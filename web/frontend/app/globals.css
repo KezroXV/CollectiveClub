@@ -2,6 +2,8 @@
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
+@custom-variant motion-safe (@media (prefers-reduced-motion: no-preference));
+@custom-variant motion-reduce (@media (prefers-reduced-motion: reduce));
 
 @theme inline {
   --color-background: var(--background);
@@ -41,6 +43,24 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  
+  /* Premium Animation Variables */
+  --animation-duration-fast: 150ms;
+  --animation-duration-normal: 200ms;
+  --animation-duration-slow: 300ms;
+  --animation-duration-slower: 500ms;
+  
+  /* Premium Shadow Variables */
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --shadow-premium: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-glow-primary: 0 0 20px color-mix(in srgb, var(--primary) 30%, transparent);
+  --shadow-glow-secondary: 0 0 20px color-mix(in srgb, var(--secondary) 30%, transparent);
+  --shadow-glow-accent: 0 0 20px color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
 :root {
@@ -76,6 +96,26 @@
   --sidebar-ring: oklch(0.705 0.015 286.067);
   --background: oklch(1 0 0);
   --foreground: oklch(0.141 0.005 285.823);
+  
+  /* Premium Color Extensions */
+  --primary-50: color-mix(in srgb, var(--primary) 5%, white);
+  --primary-100: color-mix(in srgb, var(--primary) 10%, white);
+  --primary-200: color-mix(in srgb, var(--primary) 20%, white);
+  --primary-300: color-mix(in srgb, var(--primary) 30%, white);
+  --primary-400: color-mix(in srgb, var(--primary) 40%, white);
+  --primary-500: var(--primary);
+  --primary-600: color-mix(in srgb, var(--primary) 90%, black);
+  --primary-700: color-mix(in srgb, var(--primary) 80%, black);
+  --primary-800: color-mix(in srgb, var(--primary) 70%, black);
+  --primary-900: color-mix(in srgb, var(--primary) 60%, black);
+  
+  /* State Colors */
+  --success: hsl(120, 84%, 45%);
+  --success-foreground: white;
+  --warning: hsl(45, 84%, 55%);
+  --warning-foreground: hsl(45, 84%, 15%);
+  --info: hsl(210, 84%, 55%);
+  --info-foreground: white;
 }
 
 .dark {
@@ -110,6 +150,26 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.552 0.016 285.938);
+  
+  /* Premium Color Extensions for Dark Mode */
+  --primary-50: color-mix(in srgb, var(--primary) 5%, oklch(0.141 0.005 285.823));
+  --primary-100: color-mix(in srgb, var(--primary) 10%, oklch(0.141 0.005 285.823));
+  --primary-200: color-mix(in srgb, var(--primary) 20%, oklch(0.141 0.005 285.823));
+  --primary-300: color-mix(in srgb, var(--primary) 30%, oklch(0.141 0.005 285.823));
+  --primary-400: color-mix(in srgb, var(--primary) 40%, oklch(0.141 0.005 285.823));
+  --primary-500: var(--primary);
+  --primary-600: color-mix(in srgb, var(--primary) 90%, white);
+  --primary-700: color-mix(in srgb, var(--primary) 80%, white);
+  --primary-800: color-mix(in srgb, var(--primary) 70%, white);
+  --primary-900: color-mix(in srgb, var(--primary) 60%, white);
+  
+  /* State Colors for Dark Mode */
+  --success: hsl(120, 84%, 55%);
+  --success-foreground: hsl(120, 84%, 15%);
+  --warning: hsl(45, 84%, 65%);
+  --warning-foreground: hsl(45, 84%, 15%);
+  --info: hsl(210, 84%, 65%);
+  --info-foreground: hsl(210, 84%, 15%);
 }
 
 @layer base {
@@ -118,5 +178,67 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Premium Animations */
+@layer utilities {
+  /* Shimmer animation for badges */
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  
+  .animate-shimmer {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+  
+  /* Smooth scroll behavior */
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  /* Focus visible improvements */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  }
+  
+  /* Premium hover states */
+  .hover-lift {
+    @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg;
+  }
+  
+  .hover-glow {
+    @apply transition-all duration-200 hover:shadow-lg;
+  }
+  
+  .hover-glow-primary {
+    @apply hover:shadow-[0_0_20px_rgba(52,95,248,0.3)];
+  }
+  
+  .hover-glow-secondary {
+    @apply hover:shadow-[0_0_20px_rgba(96,131,249,0.3)];
+  }
+  
+  /* Glass morphism effects */
+  .glass {
+    @apply bg-white/10 backdrop-blur-sm border border-white/20;
+  }
+  
+  .glass-dark {
+    @apply bg-black/10 backdrop-blur-sm border border-white/10;
+  }
+  
+  /* Motion safe animations */
+  @media (prefers-reduced-motion: reduce) {
+    .motion-safe\:animate-in {
+      animation: none !important;
+    }
+    
+    .motion-safe\:transition-all {
+      transition: none !important;
+    }
   }
 }
