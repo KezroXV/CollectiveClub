@@ -79,6 +79,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 🔒 SÉCURITÉ: Vérifier que l'auteur existe et appartient à cette boutique
+    const author = await prisma.user.findFirst({
+      where: {
+        id: authorId,
+        shopId: shopId
+      },
+      select: { id: true, role: true }
+    });
+
+    if (!author) {
+      return NextResponse.json(
+        { error: "Author not found or doesn't belong to this shop" },
+        { status: 403 }
+      );
+    }
+
     // Convertir category (nom) en categoryId avec isolation par boutique
     let categoryId = null;
     if (category) {

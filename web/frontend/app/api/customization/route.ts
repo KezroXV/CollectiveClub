@@ -75,11 +75,51 @@ export async function PUT(request: NextRequest) {
     ensureShopIsolation(shopId);
 
     const body = await request.json();
+    let { userId } = body;
     
-    // Vérifier les droits admin dans cette boutique
-    await requireAdmin(body.userId, shopId);
+    // Si l'userId fourni n'est pas admin, utiliser l'admin de la boutique
+    if (userId) {
+      const user = await prisma.user.findFirst({
+        where: { id: userId, shopId },
+        select: { id: true, role: true }
+      });
+      
+      // Si l'utilisateur n'est pas admin, récupérer l'admin de la boutique
+      if (!user || user.role !== 'ADMIN') {
+        const adminUser = await prisma.user.findFirst({
+          where: { shopId, role: "ADMIN" },
+          select: { id: true }
+        });
+        
+        if (!adminUser) {
+          return NextResponse.json(
+            { error: "No admin user found in this shop" },
+            { status: 403 }
+          );
+        }
+        
+        userId = adminUser.id;
+      }
+    } else {
+      // Si aucun userId, récupérer l'admin de la boutique
+      const adminUser = await prisma.user.findFirst({
+        where: { shopId, role: "ADMIN" },
+        select: { id: true }
+      });
+      
+      if (!adminUser) {
+        return NextResponse.json(
+          { error: "No admin user found in this shop" },
+          { status: 403 }
+        );
+      }
+      
+      userId = adminUser.id;
+    }
+    
+    // Vérifier les droits admin (maintenant userId est garanti d'être admin)
+    await requireAdmin(userId, shopId);
     const {
-      userId,
       colorPosts,
       colorBorders,
       colorBg,
@@ -89,13 +129,6 @@ export async function PUT(request: NextRequest) {
       bannerImageUrl,
       customBadges,
     } = body;
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "userId is required" },
-        { status: 400 }
-      );
-    }
 
     // Upsert (créer ou mettre à jour)
     const settings = await prisma.customizationSettings.upsert({

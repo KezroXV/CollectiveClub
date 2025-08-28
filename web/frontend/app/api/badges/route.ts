@@ -48,13 +48,54 @@ export async function POST(request: NextRequest) {
     ensureShopIsolation(shopId);
 
     const body = await request.json();
+    let { userId } = body;
     
-    // Vérifier les droits admin dans cette boutique
-    await requireAdmin(body.userId, shopId);
+    // Si l'userId fourni n'est pas admin, utiliser l'admin de la boutique
+    if (userId) {
+      const user = await prisma.user.findFirst({
+        where: { id: userId, shopId },
+        select: { id: true, role: true }
+      });
+      
+      // Si l'utilisateur n'est pas admin, récupérer l'admin de la boutique
+      if (!user || user.role !== 'ADMIN') {
+        const adminUser = await prisma.user.findFirst({
+          where: { shopId, role: "ADMIN" },
+          select: { id: true }
+        });
+        
+        if (!adminUser) {
+          return NextResponse.json(
+            { error: "No admin user found in this shop" },
+            { status: 403 }
+          );
+        }
+        
+        userId = adminUser.id;
+      }
+    } else {
+      // Si aucun userId, récupérer l'admin de la boutique
+      const adminUser = await prisma.user.findFirst({
+        where: { shopId, role: "ADMIN" },
+        select: { id: true }
+      });
+      
+      if (!adminUser) {
+        return NextResponse.json(
+          { error: "No admin user found in this shop" },
+          { status: 403 }
+        );
+      }
+      
+      userId = adminUser.id;
+    }
     
-    const { userId, name, imageUrl, requiredCount, order } = body;
+    // Vérifier les droits admin (maintenant userId est garanti d'être admin)
+    await requireAdmin(userId, shopId);
+    
+    const { name, imageUrl, requiredCount, order } = body;
 
-    if (!userId || !name || !imageUrl || requiredCount === undefined) {
+    if (!name || !imageUrl || requiredCount === undefined) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }

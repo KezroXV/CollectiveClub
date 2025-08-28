@@ -42,7 +42,72 @@ export async function verifyAdminRole(userId: string, shopId?: string): Promise<
   }
 }
 
+export async function getShopAdmin(shopId: string) {
+  let adminUser = await prisma.user.findFirst({
+    where: { 
+      shopId: shopId,
+      role: 'ADMIN' 
+    },
+    select: { id: true, role: true, email: true, shopId: true, name: true }
+  });
+
+  // Si aucun admin n'existe, créer un admin automatiquement
+  if (!adminUser) {
+    try {
+      const shop = await prisma.shop.findUnique({
+        where: { id: shopId },
+        select: { shopDomain: true, shopName: true }
+      });
+
+      if (!shop) {
+        throw new Error("Shop not found");
+      }
+
+      adminUser = await prisma.user.create({
+        data: {
+          email: `admin@${shop.shopDomain}`,
+          name: `Admin ${shop.shopName}`,
+          role: 'ADMIN',
+          shopId: shopId,
+          shopDomain: shop.shopDomain,
+        },
+        select: { id: true, role: true, email: true, shopId: true, name: true }
+      });
+
+      console.log(`✅ Auto-created admin for shop ${shopId}:`, adminUser.email);
+    } catch (error) {
+      console.error("Error creating admin user:", error);
+      throw new Error("No admin user found and failed to create one");
+    }
+  }
+
+  return adminUser;
+}
+
 export async function requireAdmin(userId: string, shopId?: string) {
+  // 🔒 SÉCURITÉ: Validation stricte - ne pas auto-créer d'admin
+  // Si l'userId est invalide, rejeter immédiatement
+  if (!userId || typeof userId !== 'string' || userId.length < 10) {
+    throw new Error("Valid userId is required");
+  }
+
+  // Si l'userId est en fait l'ID de la boutique, utiliser l'admin existant UNIQUEMENT
+  if (shopId && userId === shopId) {
+    const adminUser = await prisma.user.findFirst({
+      where: { 
+        shopId: shopId,
+        role: 'ADMIN' 
+      },
+      select: { id: true, role: true, email: true, shopId: true }
+    });
+
+    if (!adminUser) {
+      throw new Error("No admin user found for this shop");
+    }
+
+    userId = adminUser.id;
+  }
+
   const auth = await verifyAdminRole(userId, shopId);
   
   if (!auth.isAdmin) {
