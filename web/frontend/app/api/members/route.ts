@@ -12,6 +12,7 @@ interface MemberResponse {
   role: string;
   createdAt: string;
   isActive: boolean;
+  isOwner?: boolean;
   postsCount: number;
   commentsCount: number;
   reactionsCount: number;
@@ -62,6 +63,19 @@ export async function GET(request: NextRequest): Promise<NextResponse<PaginatedM
       },
     });
 
+    // Récupérer les informations du shop pour déterminer l'owner
+    const shop = await prisma.shop.findUnique({
+      where: { id: shopId },
+      select: { ownerId: true }
+    });
+
+    if (!shop) {
+      return NextResponse.json(
+        { error: "Shop not found" },
+        { status: 404 }
+      );
+    }
+
     // Récupérer les utilisateurs avec leurs statistiques
     const users = await prisma.user.findMany({
       where: {
@@ -97,6 +111,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<PaginatedM
       role: user.role,
       createdAt: user.createdAt.toISOString(),
       isActive: (user._count.posts + user._count.comments + user._count.reactions) > 0,
+      isOwner: user.id === shop.ownerId, // Déterminer si c'est le propriétaire du shop
       postsCount: user._count.posts,
       commentsCount: user._count.comments,
       reactionsCount: user._count.reactions,

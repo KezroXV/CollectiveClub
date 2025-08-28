@@ -3,7 +3,8 @@
     "allow": [
       "Bash(npx prisma generate:*)",
       "Bash(npm run admin:*)",
-      "Bash(npm run seed:*)"
+      "Bash(npm run seed:*)",
+      "Bash(npm run lint)"
     ],
     "deny": [],
     "ask": []

@@ -1,80 +1,246 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin, resolveActingAdmin } from "@/lib/auth";
 import { getShopId, ensureShopIsolation } from "@/lib/shopIsolation";
+import { 
+  UserRole, 
+  canChangeRole, 
+  RoleChangeContext
+} from "@/lib/permissions";
 
 const prisma = new PrismaClient();
 
-// PUT /api/users/[userId]/role - Changer le rôle d'un utilisateur (ADMIN ONLY, isolé par boutique)
+interface RoleChangeRequest {
+  role: UserRole;
+  reason?: string;
+}
+
+interface RoleChangeResponse {
+  success: boolean;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role: UserRole;
+  };
+  message: string;
+}
+
+// PUT /api/users/[userId]/role - Changer le rôle d'un utilisateur (ADMIN ONLY, sécurisé)
 export async function PUT(
   request: NextRequest,
   { params }: { params: { userId: string } }
-) {
+): Promise<NextResponse<RoleChangeResponse | { error: string }>> {
   try {
     // 🏪 ISOLATION MULTI-TENANT
     const shopId = await getShopId(request);
     ensureShopIsolation(shopId);
 
-    const { userId: targetUserId } = await params;
-    const body = await request.json();
-    const { adminUserId, role } = body;
+    const targetUserId = params.userId;
+    const body: RoleChangeRequest = await request.json();
+    const { searchParams } = new URL(request.url);
+    const actingUserId = searchParams.get("userId");
 
-    // Vérifier que l'utilisateur qui fait la demande est admin dans cette boutique
-    await requireAdmin(adminUserId, shopId);
+    // Résoudre l'utilisateur admin agissant
+    const actorId = await resolveActingAdmin(actingUserId, shopId);
 
-    // Vérifier que le rôle est valide
-    if (!['ADMIN', 'MODERATOR', 'MEMBER'].includes(role)) {
+    // Vérifier les droits admin
+    await requireAdmin(actorId, shopId);
+
+    // Valider les données d'entrée
+    if (!body.role || !Object.values(UserRole).includes(body.role)) {
       return NextResponse.json(
-        { error: "Invalid role. Must be ADMIN, MODERATOR, or MEMBER" },
+        { error: "Rôle invalide" },
         { status: 400 }
       );
     }
 
-    // Vérifier que l'utilisateur cible appartient à cette boutique
-    const targetUser = await prisma.user.findFirst({
-      where: {
-        id: targetUserId,
-        shopId // ✅ VÉRIFIER L'ISOLATION
-      }
-    });
+    // Récupérer les informations des utilisateurs
+    const [actor, target] = await Promise.all([
+      prisma.user.findFirst({
+        where: { id: actorId, shopId },
+        select: { id: true, role: true, name: true }
+      }),
+      prisma.user.findFirst({
+        where: { id: targetUserId, shopId },
+        select: { 
+          id: true, 
+          role: true, 
+          name: true, 
+          email: true,
+          isOwner: true // Vérifier si c'est le propriétaire
+        }
+      })
+    ]);
 
-    if (!targetUser) {
+    if (!actor) {
       return NextResponse.json(
-        { error: "User not found in this shop" },
+        { error: "Utilisateur administrateur non trouvé" },
         { status: 404 }
       );
     }
 
-    // Mettre à jour le rôle
-    const user = await prisma.user.update({
-      where: { id: targetUserId },
-      data: { role },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        shopDomain: true,
-        shopId: true,
+    if (!target) {
+      return NextResponse.json(
+        { error: "Utilisateur cible non trouvé dans cette boutique" },
+        { status: 404 }
+      );
+    }
+
+    // Vérifier les permissions de changement de rôle
+    const roleChangeContext: RoleChangeContext = {
+      actorId: actor.id,
+      actorRole: actor.role as UserRole,
+      targetId: target.id,
+      targetRole: target.role as UserRole,
+      newRole: body.role,
+      isTargetOwner: target.isOwner || false,
+      shopId,
+    };
+
+    const permissionCheck = canChangeRole(roleChangeContext);
+    
+    if (!permissionCheck.allowed) {
+      return NextResponse.json(
+        { error: permissionCheck.reason || "Changement de rôle non autorisé" },
+        { status: 403 }
+      );
+    }
+
+    // Si le rôle est déjà le même, pas besoin de mise à jour
+    if (target.role === body.role) {
+      return NextResponse.json({
+        success: true,
+        user: {
+          id: target.id,
+          name: target.name,
+          email: target.email,
+          role: target.role as UserRole,
+        },
+        message: "Le rôle est déjà à jour",
+      });
+    }
+
+    // Effectuer le changement de rôle dans une transaction
+    const updatedUser = await prisma.$transaction(async (tx) => {
+      // 1. Mettre à jour le rôle de l'utilisateur
+      const user = await tx.user.update({
+        where: { id: targetUserId },
+        data: { role: body.role },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+        }
+      });
+
+      // 2. Logger le changement de rôle pour audit (si le modèle existe)
+      try {
+        // Note: Nécessite l'ajout du modèle RoleChange au schéma Prisma
+        console.log('RoleChange logged:', {
+          shopId,
+          adminId: actor.id,
+          targetId: target.id,
+          fromRole: target.role,
+          toRole: body.role,
+          reason: body.reason,
+        });
+      } catch (error) {
+        // Log silencieux si le modèle n'existe pas encore
+        console.warn('RoleChange logging skipped:', error);
       }
+
+      return user;
     });
 
-    return NextResponse.json({
-      message: `User role updated to ${role}`,
-      user
-    });
+    const response: RoleChangeResponse = {
+      success: true,
+      user: {
+        id: updatedUser.id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        role: updatedUser.role as UserRole,
+      },
+      message: `Rôle changé avec succès de ${target.role} vers ${body.role}`,
+    };
+
+    return NextResponse.json(response);
+
   } catch (error) {
-    console.error("Error updating user role:", error);
-    
+    console.error('Error changing user role:', error);
+
     if (error instanceof Error && error.message.includes("Unauthorized")) {
       return NextResponse.json(
         { error: "Seuls les administrateurs peuvent modifier les rôles" },
         { status: 403 }
       );
     }
-    
+
     return NextResponse.json(
-      { error: "Failed to update user role" },
+      { error: "Erreur lors du changement de rôle" },
+      { status: 500 }
+    );
+  }
+}
+
+// GET - Obtenir les informations de rôle d'un utilisateur
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { userId: string } }
+): Promise<NextResponse> {
+  try {
+    // 🏪 ISOLATION MULTI-TENANT
+    const shopId = await getShopId(request);
+    ensureShopIsolation(shopId);
+
+    const targetUserId = params.userId;
+    const { searchParams } = new URL(request.url);
+    const actingUserId = searchParams.get("userId");
+
+    // Résoudre l'utilisateur admin agissant
+    const actorId = await resolveActingAdmin(actingUserId, shopId);
+
+    // Vérifier les droits admin
+    await requireAdmin(actorId, shopId);
+
+    // Récupérer les informations de l'utilisateur
+    const user = await prisma.user.findFirst({
+      where: { id: targetUserId, shopId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isOwner: true,
+        createdAt: true,
+      }
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Utilisateur non trouvé dans cette boutique" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      user,
+      canModify: !user.isOwner && user.id !== actorId,
+    });
+
+  } catch (error) {
+    console.error('Error fetching user role:', error);
+
+    if (error instanceof Error && error.message.includes("Unauthorized")) {
+      return NextResponse.json(
+        { error: "Accès non autorisé" },
+        { status: 403 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: "Erreur lors de la récupération des informations utilisateur" },
       { status: 500 }
     );
   }

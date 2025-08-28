@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import RolesSection from "@/components/RolesSection";
+// import RolesSection from "@/components/RolesSection";
 import CategoriesSection from "@/components/CategoriesSection";
+import RolesMembersModal from "./components/RolesMembersModal";
 import StatsCards from "./components/StatsCards";
 import PostsModal from "./components/PostsModal";
 import ClientsModal from "./components/ClientsModal";
@@ -31,6 +32,7 @@ export default function DashboardPage() {
   const handleClientsClick = () => setShowClientsModal(true);
   const handlePostsClick = () => setShowPostsModal(true);
   const handleThemeClick = () => setShowThemeModal(true);
+  // Roles rendered inline; no modal trigger needed
 
   // Charger l'utilisateur depuis localStorage
   useEffect(() => {
@@ -62,7 +64,7 @@ export default function DashboardPage() {
         {/* Contenu principal - 3 colonnes EXACT */}
         <div className="grid grid-cols-12 gap-6">
           {/* Colonne gauche - Gestion (3 colonnes) */}
-          <div className="col-span-3 space-y-6">
+          <div className="col-span-8 space-y-6">
             {/* Section Gérer */}
             <Card className="shadow-sm border-gray-200">
               <CardContent className="p-6">
@@ -104,31 +106,54 @@ export default function DashboardPage() {
             </Link>
           </div>
 
-          {/* Colonne droite - Rôles et Catégories (3 colonnes) */}
-          <div className="col-span-3 space-y-6">
-            {/* Section Rôles */}
-            <RolesSection />
-
-            {/* Section Catégories */}
-            <CategoriesSection />
-
-            {/* Section Personnalisation */}
+          {/* Colonne droite - Bloc Gestion unifié (3 colonnes) */}
+          <div className="col-span-4">
             <Card className="shadow-sm border-gray-200">
               <CardContent className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Personnalisation du forum
+                <h3 className="text-[18px] font-semibold text-gray-900 mb-6">
+                  Gestion de la boutique
                 </h3>
-                <Link href="/dashboard">
-                  <Button
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                    onClick={() => setShowCustomization(true)}
-                  >
-                    ✏️ Personnaliser
-                  </Button>
-                </Link>
+
+                <div className="space-y-6">
+                  {/* Section Rôles inline */}
+                  <div className="space-y-3">
+                    <RolesMembersModal
+                      variant="inline"
+                      isOpen={true}
+                      onClose={() => {}}
+                      userId={currentUser?.id}
+                      shopId={shopId}
+                    />
+                  </div>
+
+                  <div className="border-t border-gray-200"></div>
+
+                  {/* Section Catégories inline */}
+                  <div className="space-y-3">
+                    <CategoriesSection variant="inline" />
+                  </div>
+
+                  <div className="border-t border-gray-200"></div>
+
+                  {/* Section Personnalisation */}
+                  <div className="space-y-3">
+                    <h4 className="text-[18px] font-medium text-gray-800">
+                      Personnalisation
+                    </h4>
+                    <p className="text-[12px] text-gray-600">
+                      Personnalisez l&apos;apparence et le thème de votre forum
+                    </p>
+                    <Button
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 hover:shadow-md"
+                      onClick={handleThemeClick}
+                    >
+                      🎨 Personnaliser le thème
+                    </Button>
+                  </div>
+                </div>
               </CardContent>
             </Card>
-            
+
             {/* Modals de gestion */}
             <PostsModal
               isOpen={showPostsModal}
@@ -136,14 +161,16 @@ export default function DashboardPage() {
               userId={currentUser?.id}
               shopId={shopId}
             />
-            
+
             <ClientsModal
               isOpen={showClientsModal}
               onClose={() => setShowClientsModal(false)}
               userId={currentUser?.id}
               shopId={shopId}
             />
-            
+
+            {/* Roles modal removed; rendered inline above */}
+
             <CustomizationModal
               isOpen={showCustomization || showThemeModal}
               onClose={() => {

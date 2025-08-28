@@ -34,7 +34,20 @@ const COLOR_OPTIONS = [
   { name: "Cyan", value: "bg-cyan-500" },
 ];
 
-export default function CategoriesSection() {
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+interface CategoriesSectionProps {
+  variant?: "card" | "inline";
+}
+
+export default function CategoriesSection({
+  variant = "card",
+}: CategoriesSectionProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
@@ -95,65 +108,102 @@ export default function CategoriesSection() {
     category.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const Header = (
+    <div className="flex items-center justify-between gap-3">
+      <h4 className="text-[18px] font-medium text-gray-800">Mes Catégories</h4>
+      <div className="relative w-64 max-w-full">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        <Input
+          placeholder="Rechercher..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10 h-9 text-[12px]"
+        />
+      </div>
+    </div>
+  );
+
+  const Chips = (
+    <div className="flex flex-wrap gap-2">
+      {filteredCategories.map((category) => (
+        <div
+          key={category.id}
+          className="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-gray-200 hover:bg-gray-50 transition-all"
+        >
+          <span className={`w-2.5 h-2.5 rounded-full ${category.color}`} />
+          <span className="text-[12px] font-medium text-gray-900">
+            {category.name}
+          </span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="opacity-60 hover:opacity-100 transition-opacity">
+                <span className="sr-only">Actions</span>⋯
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem
+                onClick={() => {
+                  /* future: edit */
+                }}
+              >
+                Renommer
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  /* future: color */
+                }}
+              >
+                Changer la couleur
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-red-600"
+                onClick={() => {
+                  /* future: delete */
+                }}
+              >
+                Supprimer
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ))}
+    </div>
+  );
+
+  const AddFloating = (
+    <div className="flex justify-end">
+      <Button
+        variant="outline"
+        size="icon"
+        className="rounded-full"
+        onClick={() => setShowAddModal(true)}
+      >
+        <Plus className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+
+  const InlineContent = (
+    <div className="space-y-4">
+      {Header}
+      {Chips}
+      {AddFloating}
+    </div>
+  );
+
   return (
     <>
-      <Card className="border-gray-200">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-semibold">
-              Mes Catégories
-            </CardTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowAddModal(true)}
-              className="text-blue-600 hover:text-blue-800"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Barre de recherche */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Rechercher..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-9"
-            />
-          </div>
-
-          {/* Grille des catégories */}
-          <div className="grid grid-cols-2 gap-2">
-            {filteredCategories.map((category) => (
-              <div
-                key={category.id}
-                className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 cursor-pointer"
-              >
-                <div className={`w-3 h-3 rounded-full ${category.color}`}></div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium text-gray-900 truncate">
-                    {category.name}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Bouton Ajouter */}
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full border-dashed"
-            onClick={() => setShowAddModal(true)}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Ajouter catégorie
-          </Button>
-        </CardContent>
-      </Card>
+      {variant === "inline" ? (
+        InlineContent
+      ) : (
+        <Card className="border-gray-200">
+          <CardHeader>{Header}</CardHeader>
+          <CardContent className="space-y-4">
+            {Chips}
+            {AddFloating}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Modal d'ajout */}
       <Dialog open={showAddModal} onOpenChange={setShowAddModal}>

@@ -82,25 +82,82 @@ async function main() {
 
   console.log("✅ Categories created successfully");
 
-  // Créer un utilisateur admin par défaut pour cette boutique
-  const adminUser = await prisma.user.upsert({
-    where: { 
-      shopId_email: {
-        shopId: defaultShop.id,
-        email: "admin@collective-club.com",
-      }
-    },
-    update: {},
-    create: {
-      email: "admin@collective-club.com",
-      name: "Admin",
+  // Créer les utilisateurs de test pour cette boutique
+  const testUsers = [
+    {
+      email: "owner@collective-club.com",
+      name: "Shop Owner",
       role: "ADMIN",
-      shopId: defaultShop.id,
-      shopDomain: "collective-club-dev.myshopify.com",
+      isOwner: true,
     },
-  });
+    {
+      email: "admin@collective-club.com", 
+      name: "Admin User",
+      role: "ADMIN",
+      isOwner: false,
+    },
+    {
+      email: "moderator@collective-club.com",
+      name: "Moderator User", 
+      role: "MODERATOR",
+      isOwner: false,
+    },
+    {
+      email: "member1@collective-club.com",
+      name: "Marie Martin",
+      role: "MEMBER", 
+      isOwner: false,
+    },
+    {
+      email: "member2@collective-club.com",
+      name: "Pierre Dupont",
+      role: "MEMBER",
+      isOwner: false,
+    },
+    {
+      email: "member3@collective-club.com",
+      name: "Sophie Bernard",
+      role: "MEMBER",
+      isOwner: false,
+    },
+  ];
 
-  console.log("✅ Admin user created successfully");
+  let ownerUser = null;
+  let adminUser = null;
+
+  for (const userData of testUsers) {
+    const user = await prisma.user.upsert({
+      where: { 
+        shopId_email: {
+          shopId: defaultShop.id,
+          email: userData.email,
+        }
+      },
+      update: {},
+      create: {
+        email: userData.email,
+        name: userData.name,
+        role: userData.role as any,
+        shopId: defaultShop.id,
+        shopDomain: "collective-club-dev.myshopify.com",
+      },
+    });
+
+    if (userData.isOwner) {
+      ownerUser = user;
+      // Mettre à jour le shop avec l'ownerId correct
+      await prisma.shop.update({
+        where: { id: defaultShop.id },
+        data: { ownerId: user.id },
+      });
+    }
+
+    if (userData.email === "admin@collective-club.com") {
+      adminUser = user;
+    }
+  }
+
+  console.log("✅ Test users created successfully");
 
   // Créer les badges par défaut pour cette boutique
   const defaultBadges = [
@@ -143,14 +200,14 @@ async function main() {
       where: {
         shopId_userId_name: {
           shopId: defaultShop.id,
-          userId: adminUser.id,
+          userId: adminUser?.id || ownerUser?.id,
           name: badge.name,
         },
       },
       update: {},
       create: {
         ...badge,
-        userId: adminUser.id,
+        userId: adminUser?.id || ownerUser?.id,
       },
     });
   }
