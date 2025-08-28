@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -6,25 +5,30 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import RolesSection from "@/components/RolesSection";
 import CategoriesSection from "@/components/CategoriesSection";
+import StatsCards from "./components/StatsCards";
 import Link from "next/link";
-import { FileText, TrendingUp, Users, Home, HelpCircle } from "lucide-react";
+import { FileText, Users, Home } from "lucide-react";
 import CustomizationModal from "./components/CustomizationModal";
 import { useTheme } from "@/contexts/ThemeContext";
 import ThemeWrapper from "@/components/ThemeWrapper";
 
 export default function DashboardPage() {
   const [showCustomization, setShowCustomization] = useState(false);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [showPostsModal, setShowPostsModal] = useState(false);
+  const [showClientsModal, setShowClientsModal] = useState(false);
+  const [showThemeModal, setShowThemeModal] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{
+    id: string;
+    shopId: string;
+    name?: string;
+  } | null>(null);
+  const [shopId, setShopId] = useState<string | undefined>();
   const { loadUserTheme } = useTheme();
 
-  const [stats, setStats] = useState({
-    posts: 37,
-    postsChange: -28,
-    engagement: 130,
-    engagementChange: 8,
-    subscribers: 130,
-    subscribersChange: 12,
-  });
+  // Handlers pour les modals
+  const handleClientsClick = () => setShowClientsModal(true);
+  const handlePostsClick = () => setShowPostsModal(true);
+  const handleThemeClick = () => setShowThemeModal(true);
 
   // Charger l'utilisateur depuis localStorage
   useEffect(() => {
@@ -34,6 +38,7 @@ export default function DashboardPage() {
       try {
         const user = JSON.parse(storedUser);
         setCurrentUser(user);
+        setShopId(user.shopId);
         // Charger le thème de l'utilisateur
         if (user.id) {
           loadUserTheme(user.id);
@@ -47,66 +52,9 @@ export default function DashboardPage() {
   return (
     <ThemeWrapper applyBackgroundColor={true} className="min-h-screen p-8">
       <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header avec métriques - LAYOUT EXACT MAQUETTE */}
-        <div className="grid grid-cols-4 gap-6">
-          {/* Posts - Grande carte à gauche */}
-          <Card className="shadow-sm border-gray-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-1">
-                <HelpCircle className="h-4 w-4 text-gray-400" />
-              </div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-3xl font-bold text-blue-600">
-                  {stats.posts}
-                </span>
-                <span className="text-xs text-red-500 bg-red-50 px-2 py-1 rounded">
-                  ↓ {Math.abs(stats.postsChange)}%
-                </span>
-              </div>
-              <p className="text-sm text-gray-500">Posts</p>
-            </CardContent>
-          </Card>
-
-          {/* Engagement */}
-          <Card className="shadow-sm border-gray-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-1">
-                <p className="text-sm text-gray-500">Engagement</p>
-                <HelpCircle className="h-4 w-4 text-gray-400" />
-              </div>
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-blue-600" />
-                <span className="text-3xl font-bold text-gray-900">
-                  {stats.engagement}
-                </span>
-                <span className="text-xs text-green-500 bg-green-50 px-2 py-1 rounded">
-                  ↑ {stats.engagementChange}%
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Abonnés */}
-          <Card className="shadow-sm border-gray-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-1">
-                <p className="text-sm text-gray-500">Abonnés</p>
-                <HelpCircle className="h-4 w-4 text-gray-400" />
-              </div>
-              <div className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-blue-600" />
-                <span className="text-3xl font-bold text-gray-900">
-                  {stats.subscribers}
-                </span>
-                <span className="text-xs text-green-500 bg-green-50 px-2 py-1 rounded">
-                  ↑ {stats.subscribersChange}%
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Espace vide pour équilibrer */}
-          <div></div>
+        {/* Header avec métriques dynamiques */}
+        <div className="mb-8">
+          <StatsCards shopId={shopId} />
         </div>
 
         {/* Contenu principal - 3 colonnes EXACT */}
@@ -120,44 +68,27 @@ export default function DashboardPage() {
                   Gérer
                 </h3>
                 <nav className="space-y-1">
-                  <Link
-                    href="/dashboard/clients"
-                    className="flex items-center px-3 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
+                  <button
+                    onClick={handleClientsClick}
+                    className="w-full flex items-center px-3 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-50 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-left"
                   >
-                    <Users className="h-4 w-4 mr-3" />
+                    <Users className="h-4 w-4 mr-3 transition-colors duration-200" />
                     Clients
-                  </Link>
-                  <Link
-                    href="/dashboard/posts"
-                    className="flex items-center px-3 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
+                  </button>
+                  <button
+                    onClick={handlePostsClick}
+                    className="w-full flex items-center px-3 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-50 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-left"
                   >
-                    <FileText className="h-4 w-4 mr-3" />
+                    <FileText className="h-4 w-4 mr-3 transition-colors duration-200" />
                     Posts
-                  </Link>
-                  <Link
-                    href="/dashboard/customization"
-                    className="flex items-center px-3 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
+                  </button>
+                  <button
+                    onClick={handleThemeClick}
+                    className="w-full flex items-center px-3 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-50 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-left"
                   >
                     🎨 Thème
-                  </Link>
+                  </button>
                 </nav>
-              </CardContent>
-            </Card>
-
-            {/* Communautés phares */}
-            <Card className="shadow-sm border-gray-200">
-              <CardContent className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Communautés phares
-                </h3>
-                <div className="space-y-4 text-sm text-gray-600">
-                  <p>Un espace pour les ecommerçants dans la cosmétique</p>
-                  <p>
-                    Débutants : Envoyez tous vos conseils ici sur comment gérer
-                    sa boutique
-                  </p>
-                  <p>Quels sont vos objectifs ?</p>
-                </div>
               </CardContent>
             </Card>
 
@@ -169,36 +100,6 @@ export default function DashboardPage() {
               <Home className="h-4 w-4 mr-3" />
               Retour au forum
             </Link>
-          </div>
-
-          {/* Colonne centrale - Vue d'ensemble (6 colonnes) */}
-          <div className="col-span-6">
-            <Card className="shadow-sm border-gray-200">
-              <CardContent className="p-8">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-                  Vue d&apos;ensemble
-                </h2>
-                <p className="text-gray-600 mb-8">
-                  Tableau de bord principal pour gérer votre communauté.
-                </p>
-
-                {/* Statistiques détaillées */}
-                <div className="grid grid-cols-2 gap-8">
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500 mb-2">
-                      Posts cette semaine
-                    </h4>
-                    <p className="text-4xl font-bold text-blue-600">12</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500 mb-2">
-                      Commentaires
-                    </h4>
-                    <p className="text-4xl font-bold text-green-600">245</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Colonne droite - Rôles et Catégories (3 colonnes) */}
