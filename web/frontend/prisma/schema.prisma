@@ -1,0 +1,257 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 🏪 MODÈLE SHOP POUR MULTI-TENANT
+model Shop {
+  id          String   @id @default(cuid())
+  shopDomain  String   @unique // boutique-cosmetic.myshopify.com  
+  shopName    String   // "Cosmetic Paradise"
+  ownerId     String   // ID du propriétaire Shopify
+  settings    Json?    // Personnalisation (couleurs, etc.)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  users       User[]
+  posts       Post[]
+  categories  Category[]
+  badges      Badge[]
+  polls       Poll[]
+  
+  @@map("shops")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   
+  name      String?
+  avatar    String?
+  shopId    String   // ✅ OBLIGATOIRE pour multi-tenant
+  shopDomain String?  // Gardé pour la compatibilité
+  role      Role     @default(MEMBER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  posts     Post[]
+  comments  Comment[]
+  reactions Reaction[]
+  PollVote  PollVote[]
+  customizationSettings CustomizationSettings?
+  badges    Badge[]
+
+  @@unique([shopId, email]) // Email unique par shop
+  @@map("users")
+}
+model Category {
+  id          String @id @default(cuid())
+  name        String 
+  color       String // Ex: "bg-orange-500"
+  description String?
+  isActive    Boolean @default(true)
+  order       Int     @default(0)
+  shopId      String  // ✅ OBLIGATOIRE pour multi-tenant
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  shop        Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  posts       Post[]
+
+  @@unique([shopId, name]) // Nom unique par shop
+  @@map("categories")
+}
+
+model Post {
+  id        String     @id @default(cuid())
+  title     String
+  content   String
+  imageUrl  String?
+  isPinned  Boolean    @default(false)
+  status    PostStatus @default(PUBLISHED)
+  shopId    String     // ✅ OBLIGATOIRE pour multi-tenant
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  
+  // Relations
+  shop       Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  author     User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId   String
+  category   Category? @relation(fields: [categoryId], references: [id])
+  categoryId String?   
+
+  comments  Comment[]
+  reactions Reaction[]
+  poll      Poll?
+
+  @@map("posts")
+}
+
+model Poll {
+  id       String @id @default(cuid())
+  question String
+  shopId   String  // ✅ OBLIGATOIRE pour multi-tenant
+  
+  // Relations
+  shop     Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  post     Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId   String  @unique
+  
+  options PollOption[]
+  votes   PollVote[]
+  
+  createdAt DateTime @default(now())
+  
+  @@map("polls")
+}
+
+model PollOption {
+  id     String @id @default(cuid())
+  text   String
+  order  Int    // 0, 1, 2, 3 (pour l'ordre)
+  shopId String // ✅ OBLIGATOIRE pour multi-tenant
+  
+  // Relations
+  poll   Poll @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  pollId String
+  
+  votes PollVote[]
+  
+  @@map("poll_options")
+}
+
+model PollVote {
+  id     String @id @default(cuid())
+  shopId String // ✅ OBLIGATOIRE pour multi-tenant
+  
+  // Relations
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String
+  poll     Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  pollId   String
+  option   PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  optionId String
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([userId, pollId]) // Un seul vote par user par sondage
+  @@map("poll_votes")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  shopId    String   // ✅ OBLIGATOIRE pour multi-tenant
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  reactions Reaction[]
+
+  @@map("comments")
+}
+
+model Reaction {
+  id        String       @id @default(cuid())
+  type      ReactionType
+  shopId    String       // ✅ OBLIGATOIRE pour multi-tenant
+  createdAt DateTime     @default(now())
+
+  // Relations
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    String?
+  post      Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  commentId String?
+  comment   Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@unique([userId, commentId])
+  @@map("reactions")
+}
+
+enum Role {
+  ADMIN
+  MODERATOR
+  MEMBER
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ReactionType {
+  LIKE
+  LOVE
+  LAUGH
+  WOW
+  APPLAUSE
+}
+
+model CustomizationSettings {
+  id           String @id @default(cuid())
+  userId       String @unique
+  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Couleurs
+  colorPosts    String @default("#3B82F6")
+  colorBorders  String @default("#E5E7EB")
+  colorBg       String @default("#F9FAFB")
+  colorText     String @default("#111827")
+  
+  // Police
+  selectedFont  String @default("Inter")
+  
+  // Image de couverture
+  coverImageUrl String?
+  
+  // Image de bannière
+  bannerImageUrl String @default("/Bannière.svg")
+  
+  // Badges personnalisés (JSON)
+  customBadges  Json?
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@map("customization_settings")
+}
+
+model Badge {
+  id            String @id @default(cuid())
+  name          String
+  imageUrl      String
+  requiredCount Int
+  isDefault     Boolean @default(false)
+  order         Int     @default(0)
+  shopId        String  // ✅ OBLIGATOIRE pour multi-tenant
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  shop          Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+  
+  @@unique([shopId, userId, name]) // Nom unique par user par shop
+  @@map("badges")
+}

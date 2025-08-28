@@ -1,0 +1,13 @@
+{
+  "name": "collective-club-shopify-app",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "shopify app build",
+    "deploy": "shopify app deploy",
+    "dev": "shopify app dev",
+    "info": "shopify app info"
+  },
+  "dependencies": {
+    "@shopify/cli": "^3.60.0"
+  }
+}
