@@ -222,17 +222,21 @@ export default function PostDetailPage() {
 
       if (response.ok) {
         const comment = await response.json();
-        setData(prev => prev ? {
-          ...prev,
-          post: {
-            ...prev.post,
-            comments: [comment, ...prev.post.comments],
-            _count: {
-              ...prev.post._count,
-              comments: prev.post._count.comments + 1
-            }
-          }
-        } : null);
+        setData((prev) =>
+          prev
+            ? {
+                ...prev,
+                post: {
+                  ...prev.post,
+                  comments: [comment, ...prev.post.comments],
+                  _count: {
+                    ...prev.post._count,
+                    comments: prev.post._count.comments + 1,
+                  },
+                },
+              }
+            : null
+        );
         setNewComment("");
         toast.success("Commentaire ajouté !");
       }
@@ -291,11 +295,17 @@ export default function PostDetailPage() {
         <div className="max-w-6xl mx-auto">
           {/* Breadcrumbs */}
           <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-6">
-            <Link href="/" className="hover:text-gray-900">Accueil</Link>
+            <Link href="/" className="hover:text-gray-900">
+              Accueil
+            </Link>
             <span>&gt;</span>
-            <Link href="/community" className="hover:text-gray-900">Community</Link>
+            <Link href="/community" className="hover:text-gray-900">
+              Community
+            </Link>
             <span>&gt;</span>
-            <span className="text-gray-900 truncate max-w-xs">{post.title}</span>
+            <span className="text-gray-900 truncate max-w-xs">
+              {post.title}
+            </span>
           </nav>
 
           {/* Bouton retour */}
@@ -310,7 +320,6 @@ export default function PostDetailPage() {
 
           {/* Layout 2 colonnes */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
             {/* Colonne principale (70%) */}
             <div className="lg:col-span-2">
               <Card className="shadow-sm">
@@ -332,13 +341,18 @@ export default function PostDetailPage() {
                           <p className="text-sm text-gray-500">
                             {formatDate(post.createdAt)}
                           </p>
-                          <Badge className={getRoleColor(post.author.role)} variant="secondary">
+                          <Badge
+                            className={getRoleColor(post.author.role)}
+                            variant="secondary"
+                          >
                             {getRoleLabel(post.author.role)}
                           </Badge>
                         </div>
                       </div>
                       {post.category && (
-                        <Badge className={`${post.category.color} text-white ml-4`}>
+                        <Badge
+                          className={`${post.category.color} text-white ml-4`}
+                        >
                           {post.category.name}
                         </Badge>
                       )}
@@ -396,7 +410,7 @@ export default function PostDetailPage() {
                         currentUserId={currentUser?.id || ""}
                         onReactionUpdate={() => window.location.reload()}
                       />
-                      
+
                       <Button
                         variant="outline"
                         size="sm"
@@ -405,7 +419,11 @@ export default function PostDetailPage() {
                       >
                         <MessageSquare className="h-4 w-4" />
                         {post._count.comments} commentaires
-                        {showComments ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        {showComments ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
                       </Button>
                     </div>
 
@@ -443,10 +461,12 @@ export default function PostDetailPage() {
                                 onChange={(e) => setNewComment(e.target.value)}
                                 disabled={submittingComment}
                               />
-                              <Button 
-                                type="submit" 
+                              <Button
+                                type="submit"
                                 size="sm"
-                                disabled={!newComment.trim() || submittingComment}
+                                disabled={
+                                  !newComment.trim() || submittingComment
+                                }
                               >
                                 <Send className="h-4 w-4" />
                               </Button>
@@ -483,7 +503,8 @@ export default function PostDetailPage() {
                           ))
                         ) : (
                           <p className="text-gray-500 text-center py-8">
-                            Aucun commentaire pour l&apos;instant. Soyez le premier à commenter !
+                            Aucun commentaire pour l&apos;instant. Soyez le
+                            premier à commenter !
                           </p>
                         )}
                       </div>
@@ -498,7 +519,9 @@ export default function PostDetailPage() {
               {/* Profil de l'auteur */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Profil de l&apos;auteur</CardTitle>
+                  <CardTitle className="text-lg">
+                    Profil de l&apos;auteur
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-3 mb-4">
@@ -510,12 +533,15 @@ export default function PostDetailPage() {
                     </Avatar>
                     <div>
                       <h3 className="font-semibold">{post.author.name}</h3>
-                      <Badge className={getRoleColor(post.author.role)} variant="secondary">
+                      <Badge
+                        className={getRoleColor(post.author.role)}
+                        variant="secondary"
+                      >
                         {getRoleLabel(post.author.role)}
                       </Badge>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
                     <Calendar className="h-4 w-4" />
                     Membre depuis {formatDate(post.author.createdAt)}
@@ -539,7 +565,10 @@ export default function PostDetailPage() {
                   <CardContent>
                     <div className="grid grid-cols-2 gap-3">
                       {authorBadges.map((badge) => (
-                        <div key={badge.id} className="flex flex-col items-center p-3 bg-gray-50 rounded-lg">
+                        <div
+                          key={badge.id}
+                          className="flex flex-col items-center p-3 bg-gray-50 rounded-lg"
+                        >
                           <div className="w-12 h-12 mb-2">
                             <Image
                               src={badge.imageUrl}
@@ -567,14 +596,21 @@ export default function PostDetailPage() {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {authorRecentPosts.map((authorPost) => (
-                      <Link key={authorPost.id} href={`/community/${authorPost.id}`}>
+                      <Link
+                        key={authorPost.id}
+                        href={`/community/${authorPost.id}`}
+                      >
                         <div className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                           <h4 className="font-medium text-sm mb-2 line-clamp-2">
                             {authorPost.title}
                           </h4>
                           <div className="flex items-center gap-4 text-xs text-gray-600">
-                            <span>{formatRelativeDate(authorPost.createdAt)}</span>
-                            <span>{authorPost._count.comments} commentaires</span>
+                            <span>
+                              {formatRelativeDate(authorPost.createdAt)}
+                            </span>
+                            <span>
+                              {authorPost._count.comments} commentaires
+                            </span>
                             <span>{authorPost._count.reactions} réactions</span>
                           </div>
                         </div>
@@ -588,17 +624,24 @@ export default function PostDetailPage() {
               {authorRecentComments.length > 0 && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Commentaires récents</CardTitle>
+                    <CardTitle className="text-lg">
+                      Commentaires récents
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {authorRecentComments.map((comment) => (
-                      <Link key={comment.id} href={`/community/${comment.post.id}`}>
+                      <Link
+                        key={comment.id}
+                        href={`/community/${comment.post.id}`}
+                      >
                         <div className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                           <p className="text-sm mb-2 line-clamp-2">
                             {comment.content}
                           </p>
                           <div className="text-xs text-gray-600">
-                            <span className="font-medium">Sur: {comment.post.title}</span>
+                            <span className="font-medium">
+                              Sur: {comment.post.title}
+                            </span>
                             <br />
                             <span>{formatRelativeDate(comment.createdAt)}</span>
                           </div>

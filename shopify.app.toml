@@ -1,22 +1,20 @@
-name = "collective-club"
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
 client_id = "b4e0f05c3b167ee4454a2bb3785bf717"
-application_url = "https://localhost:3000/"
+name = "Collective Club"
+handle = "collective-club"
+application_url = "http://localhost:3000/"
 embedded = false
 
+[webhooks]
+api_version = "2025-07"
+
 [access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_content,read_customers,write_content,write_customers"
 
 [auth]
-redirect_urls = [
-  "https://localhost:3000/api/auth/callback"
-]
-
-[webhooks]
-api_version = "2024-10"
+redirect_urls = [ "http://localhost:3000/api/auth/callback" ]
 
 [pos]
 embedded = false
-
-[build]
-automatically_update_urls_on_dev = true
-include_config_on_deploy = true
