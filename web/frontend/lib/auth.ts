@@ -84,6 +84,34 @@ export async function getShopAdmin(shopId: string) {
   return adminUser;
 }
 
+export async function resolveActingAdmin(providedUserId: string | null | undefined, shopId: string): Promise<string> {
+  let actingUserId: string | null = providedUserId || null;
+  
+  if (actingUserId) {
+    // Vérifier si l'utilisateur fourni existe et est admin dans cette boutique
+    const user = await prisma.user.findFirst({
+      where: { id: actingUserId, shopId },
+      select: { id: true, role: true },
+    });
+    
+    // Si l'utilisateur n'existe pas ou n'est pas admin, fallback sur l'admin de la boutique
+    if (!user || user.role !== "ADMIN") {
+      const adminUser = await getShopAdmin(shopId);
+      actingUserId = adminUser.id;
+    }
+  } else {
+    // Si aucun userId fourni, récupérer l'admin de la boutique
+    const adminUser = await getShopAdmin(shopId);
+    actingUserId = adminUser.id;
+  }
+
+  if (!actingUserId) {
+    throw new Error("No admin user found in this shop");
+  }
+
+  return actingUserId;
+}
+
 export async function requireAdmin(userId: string, shopId?: string) {
   // 🔒 SÉCURITÉ: Validation stricte - ne pas auto-créer d'admin
   // Si l'userId est invalide, rejeter immédiatement

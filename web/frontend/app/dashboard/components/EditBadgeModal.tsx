@@ -39,6 +39,7 @@ export default function EditBadgeModal({
   const [badgeImage, setBadgeImage] = useState("");
   const [badgeCount, setBadgeCount] = useState(5);
   const [isLoading, setIsLoading] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const badgeImageInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -113,20 +114,18 @@ export default function EditBadgeModal({
     }
   };
 
-  const handleDeleteBadge = async () => {
-    if (!userId || !badge) {
-      toast.error("Informations manquantes");
-      return;
-    }
-
+  const handleDeleteBadge = () => {
+    if (!badge) return;
     if (badge.isDefault) {
       toast.error("Impossible de supprimer un badge par défaut");
       return;
     }
+    setIsConfirmOpen(true);
+  };
 
-    if (
-      !confirm(`Êtes-vous sûr de vouloir supprimer le badge "${badge.name}" ?`)
-    ) {
+  const confirmDelete = async () => {
+    if (!userId || !badge) {
+      toast.error("Informations manquantes");
       return;
     }
 
@@ -153,6 +152,7 @@ export default function EditBadgeModal({
       );
     } finally {
       setIsLoading(false);
+      setIsConfirmOpen(false);
     }
   };
 
@@ -289,6 +289,34 @@ export default function EditBadgeModal({
           </div>
         </div>
       </DialogContent>
+      {/* Confirmation dialog */}
+      <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+        <DialogContent className="w-auto max-w-[90vw] sm:max-w-[320px] p-4">
+          <DialogHeader>
+            <DialogTitle className="text-center text-gray-600 text-sm">
+              Confirmer la suppression
+            </DialogTitle>
+          </DialogHeader>
+          <div className="text-sm text-gray-600 text-center">
+            Voulez-vous vraiment supprimer ce badge ?
+          </div>
+          <div className="flex justify-center gap-3 pt-2">
+            <button
+              onClick={() => setIsConfirmOpen(false)}
+              className="px-3 py-1.5 rounded border-2 border-gray-300 text-gray-600 hover:bg-gray-50"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={confirmDelete}
+              disabled={isLoading}
+              className="px-3 py-1.5 rounded border-2 border-red-300 text-red-600 hover:bg-red-50 disabled:opacity-50"
+            >
+              {isLoading ? "..." : "Supprimer"}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
