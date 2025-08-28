@@ -37,12 +37,19 @@ export default function CustomizationModal({
   onClose,
   userId,
 }: CustomizationModalProps) {
-  const { colors: globalColors, selectedFont: globalFont, bannerImageUrl: globalBannerImage, updateTheme } = useTheme();
-  
+  const {
+    colors: globalColors,
+    selectedFont: globalFont,
+    bannerImageUrl: globalBannerImage,
+    updateTheme,
+  } = useTheme();
+
   const [activeColorTab, setActiveColorTab] = useState("Posts");
   const [colors, setColors] = useState(globalColors);
   const [selectedFont, setSelectedFont] = useState(globalFont);
-  const [bannerImage, setBannerImage] = useState(globalBannerImage || "/Bannière.svg");
+  const [bannerImage, setBannerImage] = useState(
+    globalBannerImage || "/Bannière.svg"
+  );
   const [isAddBadgeModalOpen, setIsAddBadgeModalOpen] = useState(false);
   const [isEditBadgeModalOpen, setIsEditBadgeModalOpen] = useState(false);
   const [selectedBadge, setSelectedBadge] = useState<any>(null);
@@ -55,13 +62,13 @@ export default function CustomizationModal({
   // Charger les badges
   const loadBadges = useCallback(async () => {
     if (!userId) return;
-    
+
     setIsLoadingBadges(true);
     try {
       const response = await fetch(`/api/badges?userId=${userId}`);
       if (response.ok) {
         const badgesData = await response.json();
-        
+
         // Si l'utilisateur n'a aucun badge, créer les badges par défaut
         if (badgesData.length === 0) {
           await createDefaultBadges();
@@ -85,9 +92,24 @@ export default function CustomizationModal({
   // Créer les badges par défaut pour l'utilisateur
   const createDefaultBadges = async () => {
     const defaultBadges = [
-      { name: "Nouveau", imageUrl: "/Badge-nouveau.svg", requiredCount: 5, order: 1 },
-      { name: "Bronze", imageUrl: "/Badge-bronze.svg", requiredCount: 50, order: 2 },
-      { name: "Argent", imageUrl: "/Badge-argent.svg", requiredCount: 100, order: 3 },
+      {
+        name: "Nouveau",
+        imageUrl: "/Badge-nouveau.svg",
+        requiredCount: 5,
+        order: 1,
+      },
+      {
+        name: "Bronze",
+        imageUrl: "/Badge-bronze.svg",
+        requiredCount: 50,
+        order: 2,
+      },
+      {
+        name: "Argent",
+        imageUrl: "/Badge-argent.svg",
+        requiredCount: 100,
+        order: 3,
+      },
       { name: "Or", imageUrl: "/Badge-or.svg", requiredCount: 500, order: 4 },
     ];
 
@@ -99,7 +121,11 @@ export default function CustomizationModal({
           body: JSON.stringify({ ...badge, userId }),
         });
       } catch (error) {
-        console.error("Erreur lors de la création du badge par défaut:", badge.name, error);
+        console.error(
+          "Erreur lors de la création du badge par défaut:",
+          badge.name,
+          error
+        );
       }
     }
   };
@@ -121,7 +147,6 @@ export default function CustomizationModal({
     }));
   };
 
-
   const handleBannerUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -140,11 +165,11 @@ export default function CustomizationModal({
       Fond: "#F9FAFB",
       Police: "#111827",
     };
-    
+
     setColors(defaultColors);
     setSelectedFont("Helvetica");
     setBannerImage("/Bannière.svg");
-    
+
     toast.success("Paramètres remis par défaut !");
   };
 
@@ -192,7 +217,10 @@ export default function CustomizationModal({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col">
+        <DialogContent
+          size="full"
+          className="sm:max-w-7xl w-[96vw] max-h-[90vh] flex flex-col"
+        >
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold">
               Personnalisation du forum
@@ -263,7 +291,7 @@ export default function CustomizationModal({
                     Changer
                   </Button>
                 </div>
-                
+
                 <div className="relative">
                   <Image
                     src={bannerImage}
@@ -319,7 +347,7 @@ export default function CustomizationModal({
                             {badge.name}
                           </p>
                           {!badge.isDefault && (
-                            <div 
+                            <div
                               className="flex items-center justify-center gap-1 mt-1 text-gray-500 hover:text-gray-700 transition-colors cursor-pointer"
                               onClick={() => {
                                 setSelectedBadge(badge);
@@ -352,15 +380,15 @@ export default function CustomizationModal({
               <PostPreview
                 colors={colors}
                 selectedFont={selectedFont}
-                coverImage={null}
+                coverImage={undefined}
               />
             </div>
           </div>
 
           {/* Actions */}
           <div className="flex justify-between items-center pt-4 border-t mt-4 flex-shrink-0">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={handleReset}
               className="text-gray-600 border-gray-300 hover:bg-gray-50 hover:text-gray-700 transition-colors"
             >

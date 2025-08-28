@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import RolesSection from "@/components/RolesSection";
 import CategoriesSection from "@/components/CategoriesSection";
 import StatsCards from "./components/StatsCards";
+import PostsModal from "./components/PostsModal";
+import ClientsModal from "./components/ClientsModal";
 import Link from "next/link";
 import { FileText, Users, Home } from "lucide-react";
 import CustomizationModal from "./components/CustomizationModal";
@@ -126,9 +128,28 @@ export default function DashboardPage() {
                 </Link>
               </CardContent>
             </Card>
+            
+            {/* Modals de gestion */}
+            <PostsModal
+              isOpen={showPostsModal}
+              onClose={() => setShowPostsModal(false)}
+              userId={currentUser?.id}
+              shopId={shopId}
+            />
+            
+            <ClientsModal
+              isOpen={showClientsModal}
+              onClose={() => setShowClientsModal(false)}
+              userId={currentUser?.id}
+              shopId={shopId}
+            />
+            
             <CustomizationModal
-              isOpen={showCustomization}
-              onClose={() => setShowCustomization(false)}
+              isOpen={showCustomization || showThemeModal}
+              onClose={() => {
+                setShowCustomization(false);
+                setShowThemeModal(false);
+              }}
               userId={currentUser?.id}
             />
           </div>
