@@ -132,7 +132,12 @@ export async function PUT(request: NextRequest) {
 
     // Upsert (créer ou mettre à jour)
     const settings = await prisma.customizationSettings.upsert({
-      where: { userId },
+      where: { 
+        userId_shopId: {
+          userId,
+          shopId
+        }
+      },
       update: {
         colorPosts: colorPosts || "#3B82F6",
         colorBorders: colorBorders || "#E5E7EB",
@@ -145,6 +150,7 @@ export async function PUT(request: NextRequest) {
       },
       create: {
         userId,
+        shopId, // ✅ ASSOCIER À LA BOUTIQUE
         colorPosts: colorPosts || "#3B82F6",
         colorBorders: colorBorders || "#E5E7EB",
         colorBg: colorBg || "#F9FAFB",

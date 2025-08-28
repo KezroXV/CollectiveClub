@@ -29,6 +29,7 @@ model Shop {
   categories  Category[]
   badges      Badge[]
   polls       Poll[]
+  customizationSettings CustomizationSettings[]
   
   @@map("shops")
 }
@@ -50,7 +51,7 @@ model User {
   comments  Comment[]
   reactions Reaction[]
   PollVote  PollVote[]
-  customizationSettings CustomizationSettings?
+  customizationSettings CustomizationSettings[]
   badges    Badge[]
 
   @@unique([shopId, email]) // Email unique par shop
@@ -209,8 +210,10 @@ enum ReactionType {
 
 model CustomizationSettings {
   id           String @id @default(cuid())
-  userId       String @unique
+  userId       String
   user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shopId       String  // ✅ OBLIGATOIRE pour multi-tenant
+  shop         Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
   
   // Couleurs
   colorPosts    String @default("#3B82F6")
@@ -233,6 +236,7 @@ model CustomizationSettings {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   
+  @@unique([userId, shopId], name: "userId_shopId") // Paramètres uniques par user par shop
   @@map("customization_settings")
 }
 
