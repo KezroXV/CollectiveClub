@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -55,6 +54,20 @@ export default function CategoriesSection({
   const [selectedColor, setSelectedColor] = useState("bg-blue-500");
   const [loading, setLoading] = useState(false);
 
+  // States for edit modal
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [editCategoryName, setEditCategoryName] = useState("");
+  
+  // States for color modal
+  const [showColorModal, setShowColorModal] = useState(false);
+  const [colorEditingCategory, setColorEditingCategory] = useState<Category | null>(null);
+  const [newColor, setNewColor] = useState("bg-blue-500");
+  
+  // States for delete modal
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingCategory, setDeletingCategory] = useState<Category | null>(null);
+
   // Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
@@ -104,6 +117,110 @@ export default function CategoriesSection({
     }
   };
 
+  const handleEditCategory = async () => {
+    if (!editingCategory || !editCategoryName.trim()) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/categories/${editingCategory.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editCategoryName.trim(),
+        }),
+      });
+
+      if (response.ok) {
+        const updatedCategory = await response.json();
+        setCategories((prev) =>
+          prev.map((cat) =>
+            cat.id === editingCategory.id
+              ? { ...cat, name: updatedCategory.name }
+              : cat
+          )
+        );
+        setShowEditModal(false);
+        setEditingCategory(null);
+        setEditCategoryName("");
+        toast.success("Catégorie renommée avec succès");
+      } else {
+        const error = await response.json();
+        toast.error(error.error || "Erreur lors du renommage");
+      }
+    } catch (error) {
+      console.error("Error editing category:", error);
+      toast.error("Erreur lors du renommage");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleColorChange = async () => {
+    if (!colorEditingCategory || !newColor) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/categories/${colorEditingCategory.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          color: newColor,
+        }),
+      });
+
+      if (response.ok) {
+        const updatedCategory = await response.json();
+        setCategories((prev) =>
+          prev.map((cat) =>
+            cat.id === colorEditingCategory.id
+              ? { ...cat, color: updatedCategory.color }
+              : cat
+          )
+        );
+        setShowColorModal(false);
+        setColorEditingCategory(null);
+        setNewColor("bg-blue-500");
+        toast.success("Couleur changée avec succès");
+      } else {
+        const error = await response.json();
+        toast.error(error.error || "Erreur lors du changement de couleur");
+      }
+    } catch (error) {
+      console.error("Error changing color:", error);
+      toast.error("Erreur lors du changement de couleur");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteCategory = async () => {
+    if (!deletingCategory) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/categories/${deletingCategory.id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        setCategories((prev) =>
+          prev.filter((cat) => cat.id !== deletingCategory.id)
+        );
+        setShowDeleteModal(false);
+        setDeletingCategory(null);
+        toast.success("Catégorie supprimée avec succès");
+      } else {
+        const error = await response.json();
+        toast.error(error.error || "Erreur lors de la suppression");
+      }
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      toast.error("Erreur lors de la suppression");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredCategories = categories.filter((category) =>
     category.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -143,14 +260,18 @@ export default function CategoriesSection({
             <DropdownMenuContent>
               <DropdownMenuItem
                 onClick={() => {
-                  /* future: edit */
+                  setEditingCategory(category);
+                  setEditCategoryName(category.name);
+                  setShowEditModal(true);
                 }}
               >
                 Renommer
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => {
-                  /* future: color */
+                  setColorEditingCategory(category);
+                  setNewColor(category.color);
+                  setShowColorModal(true);
                 }}
               >
                 Changer la couleur
@@ -158,7 +279,8 @@ export default function CategoriesSection({
               <DropdownMenuItem
                 className="text-red-600"
                 onClick={() => {
-                  /* future: delete */
+                  setDeletingCategory(category);
+                  setShowDeleteModal(true);
                 }}
               >
                 Supprimer
@@ -262,6 +384,156 @@ export default function CategoriesSection({
                 disabled={!newCategoryName.trim() || loading}
               >
                 {loading ? "Création..." : "Créer"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de renommage */}
+      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Renommer la catégorie</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">
+                Nouveau nom
+              </label>
+              <Input
+                placeholder="Nom de la catégorie"
+                value={editCategoryName}
+                onChange={(e) => setEditCategoryName(e.target.value)}
+                autoFocus
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingCategory(null);
+                  setEditCategoryName("");
+                }}
+                disabled={loading}
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleEditCategory}
+                disabled={!editCategoryName.trim() || loading}
+              >
+                {loading ? "Renommage..." : "Renommer"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de changement de couleur */}
+      <Dialog open={showColorModal} onOpenChange={setShowColorModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Changer la couleur</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">
+                Couleur pour &quot;{colorEditingCategory?.name}&quot;
+              </label>
+              <div className="grid grid-cols-4 gap-2">
+                {COLOR_OPTIONS.map((color) => (
+                  <button
+                    key={color.value}
+                    onClick={() => setNewColor(color.value)}
+                    className={`w-12 h-8 rounded-md ${color.value} relative ${
+                      newColor === color.value
+                        ? "ring-2 ring-gray-900 ring-offset-2"
+                        : ""
+                    }`}
+                  >
+                    {newColor === color.value && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowColorModal(false);
+                  setColorEditingCategory(null);
+                  setNewColor("bg-blue-500");
+                }}
+                disabled={loading}
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleColorChange}
+                disabled={loading}
+              >
+                {loading ? "Modification..." : "Modifier"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de suppression */}
+      <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Supprimer la catégorie</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 p-4 bg-red-50 rounded-lg border border-red-200">
+              <div className="flex-shrink-0">
+                <X className="h-5 w-5 text-red-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-red-800">
+                  Attention
+                </h3>
+                <p className="text-sm text-red-700 mt-1">
+                  Êtes-vous sûr de vouloir supprimer la catégorie &quot;{deletingCategory?.name}&quot; ? 
+                  Cette action est irréversible.
+                </p>
+                {deletingCategory && deletingCategory._count.posts > 0 && (
+                  <p className="text-xs text-red-600 mt-2 font-medium">
+                    ⚠️ Cette catégorie contient {deletingCategory._count.posts} post(s)
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeletingCategory(null);
+                }}
+                disabled={loading}
+              >
+                Annuler
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteCategory}
+                disabled={loading}
+              >
+                {loading ? "Suppression..." : "Supprimer"}
               </Button>
             </div>
           </div>
