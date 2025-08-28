@@ -20,7 +20,14 @@ export async function GET(
       },
       include: {
         author: {
-          select: { id: true, name: true, email: true, avatar: true },
+          select: { 
+            id: true, 
+            name: true, 
+            email: true, 
+            avatar: true,
+            createdAt: true,
+            role: true
+          },
         },
         category: {
           select: { id: true, name: true, color: true },
@@ -59,7 +66,70 @@ export async function GET(
       return NextResponse.json({ error: "Post not found in this shop" }, { status: 404 });
     }
 
-    return NextResponse.json(post);
+    // Récupérer les posts récents de l'auteur (excluant le post actuel)
+    const authorRecentPosts = await prisma.post.findMany({
+      where: {
+        authorId: post.author.id,
+        shopId,
+        id: { not: params.postId }
+      },
+      select: {
+        id: true,
+        title: true,
+        createdAt: true,
+        _count: {
+          select: { comments: true, reactions: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 4
+    });
+
+    // Récupérer les commentaires récents de l'auteur sur d'autres posts
+    const authorRecentComments = await prisma.comment.findMany({
+      where: {
+        authorId: post.author.id,
+        shopId,
+        postId: { not: params.postId }
+      },
+      select: {
+        id: true,
+        content: true,
+        createdAt: true,
+        post: {
+          select: {
+            id: true,
+            title: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 3
+    });
+
+    // Récupérer les badges de l'auteur
+    const authorBadges = await prisma.badge.findMany({
+      where: {
+        userId: post.author.id,
+        shopId
+      },
+      select: {
+        id: true,
+        name: true,
+        imageUrl: true,
+        requiredCount: true
+      },
+      orderBy: { order: 'asc' }
+    });
+
+    const response = {
+      post,
+      authorRecentPosts,
+      authorRecentComments,
+      authorBadges
+    };
+
+    return NextResponse.json(response);
   } catch (error) {
     console.error("Error fetching post:", error);
     return NextResponse.json(

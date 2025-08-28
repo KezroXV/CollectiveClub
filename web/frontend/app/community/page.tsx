@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { MessageSquare, Plus, Search, ArrowLeft, Send } from "lucide-react";
+import { MessageSquare, Plus, Search, ArrowLeft, Send, Calendar, User, Filter, TrendingUp, Clock } from "lucide-react";
 import Link from "next/link";
 import ReactionPicker from "@/components/ReactionPicker";
 import PollDisplay from "@/components/PollDisplay";
@@ -67,6 +67,8 @@ export default function CommunityPage() {
   const [selectedPost, setSelectedPost] = useState<string | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"recent" | "popular">("recent");
 
   const searchParams = useSearchParams();
 
@@ -179,7 +181,7 @@ export default function CommunityPage() {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("fr-FR", {
       day: "numeric",
-      month: "long",
+      month: "short",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
@@ -195,6 +197,24 @@ export default function CommunityPage() {
         .toUpperCase() || "?"
     );
   };
+
+  const filteredAndSortedPosts = posts
+    .filter((post) => {
+      if (!searchQuery) return true;
+      return (
+        post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        post.author.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    })
+    .sort((a, b) => {
+      if (sortBy === "popular") {
+        const aPopularity = a._count.comments + a._count.reactions;
+        const bPopularity = b._count.comments + b._count.reactions;
+        return bPopularity - aPopularity;
+      }
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
 
   return (
     <ThemeWrapper applyBackgroundColor={true} className="min-h-screen">
@@ -228,20 +248,26 @@ export default function CommunityPage() {
 
         {/* User Info */}
         {currentUser && (
-          <Card className="mb-6 bg-green-50 border-green-200">
+          <Card className="mb-6 shadow-sm border-0 bg-gradient-to-r from-primary/5 to-secondary/5">
             <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <Avatar>
-                  <AvatarFallback className="bg-green-500 text-white">
-                    {getInitials(currentUser.name)}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-semibold text-green-800">
-                    Connecté en tant que {currentUser.name}
-                  </p>
-                  <p className="text-sm text-green-600">{currentUser.email}</p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarFallback className="bg-gradient-to-r from-primary to-secondary text-white font-semibold">
+                      {getInitials(currentUser.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-semibold text-foreground">
+                      Connecté en tant que {currentUser.name}
+                    </p>
+                    <p className="text-sm text-muted-foreground">{currentUser.email}</p>
+                  </div>
                 </div>
+                <Badge variant="secondary" className="text-xs">
+                  <User className="h-3 w-3 mr-1" />
+                  Membre actif
+                </Badge>
               </div>
             </CardContent>
           </Card>
@@ -249,11 +275,17 @@ export default function CommunityPage() {
 
         {/* Create Post Form */}
         {showCreateForm && (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>Créer un nouveau post</CardTitle>
+          <Card className="mb-8 shadow-sm border-0">
+            <CardHeader className="border-b bg-muted/30">
+              <CardTitle className="flex items-center gap-2">
+                <Plus className="h-5 w-5" />
+                Créer un nouveau post
+              </CardTitle>
+              <CardDescription>
+                Partagez vos idées avec la communauté
+              </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               <form onSubmit={createPost} className="space-y-4">
                 <Input
                   placeholder="Titre de votre post..."
@@ -261,6 +293,7 @@ export default function CommunityPage() {
                   onChange={(e) =>
                     setNewPost({ ...newPost, title: e.target.value })
                   }
+                  className="border-muted-foreground/20 focus:border-primary"
                 />
                 <Textarea
                   placeholder="Contenu de votre post..."
@@ -269,9 +302,10 @@ export default function CommunityPage() {
                   onChange={(e) =>
                     setNewPost({ ...newPost, content: e.target.value })
                   }
+                  className="border-muted-foreground/20 focus:border-primary resize-none"
                 />
                 <div className="flex gap-2">
-                  <Button type="submit" disabled={loading}>
+                  <Button type="submit" disabled={loading} className="px-6">
                     {loading ? "Publication..." : "Publier"}
                   </Button>
                   <Button
@@ -287,59 +321,156 @@ export default function CommunityPage() {
           </Card>
         )}
 
-        {/* Search Bar */}
-        <div className="relative mb-6">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input placeholder="Rechercher des posts..." className="pl-10" />
+        {/* Search and Filter Bar */}
+        <div className="mb-8 space-y-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input 
+                placeholder="Rechercher des posts..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 border-muted-foreground/20 focus:border-primary shadow-sm" 
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant={sortBy === "recent" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSortBy("recent")}
+                className="gap-2"
+              >
+                <Clock className="h-4 w-4" />
+                Récents
+              </Button>
+              <Button
+                variant={sortBy === "popular" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSortBy("popular")}
+                className="gap-2"
+              >
+                <TrendingUp className="h-4 w-4" />
+                Populaires
+              </Button>
+            </div>
+          </div>
+          {(searchQuery || posts.length > 0) && (
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <span>
+                {searchQuery ? (
+                  `${filteredAndSortedPosts.length} résultat${filteredAndSortedPosts.length > 1 ? 's' : ''} pour "${searchQuery}"`
+                ) : (
+                  `${posts.length} post${posts.length > 1 ? 's' : ''} • Triés par ${sortBy === "recent" ? "date" : "popularité"}`
+                )}
+              </span>
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSearchQuery("")}
+                  className="text-xs px-2 py-1 h-auto"
+                >
+                  Effacer
+                </Button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Posts List */}
         <div className="space-y-6">
           {posts.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-12">
-                <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">
-                  Aucun post pour l&apos;instant
-                </h3>
-                <p className="text-muted-foreground mb-4">
-                  Soyez le premier à partager quelque chose !
-                </p>
-                {currentUser && (
-                  <Button onClick={() => setShowCreateForm(true)}>
-                    Créer le premier post
+            <Card className="shadow-sm border-0">
+              <CardContent className="text-center py-16">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="p-4 rounded-full bg-muted/50">
+                    <MessageSquare className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-semibold">
+                      Aucun post pour l&apos;instant
+                    </h3>
+                    <p className="text-muted-foreground max-w-md">
+                      Lancez la conversation ! Soyez le premier à partager quelque chose avec la communauté.
+                    </p>
+                  </div>
+                  {currentUser && (
+                    <Button 
+                      onClick={() => setShowCreateForm(true)}
+                      className="mt-4 px-6"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Créer le premier post
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ) : filteredAndSortedPosts.length === 0 && searchQuery ? (
+            <Card className="shadow-sm border-0">
+              <CardContent className="text-center py-16">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="p-4 rounded-full bg-muted/50">
+                    <Search className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-semibold">
+                      Aucun résultat trouvé
+                    </h3>
+                    <p className="text-muted-foreground max-w-md">
+                      Aucun post ne correspond à votre recherche &quot;{searchQuery}&quot;. Essayez avec d&apos;autres mots-clés.
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => setSearchQuery("")}
+                    className="mt-4"
+                  >
+                    Afficher tous les posts
                   </Button>
-                )}
+                </div>
               </CardContent>
             </Card>
           ) : (
-            posts.map((post) => (
-              <Card key={post.id} className="hover:shadow-md transition-shadow">
-                <CardHeader>
+            filteredAndSortedPosts.map((post) => (
+              <Card key={post.id} className="shadow-sm border-0 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
+                <CardHeader className="pb-4">
                   <div className="flex justify-between items-start">
                     <div className="flex items-start gap-3 flex-1">
-                      <Avatar>
-                        <AvatarFallback>
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback className="bg-gradient-to-r from-primary/20 to-secondary/20 text-foreground font-semibold">
                           {getInitials(post.author.name)}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="flex-1">
-                        <CardTitle className="text-xl mb-2">
-                          {post.title}
-                        </CardTitle>
-                        <CardDescription>
-                          Par {post.author.name} • {formatDate(post.createdAt)}
+                      <div className="flex-1 min-w-0">
+                        <Link 
+                          href={`/community/${post.id}`}
+                          className="group"
+                        >
+                          <CardTitle className="text-xl mb-2 group-hover:text-primary transition-colors cursor-pointer line-clamp-2">
+                            {post.title}
+                          </CardTitle>
+                        </Link>
+                        <CardDescription className="flex items-center gap-2">
+                          <span className="font-medium">{post.author.name}</span>
+                          <span>•</span>
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {formatDate(post.createdAt)}
+                          </div>
                         </CardDescription>
                       </div>
                     </div>
-                    <Badge variant="secondary">Nouveau</Badge>
+                    <Badge variant="secondary" className="shrink-0">
+                      Nouveau
+                    </Badge>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-4">{post.content}</p>
+                <CardContent className="pt-0">
+                  <p className="text-muted-foreground mb-6 line-clamp-3">{post.content}</p>
 
                   {post.poll && (
-                    <div className="mb-4">
+                    <div className="mb-6 p-4 bg-muted/30 rounded-lg">
                       <PollDisplay
                         poll={post.poll}
                         currentUser={currentUser ?? undefined}
@@ -348,46 +479,58 @@ export default function CommunityPage() {
                     </div>
                   )}
 
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="gap-1 p-0 h-auto"
-                      onClick={() => {
-                        setSelectedPost(
-                          selectedPost === post.id ? null : post.id
-                        );
-                        if (selectedPost !== post.id) {
-                          fetchComments(post.id);
-                        }
-                      }}
-                    >
-                      <MessageSquare className="h-4 w-4" />
-                      {post._count.comments} commentaires
-                    </Button>
-                    <ReactionPicker
-                      postId={post.id}
-                      currentUserId={currentUser?.id || ""}
-                      onReactionUpdate={fetchPosts}
-                    />
+                  <div className="flex items-center justify-between pt-4 border-t border-muted/50">
+                    <div className="flex items-center gap-4">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="gap-2 text-muted-foreground hover:text-foreground px-2"
+                        onClick={() => {
+                          setSelectedPost(
+                            selectedPost === post.id ? null : post.id
+                          );
+                          if (selectedPost !== post.id) {
+                            fetchComments(post.id);
+                          }
+                        }}
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                        <span className="text-sm font-medium">{post._count.comments}</span>
+                      </Button>
+                      <ReactionPicker
+                        postId={post.id}
+                        currentUserId={currentUser?.id || ""}
+                        onReactionUpdate={fetchPosts}
+                      />
+                    </div>
+                    <Link href={`/community/${post.id}`}>
+                      <Button variant="outline" size="sm">
+                        Voir le post
+                      </Button>
+                    </Link>
                   </div>
 
                   {/* Comments Section */}
                   {selectedPost === post.id && (
                     <div className="mt-6 pt-6 border-t">
-                      <h4 className="font-semibold mb-4">Commentaires</h4>
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="font-semibold flex items-center gap-2">
+                          <MessageSquare className="h-4 w-4" />
+                          Commentaires ({comments.length})
+                        </h4>
+                      </div>
 
                       {/* Comment Form */}
                       {currentUser && (
-                        <form onSubmit={createComment} className="mb-4">
+                        <form onSubmit={createComment} className="mb-6">
                           <div className="flex gap-2">
                             <Input
                               placeholder="Écrivez un commentaire..."
                               value={newComment}
                               onChange={(e) => setNewComment(e.target.value)}
-                              className="flex-1"
+                              className="flex-1 border-muted-foreground/20"
                             />
-                            <Button type="submit" size="sm">
+                            <Button type="submit" size="sm" className="px-4">
                               <Send className="h-4 w-4" />
                             </Button>
                           </div>
@@ -395,36 +538,44 @@ export default function CommunityPage() {
                       )}
 
                       {/* Comments List */}
-                      <div className="space-y-3">
+                      <div className="space-y-4">
                         {comments.map((comment) => (
                           <div
                             key={comment.id}
-                            className="bg-muted/50 rounded-lg p-3"
+                            className="bg-muted/30 rounded-lg p-4 border border-muted/50"
                           >
-                            <div className="flex items-start gap-2">
-                              <Avatar className="h-8 w-8">
-                                <AvatarFallback className="text-xs">
+                            <div className="flex items-start gap-3">
+                              <Avatar className="h-8 w-8 shrink-0">
+                                <AvatarFallback className="text-xs bg-gradient-to-r from-primary/10 to-secondary/10">
                                   {getInitials(comment.author.name)}
                                 </AvatarFallback>
                               </Avatar>
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-2">
                                   <span className="font-medium text-sm">
                                     {comment.author.name}
                                   </span>
-                                  <span className="text-xs text-muted-foreground">
+                                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <Calendar className="h-3 w-3" />
                                     {formatDate(comment.createdAt)}
                                   </span>
                                 </div>
-                                <p className="text-sm">{comment.content}</p>
+                                <p className="text-sm leading-relaxed">{comment.content}</p>
                               </div>
                             </div>
                           </div>
                         ))}
                         {comments.length === 0 && (
-                          <p className="text-muted-foreground text-sm text-center py-4">
-                            Aucun commentaire pour l&apos;instant.
-                          </p>
+                          <div className="text-center py-8">
+                            <div className="flex flex-col items-center gap-2">
+                              <div className="p-2 rounded-full bg-muted/50">
+                                <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                              <p className="text-muted-foreground text-sm">
+                                Aucun commentaire pour l&apos;instant.
+                              </p>
+                            </div>
+                          </div>
                         )}
                       </div>
                     </div>

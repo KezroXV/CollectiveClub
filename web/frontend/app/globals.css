@@ -48,6 +48,10 @@
   --animation-duration-fast: 150ms;
   --animation-duration-normal: 200ms;
   --animation-duration-slow: 300ms;
+  
+  /* Post Detail Layout Variables */
+  --post-layout-gap: 2rem;
+  --sidebar-width: 320px;
   --animation-duration-slower: 500ms;
   
   /* Premium Shadow Variables */
@@ -239,6 +243,45 @@
     
     .motion-safe\:transition-all {
       transition: none !important;
+    }
+  }
+  
+  /* Post Detail Layout Utilities */
+  .post-layout {
+    @apply grid grid-cols-1 lg:grid-cols-3 gap-8;
+  }
+  
+  .post-main-content {
+    @apply lg:col-span-2;
+  }
+  
+  .post-sidebar {
+    @apply space-y-6;
+  }
+  
+  /* Line clamping utilities */
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+  
+  /* Mobile optimizations */
+  @media (max-width: 768px) {
+    .post-sidebar {
+      order: -1; /* Sidebar appears before content on mobile */
+    }
+    
+    .post-layout {
+      @apply gap-6; /* Reduced gap on mobile */
     }
   }
 }
