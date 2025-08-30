@@ -30,6 +30,10 @@ model Shop {
   badges      Badge[]
   polls       Poll[]
   customizationSettings CustomizationSettings[]
+  follows     Follow[]
+  userPoints  UserPoints[]
+  pointTransactions PointTransaction[]
+  userBadges  UserBadge[]
   
   @@map("shops")
 }
@@ -52,7 +56,13 @@ model User {
   reactions Reaction[]
   PollVote  PollVote[]
   customizationSettings CustomizationSettings[]
-  badges    Badge[]
+  
+  // Nouvelles relations sociales
+  following Follow[] @relation("UserFollows")
+  followers Follow[] @relation("UserFollowed")
+  userPoints UserPoints[]
+  pointTransactions PointTransaction[]
+  userBadges UserBadge[]
 
   @@unique([shopId, email]) // Email unique par shop
   @@map("users")
@@ -241,21 +251,101 @@ model CustomizationSettings {
 }
 
 model Badge {
-  id            String @id @default(cuid())
-  name          String
-  imageUrl      String
-  requiredCount Int
-  isDefault     Boolean @default(false)
-  order         Int     @default(0)
-  shopId        String  // ✅ OBLIGATOIRE pour multi-tenant
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id             String @id @default(cuid())
+  name           String
+  imageUrl       String
+  requiredPoints Int    // Points requis au lieu de requiredCount
+  description    String?
+  isDefault      Boolean @default(false)
+  order          Int     @default(0)
+  shopId         String  // ✅ OBLIGATOIRE pour multi-tenant
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
   
   // Relations
-  shop          Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId        String
+  shop           Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  userBadges     UserBadge[]
   
-  @@unique([shopId, userId, name]) // Nom unique par user par shop
+  @@unique([shopId, name]) // Nom unique par shop
   @@map("badges")
+}
+
+// 👥 SYSTÈME D'ABONNEMENT
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String   // Utilisateur qui suit
+  followingId String   // Utilisateur suivi
+  shopId      String   // ✅ OBLIGATOIRE pour multi-tenant
+  createdAt   DateTime @default(now())
+
+  // Relations
+  shop        Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  follower    User @relation("UserFollows", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User @relation("UserFollowed", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId]) // Un user ne peut suivre qu'une fois
+  @@map("follows")
+}
+
+// 🏆 SYSTÈME DE POINTS
+model UserPoints {
+  id        String   @id @default(cuid())
+  userId    String
+  shopId    String   // ✅ OBLIGATOIRE pour multi-tenant
+  points    Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  shop      Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  pointsHistory PointTransaction[]
+
+  @@unique([userId, shopId]) // Points uniques par user par shop
+  @@map("user_points")
+}
+
+model PointTransaction {
+  id          String      @id @default(cuid())
+  userId      String
+  shopId      String      // ✅ OBLIGATOIRE pour multi-tenant
+  points      Int         // Positif = gain, négatif = dépense
+  action      PointAction
+  description String?
+  createdAt   DateTime    @default(now())
+
+  // Relations
+  shop        Shop       @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userPoints  UserPoints @relation(fields: [userPointsId], references: [id], onDelete: Cascade)
+  userPointsId String
+
+  @@map("point_transactions")
+}
+
+// 🏅 BADGES UTILISATEURS
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  badgeId   String
+  shopId    String   // ✅ OBLIGATOIRE pour multi-tenant
+  unlockedAt DateTime @default(now())
+
+  // Relations
+  shop      Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge     Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId]) // Un badge par user
+  @@map("user_badges")
+}
+
+// 📝 NOUVEL ENUM POUR LES ACTIONS DE POINTS
+enum PointAction {
+  POST_CREATED      // +10 points
+  COMMENT_CREATED   // +5 points
+  REACTION_RECEIVED // +2 points
+  BADGE_UNLOCKED    // -points requis
+  DAILY_LOGIN       // +1 point
 }

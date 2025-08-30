@@ -14,16 +14,14 @@ import {
   Share2,
   MoreHorizontal,
   Send,
-  ChevronDown,
-  ChevronUp,
-  Calendar,
-  UserPlus,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import PollDisplay from "@/components/PollDisplay";
-import ReactionPicker from "@/components/ReactionPicker";
 import ThemeWrapper from "@/components/ThemeWrapper";
+import FollowButton from "@/components/FollowButton";
+import PointsDisplay from "@/components/PointsDisplay";
+import BadgeGrid from "@/components/BadgeGrid";
 import { toast } from "sonner";
 
 interface Post {
@@ -85,18 +83,11 @@ interface AuthorComment {
   };
 }
 
-interface AuthorBadge {
-  id: string;
-  name: string;
-  imageUrl: string;
-  requiredCount: number;
-}
 
 interface PostDetailData {
   post: Post;
   authorRecentPosts: AuthorPost[];
   authorRecentComments: AuthorComment[];
-  authorBadges: AuthorBadge[];
 }
 
 export default function PostDetailPage() {
@@ -287,7 +278,7 @@ export default function PostDetailPage() {
     );
   }
 
-  const { post, authorRecentPosts, authorRecentComments, authorBadges } = data;
+  const { post, authorRecentPosts, authorRecentComments } = data;
 
   return (
     <ThemeWrapper applyBackgroundColor={true} className="min-h-screen">
@@ -350,9 +341,22 @@ export default function PostDetailPage() {
                         </p>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      {currentUser && currentUser.id !== post.author.id && (
+                        <FollowButton
+                          targetUserId={post.author.id}
+                          currentUserId={currentUser.id}
+                          shopId={currentUser.shopId}
+                          isFollowing={false}
+                          followersCount={0}
+                          size="sm"
+                          variant="outline"
+                        />
+                      )}
+                      <Button variant="ghost" size="sm">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
 
                   {/* Categories badges */}
@@ -542,11 +546,28 @@ export default function PostDetailPage() {
                       </div>
                     </div>
 
-                    {currentUser?.id !== post.author.id && (
-                      <Button className="w-full" size="sm">
-                        S&apos;abonner
-                      </Button>
+                    {currentUser && currentUser.id !== post.author.id && (
+                      <FollowButton
+                        targetUserId={post.author.id}
+                        currentUserId={currentUser.id}
+                        shopId={currentUser.shopId}
+                        isFollowing={false}
+                        followersCount={0}
+                        size="sm"
+                      />
                     )}
+                  </div>
+
+                  {/* Divider */}
+                  <div className="h-px bg-gray-200"></div>
+
+                  {/* Points de l'auteur */}
+                  <div className="p-6">
+                    <PointsDisplay 
+                      userId={post.author.id}
+                      shopId={currentUser?.shopId || data?.post?.shop?.id}
+                      compact={true}
+                    />
                   </div>
 
                   {/* Divider */}
@@ -554,52 +575,12 @@ export default function PostDetailPage() {
 
                   {/* Badges de l'auteur */}
                   <div className="p-6">
-                    <h4 className="font-semibold text-lg mb-4">Badges</h4>
-                    <div className="grid grid-cols-4 gap-3">
-                      {authorBadges.length > 0 ? (
-                        authorBadges.slice(0, 4).map((badge, index) => (
-                          <div key={badge.id} className="flex flex-col items-center">
-                            <div className="w-12 h-12 mb-2">
-                              <Image
-                                src={badge.imageUrl}
-                                alt={badge.name}
-                                width={48}
-                                height={48}
-                                className="w-full h-full object-contain rounded-full"
-                              />
-                            </div>
-                            <span className="text-xs text-gray-600 text-center">{badge.name}</span>
-                          </div>
-                        ))
-                      ) : (
-                        <>
-                          <div className="flex flex-col items-center">
-                            <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mb-2">
-                              <span className="text-white text-sm font-bold">1</span>
-                            </div>
-                            <span className="text-xs text-gray-600 text-center">Nouveau</span>
-                          </div>
-                          <div className="flex flex-col items-center">
-                            <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center mb-2">
-                              <span className="text-white text-sm font-bold">★</span>
-                            </div>
-                            <span className="text-xs text-gray-600 text-center">Novice</span>
-                          </div>
-                          <div className="flex flex-col items-center">
-                            <div className="w-12 h-12 bg-gray-400 rounded-full flex items-center justify-center mb-2">
-                              <span className="text-white text-sm font-bold">★</span>
-                            </div>
-                            <span className="text-xs text-gray-600 text-center">Intermédiaire</span>
-                          </div>
-                          <div className="flex flex-col items-center">
-                            <div className="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center mb-2">
-                              <span className="text-white text-sm font-bold">★</span>
-                            </div>
-                            <span className="text-xs text-gray-600 text-center">Expert</span>
-                          </div>
-                        </>
-                      )}
-                    </div>
+                    <BadgeGrid
+                      userId={post.author.id}
+                      shopId={currentUser?.shopId || data?.post?.shop?.id}
+                      userPoints={0}
+                      compact={true}
+                    />
                   </div>
 
                   {/* Divider */}

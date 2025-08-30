@@ -6,16 +6,18 @@ const prisma = new PrismaClient();
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { postId: string } }
+  { params }: { params: Promise<{ postId: string }> }
 ) {
   try {
     // 🏪 ISOLATION MULTI-TENANT
     const shopId = await getShopId(request);
     ensureShopIsolation(shopId);
 
+    const { postId } = await params;
+
     const post = await prisma.post.findFirst({
       where: { 
-        id: params.postId,
+        id: postId,
         shopId // ✅ VÉRIFIER L'ISOLATION
       },
       include: {
@@ -71,7 +73,7 @@ export async function GET(
       where: {
         authorId: post.author.id,
         shopId,
-        id: { not: params.postId }
+        id: { not: postId }
       },
       select: {
         id: true,
@@ -90,7 +92,7 @@ export async function GET(
       where: {
         authorId: post.author.id,
         shopId,
-        postId: { not: params.postId }
+        postId: { not: postId }
       },
       select: {
         id: true,
@@ -107,20 +109,32 @@ export async function GET(
       take: 3
     });
 
-    // Récupérer les badges de l'auteur
-    const authorBadges = await prisma.badge.findMany({
+    // Récupérer les badges de l'auteur via UserBadge
+    const authorUserBadges = await prisma.userBadge.findMany({
       where: {
         userId: post.author.id,
         shopId
       },
-      select: {
-        id: true,
-        name: true,
-        imageUrl: true,
-        requiredCount: true
+      include: {
+        badge: {
+          select: {
+            id: true,
+            name: true,
+            imageUrl: true,
+            requiredPoints: true
+          }
+        }
       },
-      orderBy: { order: 'asc' }
+      orderBy: { 
+        badge: { order: 'asc' } 
+      }
     });
+
+    // Transformer pour compatibilité avec l'interface existante
+    const authorBadges = authorUserBadges.map(ub => ({
+      ...ub.badge,
+      requiredCount: ub.badge.requiredPoints // Pour compatibilité
+    }));
 
     const response = {
       post,

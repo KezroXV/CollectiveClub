@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getShopId, ensureShopIsolation } from "@/lib/shopIsolation";
+import { awardPoints } from "@/lib/points";
+import { PointAction } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -106,6 +108,23 @@ export async function POST(
           shopId, // ✅ ASSOCIER À LA BOUTIQUE
         },
       });
+
+      // 🏆 ATTRIBUER DES POINTS À L'AUTEUR DU POST POUR LA RÉACTION REÇUE
+      try {
+        // Récupérer l'auteur du post pour lui attribuer des points
+        const post = await prisma.post.findUnique({
+          where: { id: postId },
+          select: { authorId: true, shopId: true },
+        });
+
+        if (post && post.authorId !== userId) { // Ne pas attribuer de points si on réagit à son propre post
+          await awardPoints(post.authorId, post.shopId, PointAction.REACTION_RECEIVED);
+        }
+      } catch (pointsError) {
+        console.error("Error awarding points for reaction received:", pointsError);
+        // Ne pas faire échouer la création de la réaction si l'attribution des points échoue
+      }
+
       return NextResponse.json({ action: "created", reaction: newReaction });
     }
   } catch (error) {

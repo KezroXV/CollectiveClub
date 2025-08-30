@@ -164,31 +164,35 @@ async function main() {
     {
       name: "Nouveau",
       imageUrl: "/Badge-nouveau.svg",
-      requiredCount: 5,
+      requiredPoints: 0,
+      description: "Bienvenue dans la communauté !",
       isDefault: true,
       order: 1,
       shopId: defaultShop.id,
     },
     {
-      name: "Bronze",
-      imageUrl: "/Badge-bronze.svg",
-      requiredCount: 50,
+      name: "Novice",
+      imageUrl: "/Badge-novice.svg",
+      requiredPoints: 50,
+      description: "Vous commencez à participer activement !",
       isDefault: true,
       order: 2,
       shopId: defaultShop.id,
     },
     {
-      name: "Argent",
-      imageUrl: "/Badge-argent.svg",
-      requiredCount: 100,
+      name: "Intermédiaire",
+      imageUrl: "/Badge-intermediaire.svg",
+      requiredPoints: 200,
+      description: "Membre actif de la communauté !",
       isDefault: true,
       order: 3,
       shopId: defaultShop.id,
     },
     {
-      name: "Or",
-      imageUrl: "/Badge-or.svg",
-      requiredCount: 500,
+      name: "Expert",
+      imageUrl: "/Badge-expert.svg",
+      requiredPoints: 500,
+      description: "Expert reconnu de la communauté !",
       isDefault: true,
       order: 4,
       shopId: defaultShop.id,
@@ -198,17 +202,13 @@ async function main() {
   for (const badge of defaultBadges) {
     await prisma.badge.upsert({
       where: {
-        shopId_userId_name: {
+        shopId_name: {
           shopId: defaultShop.id,
-          userId: adminUser?.id || ownerUser?.id,
           name: badge.name,
         },
       },
       update: {},
-      create: {
-        ...badge,
-        userId: adminUser?.id || ownerUser?.id,
-      },
+      create: badge,
     });
   }
 

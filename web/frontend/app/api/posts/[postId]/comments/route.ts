@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getShopId, ensureShopIsolation } from "@/lib/shopIsolation";
+import { awardPoints } from "@/lib/points";
+import { PointAction } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -73,6 +75,14 @@ export async function POST(
         },
       },
     });
+
+    // 🏆 ATTRIBUER DES POINTS AUTOMATIQUEMENT POUR LA CRÉATION D'UN COMMENTAIRE
+    try {
+      await awardPoints(authorId, shopId, PointAction.COMMENT_CREATED);
+    } catch (pointsError) {
+      console.error("Error awarding points for comment creation:", pointsError);
+      // Ne pas faire échouer la création du commentaire si l'attribution des points échoue
+    }
 
     return NextResponse.json(comment, { status: 201 });
   } catch (error) {
