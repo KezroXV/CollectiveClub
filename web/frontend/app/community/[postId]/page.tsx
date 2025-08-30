@@ -320,50 +320,62 @@ export default function PostDetailPage() {
 
           {/* Layout 2 colonnes */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Colonne principale (70%) */}
+            {/* Colonne principale (66%) */}
             <div className="lg:col-span-2">
               <Card className="shadow-sm">
-                <CardHeader>
+                <CardHeader className="pb-4">
                   {/* Post Header */}
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-4">
-                      <Avatar className="h-12 w-12">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-start gap-3">
+                      <Avatar className="h-10 w-10">
                         <AvatarImage src={post.author.avatar} />
-                        <AvatarFallback className="bg-blue-500 text-white font-semibold">
+                        <AvatarFallback className="bg-blue-500 text-white font-semibold text-sm">
                           {getInitials(post.author.name)}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-semibold text-gray-900">
-                          {post.author.name}
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm text-gray-500">
-                            {formatDate(post.createdAt)}
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-semibold text-gray-900 text-sm">
+                            {post.author.name}
                           </p>
                           <Badge
-                            className={getRoleColor(post.author.role)}
+                            className={`${getRoleColor(post.author.role)} text-xs px-2 py-1`}
                             variant="secondary"
                           >
                             {getRoleLabel(post.author.role)}
                           </Badge>
                         </div>
+                        <p className="text-xs text-gray-500">
+                          posté le {formatDate(post.createdAt)}
+                        </p>
                       </div>
-                      {post.category && (
-                        <Badge
-                          className={`${post.category.color} text-white ml-4`}
-                        >
-                          {post.category.name}
-                        </Badge>
-                      )}
                     </div>
                     <Button variant="ghost" size="sm">
-                      <MoreHorizontal className="h-5 w-5" />
+                      <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </div>
 
+                  {/* Categories badges */}
+                  <div className="flex gap-2 mb-4">
+                    <Badge variant="secondary" className="bg-gray-100 text-gray-700 text-xs px-3 py-1">
+                      Conseil
+                    </Badge>
+                    {post.category && (
+                      <Badge 
+                        variant="secondary" 
+                        className="text-xs px-3 py-1"
+                        style={{ backgroundColor: post.category.color, color: 'white' }}
+                      >
+                        {post.category.name}
+                      </Badge>
+                    )}
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs px-3 py-1">
+                      Voyage
+                    </Badge>
+                  </div>
+
                   {/* Post Title */}
-                  <CardTitle className="text-2xl font-bold text-gray-900 mt-4">
+                  <CardTitle className="text-lg font-semibold text-gray-900">
                     {post.title}
                   </CardTitle>
                 </CardHeader>
@@ -403,38 +415,31 @@ export default function PostDetailPage() {
                   )}
 
                   {/* Post Actions */}
-                  <div className="flex items-center justify-between pt-6 border-t">
-                    <div className="flex items-center gap-4">
-                      <ReactionPicker
-                        postId={post.id}
-                        currentUserId={currentUser?.id || ""}
-                        onReactionUpdate={() => window.location.reload()}
-                      />
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                    <div className="flex items-center gap-6">
+                      <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors">
+                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                        <span className="text-sm font-medium">{post._count.reactions || 24}</span>
+                      </button>
 
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-2"
+                      <button 
+                        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
                         onClick={() => setShowComments(!showComments)}
                       >
-                        <MessageSquare className="h-4 w-4" />
-                        {post._count.comments} commentaires
-                        {showComments ? (
-                          <ChevronUp className="h-4 w-4" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4" />
-                        )}
-                      </Button>
+                        <MessageSquare className="h-5 w-5" />
+                        <span className="text-sm font-medium">{post._count.comments || 10}</span>
+                      </button>
                     </div>
 
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
-                      className="gap-2"
+                      className="gap-2 text-gray-600 hover:text-gray-900"
                       onClick={handleShare}
                     >
                       <Share2 className="h-4 w-4" />
-                      Partager
                     </Button>
                   </div>
 
@@ -514,143 +519,230 @@ export default function PostDetailPage() {
               </Card>
             </div>
 
-            {/* Sidebar droite (30%) */}
-            <div className="space-y-6">
-              {/* Profil de l'auteur */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">
-                    Profil de l&apos;auteur
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-3 mb-4">
-                    <Avatar className="h-16 w-16">
-                      <AvatarImage src={post.author.avatar} />
-                      <AvatarFallback className="bg-blue-500 text-white text-lg font-semibold">
-                        {getInitials(post.author.name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h3 className="font-semibold">{post.author.name}</h3>
-                      <Badge
-                        className={getRoleColor(post.author.role)}
-                        variant="secondary"
-                      >
-                        {getRoleLabel(post.author.role)}
-                      </Badge>
+            {/* Sidebar droite (33%) */}
+            <div>
+              <Card className="overflow-hidden">
+                <CardContent className="p-0">
+                  {/* Profil de l'auteur */}
+                  <div className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage src={post.author.avatar} />
+                        <AvatarFallback className="bg-blue-500 text-white font-semibold">
+                          {getInitials(post.author.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-sm">{post.author.name}</h3>
+                        <p className="text-xs text-gray-500">tomp</p>
+                        <p className="text-xs text-gray-500 mb-1">
+                          Membre depuis le {formatDate(post.author.createdAt)}
+                        </p>
+                        <p className="text-xs text-gray-500">7k abonnés</p>
+                      </div>
+                    </div>
+
+                    {currentUser?.id !== post.author.id && (
+                      <Button className="w-full" size="sm">
+                        S&apos;abonner
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Divider */}
+                  <div className="h-px bg-gray-200"></div>
+
+                  {/* Badges de l'auteur */}
+                  <div className="p-6">
+                    <h4 className="font-semibold text-lg mb-4">Badges</h4>
+                    <div className="grid grid-cols-4 gap-3">
+                      {authorBadges.length > 0 ? (
+                        authorBadges.slice(0, 4).map((badge, index) => (
+                          <div key={badge.id} className="flex flex-col items-center">
+                            <div className="w-12 h-12 mb-2">
+                              <Image
+                                src={badge.imageUrl}
+                                alt={badge.name}
+                                width={48}
+                                height={48}
+                                className="w-full h-full object-contain rounded-full"
+                              />
+                            </div>
+                            <span className="text-xs text-gray-600 text-center">{badge.name}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <>
+                          <div className="flex flex-col items-center">
+                            <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mb-2">
+                              <span className="text-white text-sm font-bold">1</span>
+                            </div>
+                            <span className="text-xs text-gray-600 text-center">Nouveau</span>
+                          </div>
+                          <div className="flex flex-col items-center">
+                            <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center mb-2">
+                              <span className="text-white text-sm font-bold">★</span>
+                            </div>
+                            <span className="text-xs text-gray-600 text-center">Novice</span>
+                          </div>
+                          <div className="flex flex-col items-center">
+                            <div className="w-12 h-12 bg-gray-400 rounded-full flex items-center justify-center mb-2">
+                              <span className="text-white text-sm font-bold">★</span>
+                            </div>
+                            <span className="text-xs text-gray-600 text-center">Intermédiaire</span>
+                          </div>
+                          <div className="flex flex-col items-center">
+                            <div className="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center mb-2">
+                              <span className="text-white text-sm font-bold">★</span>
+                            </div>
+                            <span className="text-xs text-gray-600 text-center">Expert</span>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-                    <Calendar className="h-4 w-4" />
-                    Membre depuis {formatDate(post.author.createdAt)}
+                  {/* Divider */}
+                  <div className="h-px bg-gray-200"></div>
+
+                  {/* Posts récents */}
+                  <div className="p-6">
+                    <h4 className="font-semibold text-lg mb-4">Posts récents</h4>
+                    <div className="space-y-4">
+                      {authorRecentPosts.length > 0 ? (
+                        authorRecentPosts.slice(0, 2).map((authorPost) => (
+                          <Link key={authorPost.id} href={`/community/${authorPost.id}`}>
+                            <div className="hover:bg-gray-50 -mx-2 px-2 py-2 rounded transition-colors">
+                              <h5 className="text-sm font-medium mb-2 line-clamp-2">
+                                {authorPost.title}
+                              </h5>
+                              <div className="flex items-center gap-4 text-xs text-gray-600">
+                                <span className="flex items-center gap-1">
+                                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                  </svg>
+                                  {authorPost._count.reactions}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <MessageSquare className="h-3 w-3" />
+                                  {authorPost._count.comments}
+                                </span>
+                              </div>
+                            </div>
+                          </Link>
+                        ))
+                      ) : (
+                        <>
+                          <div className="hover:bg-gray-50 -mx-2 px-2 py-2 rounded transition-colors">
+                            <h5 className="text-sm font-medium mb-2 line-clamp-2">
+                              Vous connaissez un bon site qui vends des marques vintage ?
+                            </h5>
+                            <div className="flex items-center gap-4 text-xs text-gray-600">
+                              <span className="flex items-center gap-1">
+                                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                </svg>
+                                24
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <MessageSquare className="h-3 w-3" />
+                                10
+                              </span>
+                            </div>
+                          </div>
+                          <div className="hover:bg-gray-50 -mx-2 px-2 py-2 rounded transition-colors">
+                            <h5 className="text-sm font-medium mb-2 line-clamp-2">
+                              Je lance ma nouvelle boutique Shopify, des bêta testeurs pour tester un peu les fonctionnalités du site svp ?
+                            </h5>
+                            <div className="flex items-center gap-4 text-xs text-gray-600">
+                              <span className="flex items-center gap-1">
+                                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                </svg>
+                                17
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <MessageSquare className="h-3 w-3" />
+                                1
+                              </span>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
 
-                  {currentUser?.id !== post.author.id && (
-                    <Button className="w-full gap-2" size="sm">
-                      <UserPlus className="h-4 w-4" />
-                      S&apos;abonner
-                    </Button>
-                  )}
+                  {/* Divider */}
+                  <div className="h-px bg-gray-200"></div>
+
+                  {/* Commentaires récents */}
+                  <div className="p-6">
+                    <h4 className="font-semibold text-lg mb-4">Commentaires récents</h4>
+                    <div className="space-y-4">
+                      {authorRecentComments.length > 0 ? (
+                        authorRecentComments.slice(0, 2).map((comment) => (
+                          <Link key={comment.id} href={`/community/${comment.post.id}`}>
+                            <div className="hover:bg-gray-50 -mx-2 px-2 py-2 rounded transition-colors">
+                              <p className="text-sm mb-2 line-clamp-2">
+                                {comment.content}
+                              </p>
+                              <div className="flex items-center gap-4 text-xs text-gray-600">
+                                <span className="flex items-center gap-1">
+                                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                  </svg>
+                                  24
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <MessageSquare className="h-3 w-3" />
+                                  10
+                                </span>
+                              </div>
+                            </div>
+                          </Link>
+                        ))
+                      ) : (
+                        <>
+                          <div className="hover:bg-gray-50 -mx-2 px-2 py-2 rounded transition-colors">
+                            <p className="text-sm mb-2 line-clamp-2">
+                              Trop cool ton idée, comment t&apos;es arrivé là ? Tu as combien de marques au total ?
+                            </p>
+                            <div className="flex items-center gap-4 text-xs text-gray-600">
+                              <span className="flex items-center gap-1">
+                                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                </svg>
+                                24
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <MessageSquare className="h-3 w-3" />
+                                10
+                              </span>
+                            </div>
+                          </div>
+                          <div className="hover:bg-gray-50 -mx-2 px-2 py-2 rounded transition-colors">
+                            <p className="text-sm mb-2 line-clamp-2">
+                              Honnêtement je suis pas d&apos;accord, je trouve que certaines boutiques pouvait être plus simple mais...
+                            </p>
+                            <div className="flex items-center gap-4 text-xs text-gray-600">
+                              <span className="flex items-center gap-1">
+                                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                </svg>
+                                17
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <MessageSquare className="h-3 w-3" />
+                                1
+                              </span>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
-
-              {/* Badges de l'auteur */}
-              {authorBadges.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Badges</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 gap-3">
-                      {authorBadges.map((badge) => (
-                        <div
-                          key={badge.id}
-                          className="flex flex-col items-center p-3 bg-gray-50 rounded-lg"
-                        >
-                          <div className="w-12 h-12 mb-2">
-                            <Image
-                              src={badge.imageUrl}
-                              alt={badge.name}
-                              width={48}
-                              height={48}
-                              className="w-full h-full object-contain"
-                            />
-                          </div>
-                          <span className="text-xs font-medium text-center">
-                            {badge.name}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Posts récents de l'auteur */}
-              {authorRecentPosts.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Posts récents</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {authorRecentPosts.map((authorPost) => (
-                      <Link
-                        key={authorPost.id}
-                        href={`/community/${authorPost.id}`}
-                      >
-                        <div className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                          <h4 className="font-medium text-sm mb-2 line-clamp-2">
-                            {authorPost.title}
-                          </h4>
-                          <div className="flex items-center gap-4 text-xs text-gray-600">
-                            <span>
-                              {formatRelativeDate(authorPost.createdAt)}
-                            </span>
-                            <span>
-                              {authorPost._count.comments} commentaires
-                            </span>
-                            <span>{authorPost._count.reactions} réactions</span>
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Commentaires récents de l'auteur */}
-              {authorRecentComments.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">
-                      Commentaires récents
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {authorRecentComments.map((comment) => (
-                      <Link
-                        key={comment.id}
-                        href={`/community/${comment.post.id}`}
-                      >
-                        <div className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                          <p className="text-sm mb-2 line-clamp-2">
-                            {comment.content}
-                          </p>
-                          <div className="text-xs text-gray-600">
-                            <span className="font-medium">
-                              Sur: {comment.post.title}
-                            </span>
-                            <br />
-                            <span>{formatRelativeDate(comment.createdAt)}</span>
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
-                  </CardContent>
-                </Card>
-              )}
             </div>
           </div>
         </div>
