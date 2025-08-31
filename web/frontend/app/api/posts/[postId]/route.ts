@@ -14,6 +14,8 @@ export async function GET(
     ensureShopIsolation(shopId);
 
     const { postId } = await params;
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('userId'); // Pour récupérer la réaction utilisateur
 
     const post = await prisma.post.findFirst({
       where: { 
@@ -54,6 +56,12 @@ export async function GET(
             author: {
               select: { id: true, name: true, email: true, avatar: true },
             },
+            reactions: {
+              select: {
+                type: true,
+                userId: true
+              }
+            }
           },
           orderBy: { createdAt: "desc" },
         },
@@ -136,8 +144,52 @@ export async function GET(
       requiredCount: ub.badge.requiredPoints // Pour compatibilité
     }));
 
+    // Calculer les réactions groupées par type
+    const reactionsGrouped = post.reactions.reduce((acc: any, reaction: any) => {
+      const existingType = acc.find((r: any) => r.type === reaction.type);
+      if (existingType) {
+        existingType.count += 1;
+      } else {
+        acc.push({ type: reaction.type, count: 1 });
+      }
+      return acc;
+    }, []);
+
+    // Trouver la réaction de l'utilisateur actuel
+    const userReaction = userId 
+      ? post.reactions.find((r: any) => r.userId === userId)?.type 
+      : null;
+
+    // Traiter les réactions des commentaires
+    const commentsWithReactions = post.comments.map((comment: any) => {
+      const commentReactionsGrouped = comment.reactions.reduce((acc: any, reaction: any) => {
+        const existingType = acc.find((r: any) => r.type === reaction.type);
+        if (existingType) {
+          existingType.count += 1;
+        } else {
+          acc.push({ type: reaction.type, count: 1 });
+        }
+        return acc;
+      }, []);
+
+      const commentUserReaction = userId 
+        ? comment.reactions.find((r: any) => r.userId === userId)?.type 
+        : null;
+
+      return {
+        ...comment,
+        reactions: commentReactionsGrouped,
+        userReaction: commentUserReaction
+      };
+    });
+
     const response = {
-      post,
+      post: {
+        ...post,
+        reactions: reactionsGrouped,
+        userReaction,
+        comments: commentsWithReactions
+      },
       authorRecentPosts,
       authorRecentComments,
       authorBadges

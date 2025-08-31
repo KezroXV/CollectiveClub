@@ -22,6 +22,9 @@ import ThemeWrapper from "@/components/ThemeWrapper";
 import FollowButton from "@/components/FollowButton";
 import PointsDisplay from "@/components/PointsDisplay";
 import BadgeGrid from "@/components/BadgeGrid";
+import Header from "@/components/Header";
+import PostReactions from "@/components/PostReactions";
+import CommentReactions from "@/components/CommentReactions";
 import { toast } from "sonner";
 
 interface Post {
@@ -44,6 +47,11 @@ interface Post {
   };
   poll?: any;
   comments: Comment[];
+  reactions?: Array<{
+    type: string;
+    count: number;
+  }>;
+  userReaction?: string | null;
   _count: {
     comments: number;
     reactions: number;
@@ -61,6 +69,11 @@ interface Comment {
     avatar?: string;
   };
   createdAt: string;
+  reactions?: Array<{
+    type: string;
+    count: number;
+  }>;
+  userReaction?: string | null;
 }
 
 interface AuthorPost {
@@ -117,7 +130,10 @@ export default function PostDetailPage() {
   useEffect(() => {
     const fetchPostData = async () => {
       try {
-        const response = await fetch(`/api/posts/${params.postId}`);
+        const url = currentUser 
+          ? `/api/posts/${params.postId}?userId=${currentUser.id}`
+          : `/api/posts/${params.postId}`;
+        const response = await fetch(url);
         if (response.ok) {
           const postData = await response.json();
           setData(postData);
@@ -135,7 +151,7 @@ export default function PostDetailPage() {
     if (params.postId) {
       fetchPostData();
     }
-  }, [params.postId, router]);
+  }, [params.postId, router, currentUser]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("fr-FR", {
@@ -282,6 +298,7 @@ export default function PostDetailPage() {
 
   return (
     <ThemeWrapper applyBackgroundColor={true} className="min-h-screen">
+      <Header currentUser={currentUser} />
       <div className="container mx-auto px-6 py-8">
         <div className="max-w-6xl mx-auto">
           {/* Breadcrumbs */}
@@ -341,29 +358,13 @@ export default function PostDetailPage() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {currentUser && currentUser.id !== post.author.id && (
-                        <FollowButton
-                          targetUserId={post.author.id}
-                          currentUserId={currentUser.id}
-                          shopId={currentUser.shopId}
-                          isFollowing={false}
-                          followersCount={0}
-                          size="sm"
-                          variant="outline"
-                        />
-                      )}
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <Button variant="ghost" size="sm">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
                   </div>
 
                   {/* Categories badges */}
                   <div className="flex gap-2 mb-4">
-                    <Badge variant="secondary" className="bg-gray-100 text-gray-700 text-xs px-3 py-1">
-                      Conseil
-                    </Badge>
                     {post.category && (
                       <Badge 
                         variant="secondary" 
@@ -373,9 +374,6 @@ export default function PostDetailPage() {
                         {post.category.name}
                       </Badge>
                     )}
-                    <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs px-3 py-1">
-                      Voyage
-                    </Badge>
                   </div>
 
                   {/* Post Title */}
@@ -418,16 +416,20 @@ export default function PostDetailPage() {
                     </div>
                   )}
 
+                  {/* Post Reactions */}
+                  {currentUser && (
+                    <PostReactions
+                      postId={post.id}
+                      shopId={currentUser.shopId}
+                      userId={currentUser.id}
+                      reactions={post.reactions || []}
+                      userReaction={post.userReaction}
+                    />
+                  )}
+
                   {/* Post Actions */}
                   <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                     <div className="flex items-center gap-6">
-                      <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors">
-                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                        </svg>
-                        <span className="text-sm font-medium">{post._count.reactions || 24}</span>
-                      </button>
-
                       <button 
                         className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
                         onClick={() => setShowComments(!showComments)}
@@ -504,9 +506,17 @@ export default function PostDetailPage() {
                                     {formatRelativeDate(comment.createdAt)}
                                   </span>
                                 </div>
-                                <p className="text-sm text-gray-700">
+                                <p className="text-sm text-gray-700 mb-2">
                                   {comment.content}
                                 </p>
+                                {/* Réactions du commentaire */}
+                                <CommentReactions
+                                  commentId={comment.id}
+                                  shopId={currentUser?.shopId || ''}
+                                  userId={currentUser?.id}
+                                  reactions={comment.reactions || []}
+                                  userReaction={comment.userReaction}
+                                />
                               </div>
                             </div>
                           ))
