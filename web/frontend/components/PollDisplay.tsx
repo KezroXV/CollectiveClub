@@ -104,7 +104,9 @@ export default function PollDisplay({
         {/* En-tête du sondage */}
         <div className="flex items-center gap-2">
           <BarChart3 className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold text-gray-900">{poll.question}</h3>
+          <h3 className="font-semibold text-[13px] text-gray-900">
+            {poll.question}
+          </h3>
         </div>
 
         {/* Options du sondage */}
@@ -136,7 +138,7 @@ export default function PollDisplay({
                   <div className="relative flex items-center justify-between w-full">
                     <div className="flex items-center gap-2">
                       {isSelected && <Check className="h-4 w-4 text-primary" />}
-                      <span className="font-medium">{option.text}</span>
+                      <span className="font-medium text-xs">{option.text}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <span>{option._count.votes} votes</span>

@@ -16,7 +16,6 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   X,
-  Plus,
   Loader2,
   Upload,
   Image as ImageIcon,
@@ -331,14 +330,6 @@ export default function CreatePostModal({
                   {category.name}
                 </Button>
               ))}
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1 rounded-full border-dashed opacity-50 cursor-not-allowed"
-                disabled
-              >
-                <Plus className="h-3 w-3" />
-              </Button>
             </div>
           </div>
         </div>
