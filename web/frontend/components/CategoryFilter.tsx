@@ -14,6 +14,7 @@ import {
   Calendar,
   Heart,
   Check,
+  Pin,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -58,6 +59,8 @@ interface CategoryFilterProps {
   onCreatePost: () => void;
   sortBy?: string;
   onSortChange?: (sort: string) => void;
+  showPinnedOnly?: boolean;
+  onPinnedFilterChange?: (showPinnedOnly: boolean) => void;
 }
 
 export default function CategoryFilter({
@@ -67,6 +70,8 @@ export default function CategoryFilter({
   onCreatePost,
   sortBy = "newest",
   onSortChange,
+  showPinnedOnly = false,
+  onPinnedFilterChange,
 }: CategoryFilterProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
@@ -222,7 +227,7 @@ export default function CategoryFilter({
             <button
               key={category.id}
               onClick={() => onCategoryChange(category.id)}
-              className={`flex items-center gap-2.5 px-4 py-2 rounded-2xl whitespace-nowrap transition-all text-sm font-medium border ${
+              className={`flex items-center gap-2.5 px-2.5 py-1 rounded-2xl whitespace-nowrap transition-all text-xs font-medium border ${
                 selectedCategory === category.id
                   ? "bg-white text-gray-900 border-gray-300 ring-2 ring-blue-300"
                   : "bg-white text-gray-900 border-gray-300 hover:bg-gray-50"
@@ -238,32 +243,56 @@ export default function CategoryFilter({
             </button>
           ))}
 
-          {/* Status indicator pour le tri actuel */}
-          <div className="flex items-center gap-2 ml-auto text-sm text-gray-500">
-            <span>Trié par:</span>
-            <span className="font-medium text-gray-700">
-              {currentSortLabel}
-            </span>
-          </div>
+          {/* Dropdown "Voir plus" pour les catégories supplémentaires */}
+          {overflowCategories.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2.5 px-2.5 py-1 rounded-2xl whitespace-nowrap transition-all text-xs font-medium border bg-white text-gray-900 border-gray-300 hover:bg-gray-50">
+                  <span>Voir plus</span>
+                  <ChevronDown className="h-3 w-3" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48">
+                <DropdownMenuLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  Autres catégories
+                </DropdownMenuLabel>
+                {overflowCategories.map((category) => (
+                  <DropdownMenuItem
+                    key={category.id}
+                    onClick={() => onCategoryChange(category.id)}
+                    className="flex items-center gap-3 py-2"
+                  >
+                    <div
+                      className={`w-3 h-3 rounded-full ${category.color}`}
+                    ></div>
+                    <span className="flex-1">{category.name}</span>
+                    <span className="text-xs text-gray-400">
+                      {category._count.posts}
+                    </span>
+                    {selectedCategory === category.id && (
+                      <Check className="h-4 w-4 text-primary" />
+                    )}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
 
-          {/* Right Icons */}
-          <div className="flex items-center gap-2.5">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-10 w-10 p-0 rounded-full bg-white border border-gray-300 hover:bg-gray-50"
-            >
-              <Wrench className="h-4 w-4 text-gray-500" />
-            </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-10 w-10 p-0 rounded-full bg-white border border-gray-300 hover:bg-gray-50"
-            >
-              <Share2 className="h-4 w-4 text-gray-500" />
-            </Button>
-          </div>
+          {/* Bouton de filtre pour les posts épinglés */}
+          <button
+            onClick={() => onPinnedFilterChange?.(!showPinnedOnly)}
+            className={`flex items-center gap-2.5 px-2.5 py-1 rounded-2xl whitespace-nowrap transition-all text-xs font-medium border ${
+              showPinnedOnly
+                ? "bg-blue-50 text-blue-700 border-blue-200"
+                : "bg-white text-gray-900 border-gray-300 hover:bg-gray-50"
+            }`}
+          >
+            <Pin
+              className={`h-3 w-3 ${
+                showPinnedOnly ? "text-blue-600" : "text-gray-500"
+              }`}
+            />
+          </button>
         </div>
       </div>
     </div>
