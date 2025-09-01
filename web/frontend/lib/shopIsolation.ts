@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { NextRequest } from "next/server";
+import { createDefaultBadgesForShop } from "./defaultBadges";
 
 const prisma = new PrismaClient();
 
@@ -146,9 +147,10 @@ export async function getShopContext(request: NextRequest): Promise<ShopContext>
           }
         });
 
-        // Créer automatiquement un admin et des catégories par défaut
+        // Créer automatiquement un admin, des catégories et des badges par défaut
         await createDefaultAdminForShop(shop.id, shop.shopDomain);
         await createDefaultCategoriesForShop(shop.id);
+        await createDefaultBadgesForShop(shop.id);
         
       } catch (dbError) {
         throw new ShopIsolationException({

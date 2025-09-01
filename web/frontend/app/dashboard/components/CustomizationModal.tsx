@@ -71,6 +71,9 @@ export default function CustomizationModal({
       try {
         const user = JSON.parse(storedUser);
         shopId = user.shopId;
+        console.log("=== CustomizationModal ===");
+        console.log("User from localStorage:", user);
+        console.log("shopId from localStorage:", shopId);
       } catch (error) {
         console.error("Error parsing stored user:", error);
         return;
@@ -92,20 +95,8 @@ export default function CustomizationModal({
         const badgesData = await response.json();
         console.log("Badges data received:", badgesData);
 
-        // Si l'utilisateur n'a aucun badge, créer les badges par défaut
-        if (badgesData.length === 0) {
-          console.log("No badges found, creating defaults...");
-          await createDefaultBadges(shopId);
-          // Recharger après création
-          const newResponse = await fetch(`/api/badges?userId=${userId}&shopId=${shopId}`);
-          if (newResponse.ok) {
-            const newBadgesData = await newResponse.json();
-            console.log("New badges data after creation:", newBadgesData);
-            setBadges(newBadgesData);
-          }
-        } else {
-          setBadges(badgesData);
-        }
+        // L'API crée automatiquement les badges par défaut si ils n'existent pas
+        setBadges(badgesData);
       } else {
         console.error("Failed to load badges:", response.status, response.statusText);
       }
@@ -116,57 +107,6 @@ export default function CustomizationModal({
     }
   }, [userId]);
 
-  // Créer les badges par défaut pour l'utilisateur
-  const createDefaultBadges = async (shopId: string) => {
-    const defaultBadges = [
-      {
-        name: "Nouveau",
-        imageUrl: "/Badge-nouveau.svg",
-        requiredPoints: 0,
-        order: 1,
-      },
-      {
-        name: "Novice",
-        imageUrl: "/Badge-bronze.svg",
-        requiredPoints: 50,
-        order: 2,
-      },
-      {
-        name: "Intermédiaire",
-        imageUrl: "/Badge-argent.svg",
-        requiredPoints: 200,
-        order: 3,
-      },
-      { name: "Expert", imageUrl: "/Badge-or.svg", requiredPoints: 500, order: 4 },
-    ];
-
-    for (const badge of defaultBadges) {
-      try {
-        console.log("Creating default badge:", badge.name, "for shopId:", shopId);
-        const response = await fetch("/api/badges", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            ...badge, 
-            userId // L'userId est toujours nécessaire pour l'authentification admin
-          }),
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error("Failed to create default badge:", badge.name, errorData);
-        } else {
-          console.log("Successfully created default badge:", badge.name);
-        }
-      } catch (error) {
-        console.error(
-          "Erreur lors de la création du badge par défaut:",
-          badge.name,
-          error
-        );
-      }
-    }
-  };
 
   // Synchroniser avec le contexte global au moment de l'ouverture
   useEffect(() => {

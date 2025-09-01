@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { requireAdmin, resolveActingAdmin } from "@/lib/auth";
 import { getShopId, ensureShopIsolation } from "@/lib/shopIsolation";
+import { createDefaultBadgesForShop } from "@/lib/defaultBadges";
 
 const prisma = new PrismaClient();
 
@@ -16,6 +17,10 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("userId");
     const forumId = searchParams.get("forumId"); // Support futur pour l'isolation par forum
+    
+    console.log("=== BADGES GET API ===");
+    console.log("shopId from API:", shopId);
+    console.log("userId from params:", userId);
 
     // 1) Si userId fourni, valider qu'il appartient à cette boutique
     if (userId) {
@@ -41,11 +46,29 @@ export async function GET(request: NextRequest) {
     //   shopBadgeWhere.forumId = forumId;
     // }
 
+    console.log("Querying badges with:", shopBadgeWhere);
     const shopBadges = await prisma.badge.findMany({
       where: shopBadgeWhere,
       orderBy: { order: "asc" },
     });
 
+    console.log("Found badges:", shopBadges.length, shopBadges.map(b => ({ name: b.name, shopId: b.shopId })));
+    
+    // Si aucun badge n'est trouvé pour cette boutique, créer les badges par défaut
+    if (shopBadges.length === 0) {
+      console.log("No badges found for shop", shopId, "- creating default badges");
+      await createDefaultBadgesForShop(shopId);
+      
+      // Récupérer les badges nouvellement créés
+      const newBadges = await prisma.badge.findMany({
+        where: shopBadgeWhere,
+        orderBy: { order: "asc" },
+      });
+      
+      console.log("Created default badges:", newBadges.length);
+      return NextResponse.json(newBadges);
+    }
+    
     return NextResponse.json(shopBadges);
   } catch (error) {
     console.error("Error fetching badges:", error);

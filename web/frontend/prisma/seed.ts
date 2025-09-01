@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { PrismaClient } from "@prisma/client";
+import { createDefaultBadgesForShop } from "../lib/defaultBadges";
 
 const prisma = new PrismaClient();
 
@@ -161,58 +162,7 @@ async function main() {
   console.log("✅ Test users created successfully");
 
   // Créer les badges par défaut pour cette boutique
-  const defaultBadges = [
-    {
-      name: "Nouveau",
-      imageUrl: "/Badge-nouveau.svg",
-      requiredPoints: 0,
-      description: "Bienvenue dans la communauté !",
-      isDefault: true,
-      order: 1,
-      shopId: defaultShop.id,
-    },
-    {
-      name: "Novice",
-      imageUrl: "/Badge-novice.svg",
-      requiredPoints: 50,
-      description: "Vous commencez à participer activement !",
-      isDefault: true,
-      order: 2,
-      shopId: defaultShop.id,
-    },
-    {
-      name: "Intermédiaire",
-      imageUrl: "/Badge-intermediaire.svg",
-      requiredPoints: 200,
-      description: "Membre actif de la communauté !",
-      isDefault: true,
-      order: 3,
-      shopId: defaultShop.id,
-    },
-    {
-      name: "Expert",
-      imageUrl: "/Badge-expert.svg",
-      requiredPoints: 500,
-      description: "Expert reconnu de la communauté !",
-      isDefault: true,
-      order: 4,
-      shopId: defaultShop.id,
-    },
-  ];
-
-  for (const badge of defaultBadges) {
-    await prisma.badge.upsert({
-      where: {
-        shopId_name: {
-          shopId: defaultShop.id,
-          name: badge.name,
-        },
-      },
-      update: {},
-      create: badge,
-    });
-  }
-
+  await createDefaultBadgesForShop(defaultShop.id);
   console.log("✅ Default badges created successfully");
 }
 
