@@ -117,32 +117,7 @@ export async function GET(
       take: 3
     });
 
-    // Récupérer les badges de l'auteur via UserBadge
-    const authorUserBadges = await prisma.userBadge.findMany({
-      where: {
-        userId: post.author.id,
-        shopId
-      },
-      include: {
-        badge: {
-          select: {
-            id: true,
-            name: true,
-            imageUrl: true,
-            requiredPoints: true
-          }
-        }
-      },
-      orderBy: { 
-        badge: { order: 'asc' } 
-      }
-    });
 
-    // Transformer pour compatibilité avec l'interface existante
-    const authorBadges = authorUserBadges.map(ub => ({
-      ...ub.badge,
-      requiredCount: ub.badge.requiredPoints // Pour compatibilité
-    }));
 
     // Calculer les réactions groupées par type
     const reactionsGrouped = post.reactions.reduce((acc: any, reaction: any) => {

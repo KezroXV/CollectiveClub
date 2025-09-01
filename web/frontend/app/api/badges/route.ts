@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get("userId");
     const forumId = searchParams.get("forumId"); // Support futur pour l'isolation par forum
 
-    // 1) Si userId fourni, valider qu'il appartient à cette boutique et récupérer ses badges
+    // 1) Si userId fourni, valider qu'il appartient à cette boutique
     if (userId) {
       // Vérifier que l'utilisateur existe dans cette boutique
       const user = await prisma.user.findFirst({
@@ -31,29 +31,9 @@ export async function GET(request: NextRequest) {
           { status: 404 }
         );
       }
-
-      // Récupérer les badges spécifiques à cet utilisateur
-      const userBadgeWhere: any = {
-        userId,
-        shopId, // ✅ double isolation: utilisateur + boutique
-      };
-
-      // TODO: Ajouter l'isolation par forum une fois le modèle Forum créé
-      // if (forumId) {
-      //   userBadgeWhere.forumId = forumId;
-      // }
-
-      const userBadges = await prisma.badge.findMany({
-        where: userBadgeWhere,
-        orderBy: { order: "asc" },
-      });
-
-      if (userBadges.length > 0) {
-        return NextResponse.json(userBadges);
-      }
     }
 
-    // 2) Fallback: retourner tous les badges de la boutique (paliers globaux)
+    // 2) Retourner tous les badges de la boutique (paliers globaux)
     const shopBadgeWhere: any = { shopId };
 
     // TODO: Ajouter l'isolation par forum une fois le modèle Forum créé
@@ -92,20 +72,36 @@ export async function POST(request: NextRequest) {
     // Vérifier les droits admin
     await requireAdmin(userId, shopId);
 
-    const { name, imageUrl, requiredCount, order } = body;
+    const { name, imageUrl, requiredPoints, order } = body;
 
-    if (!name || !imageUrl || requiredCount === undefined) {
+    if (!name || !imageUrl || requiredPoints === undefined) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Missing required fields: name, imageUrl, requiredPoints" },
         { status: 400 }
       );
     }
 
+    // Vérifier si un badge avec ce nom existe déjà dans cette boutique
+    const existingBadge = await prisma.badge.findUnique({
+      where: {
+        shopId_name: {
+          shopId,
+          name
+        }
+      }
+    });
+
+    if (existingBadge) {
+      return NextResponse.json(
+        { error: `Un badge nommé "${name}" existe déjà dans cette boutique` },
+        { status: 409 }
+      );
+    }
+
     const badgeData: any = {
-      userId,
       name,
       imageUrl,
-      requiredCount,
+      requiredPoints,
       order: order || 0,
       isDefault: false,
       shopId, // ✅ ASSOCIER À LA BOUTIQUE
@@ -131,8 +127,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Gestion spécifique des erreurs Prisma de contrainte d'unicité
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'P2002') {
+      return NextResponse.json(
+        { error: "Un badge avec ce nom existe déjà dans cette boutique" },
+        { status: 409 }
+      );
+    }
+
     return NextResponse.json(
-      { error: "Failed to create badge" },
+      { error: "Erreur lors de la création du badge" },
       { status: 500 }
     );
   }

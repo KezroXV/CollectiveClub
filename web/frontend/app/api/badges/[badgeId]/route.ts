@@ -24,9 +24,9 @@ export async function PUT(
     // Vérifier les droits admin
     await requireAdmin(actingUserId, shopId);
 
-    const { name, imageUrl, requiredCount, order } = body;
+    const { name, imageUrl, requiredPoints, order } = body;
 
-    if (!name || !imageUrl || requiredCount === undefined) {
+    if (!name || !imageUrl || requiredPoints === undefined) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -53,7 +53,7 @@ export async function PUT(
       data: {
         name,
         imageUrl,
-        requiredCount,
+        requiredPoints,
         order: order || 0,
       },
     });

@@ -71,7 +71,7 @@ export default function BadgeModal({
           userId,
           name: newBadgeName,
           imageUrl: newBadgeImage,
-          requiredCount: badgeCount,
+          requiredPoints: badgeCount,
         }),
       });
 
@@ -80,8 +80,16 @@ export default function BadgeModal({
         onBadgeCreated?.();
         handleClose();
       } else {
-        const error = await response.json();
-        throw new Error(error.error || "Erreur lors de la création");
+        const errorData = await response.json();
+        const errorMessage = errorData.error || "Erreur lors de la création";
+        
+        if (response.status === 409) {
+          // Erreur de conflit (nom de badge déjà existant)
+          toast.error(`❌ ${errorMessage}`);
+        } else {
+          toast.error(errorMessage);
+        }
+        return;
       }
     } catch (error) {
       console.error("Erreur lors de la création du badge:", error);

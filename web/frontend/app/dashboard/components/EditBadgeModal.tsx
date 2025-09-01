@@ -16,7 +16,7 @@ interface Badge {
   id: string;
   name: string;
   imageUrl: string;
-  requiredCount: number;
+  requiredPoints: number;
   isDefault: boolean;
 }
 
@@ -46,7 +46,7 @@ export default function EditBadgeModal({
     if (isOpen && badge) {
       setBadgeName(badge.name);
       setBadgeImage(badge.imageUrl);
-      setBadgeCount(badge.requiredCount);
+      setBadgeCount(badge.requiredPoints);
     }
   }, [isOpen, badge]);
 
@@ -90,7 +90,7 @@ export default function EditBadgeModal({
           userId,
           name: badgeName,
           imageUrl: badgeImage,
-          requiredCount: badgeCount,
+          requiredPoints: badgeCount,
         }),
       });
 
@@ -99,8 +99,16 @@ export default function EditBadgeModal({
         onBadgeUpdated?.();
         handleClose();
       } else {
-        const error = await response.json();
-        throw new Error(error.error || "Erreur lors de la modification");
+        const errorData = await response.json();
+        const errorMessage = errorData.error || "Erreur lors de la modification";
+        
+        if (response.status === 409) {
+          // Erreur de conflit (nom de badge déjà existant)
+          toast.error(`❌ ${errorMessage}`);
+        } else {
+          toast.error(errorMessage);
+        }
+        return;
       }
     } catch (error) {
       console.error("Erreur lors de la modification du badge:", error);

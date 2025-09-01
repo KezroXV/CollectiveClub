@@ -63,24 +63,51 @@ export default function CustomizationModal({
   const loadBadges = useCallback(async () => {
     if (!userId) return;
 
+    // Récupérer les informations utilisateur depuis localStorage
+    const storedUser = localStorage.getItem("currentUser");
+    let shopId = null;
+    
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        shopId = user.shopId;
+      } catch (error) {
+        console.error("Error parsing stored user:", error);
+        return;
+      }
+    }
+
+    if (!shopId) {
+      console.error("No shopId found in currentUser");
+      return;
+    }
+
     setIsLoadingBadges(true);
     try {
-      const response = await fetch(`/api/badges?userId=${userId}`);
+      console.log("Loading badges for userId:", userId, "shopId:", shopId);
+      const response = await fetch(`/api/badges?userId=${userId}&shopId=${shopId}`);
+      console.log("Badges response status:", response.status);
+      
       if (response.ok) {
         const badgesData = await response.json();
+        console.log("Badges data received:", badgesData);
 
         // Si l'utilisateur n'a aucun badge, créer les badges par défaut
         if (badgesData.length === 0) {
-          await createDefaultBadges();
+          console.log("No badges found, creating defaults...");
+          await createDefaultBadges(shopId);
           // Recharger après création
-          const newResponse = await fetch(`/api/badges?userId=${userId}`);
+          const newResponse = await fetch(`/api/badges?userId=${userId}&shopId=${shopId}`);
           if (newResponse.ok) {
             const newBadgesData = await newResponse.json();
+            console.log("New badges data after creation:", newBadgesData);
             setBadges(newBadgesData);
           }
         } else {
           setBadges(badgesData);
         }
+      } else {
+        console.error("Failed to load badges:", response.status, response.statusText);
       }
     } catch (error) {
       console.error("Erreur lors du chargement des badges:", error);
@@ -90,36 +117,47 @@ export default function CustomizationModal({
   }, [userId]);
 
   // Créer les badges par défaut pour l'utilisateur
-  const createDefaultBadges = async () => {
+  const createDefaultBadges = async (shopId: string) => {
     const defaultBadges = [
       {
         name: "Nouveau",
         imageUrl: "/Badge-nouveau.svg",
-        requiredCount: 5,
+        requiredPoints: 0,
         order: 1,
       },
       {
-        name: "Bronze",
+        name: "Novice",
         imageUrl: "/Badge-bronze.svg",
-        requiredCount: 50,
+        requiredPoints: 50,
         order: 2,
       },
       {
-        name: "Argent",
+        name: "Intermédiaire",
         imageUrl: "/Badge-argent.svg",
-        requiredCount: 100,
+        requiredPoints: 200,
         order: 3,
       },
-      { name: "Or", imageUrl: "/Badge-or.svg", requiredCount: 500, order: 4 },
+      { name: "Expert", imageUrl: "/Badge-or.svg", requiredPoints: 500, order: 4 },
     ];
 
     for (const badge of defaultBadges) {
       try {
-        await fetch("/api/badges", {
+        console.log("Creating default badge:", badge.name, "for shopId:", shopId);
+        const response = await fetch("/api/badges", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...badge, userId }),
+          body: JSON.stringify({ 
+            ...badge, 
+            userId // L'userId est toujours nécessaire pour l'authentification admin
+          }),
         });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Failed to create default badge:", badge.name, errorData);
+        } else {
+          console.log("Successfully created default badge:", badge.name);
+        }
       } catch (error) {
         console.error(
           "Erreur lors de la création du badge par défaut:",
@@ -340,7 +378,7 @@ export default function CustomizationModal({
                               className="absolute -top-1.5 -right-1.5 text-[9px] px-1 py-0.5 rounded bg-white shadow"
                               style={{ border: `1px solid ${colors.Bordures}` }}
                             >
-                              {badge.requiredCount}
+                              {badge.requiredPoints || badge.requiredCount || 0}
                             </span>
                           </div>
                           <p className="font-medium text-xs text-gray-900">

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -14,8 +15,8 @@ async function main() {
       settings: {
         theme: "default",
         primaryColor: "#3B82F6",
-        environment: "development"
-      }
+        environment: "development",
+      },
     },
   });
 
@@ -69,11 +70,11 @@ async function main() {
 
   for (const category of categories) {
     await prisma.category.upsert({
-      where: { 
+      where: {
         shopId_name: {
           shopId: defaultShop.id,
           name: category.name,
-        }
+        },
       },
       update: {},
       create: category,
@@ -91,21 +92,21 @@ async function main() {
       isOwner: true,
     },
     {
-      email: "admin@collective-club.com", 
+      email: "admin@collective-club.com",
       name: "Admin User",
       role: "ADMIN",
       isOwner: false,
     },
     {
       email: "moderator@collective-club.com",
-      name: "Moderator User", 
+      name: "Moderator User",
       role: "MODERATOR",
       isOwner: false,
     },
     {
       email: "member1@collective-club.com",
       name: "Marie Martin",
-      role: "MEMBER", 
+      role: "MEMBER",
       isOwner: false,
     },
     {
@@ -127,11 +128,11 @@ async function main() {
 
   for (const userData of testUsers) {
     const user = await prisma.user.upsert({
-      where: { 
+      where: {
         shopId_email: {
           shopId: defaultShop.id,
           email: userData.email,
-        }
+        },
       },
       update: {},
       create: {
