@@ -87,6 +87,9 @@ interface AuthorComment {
     id: string;
     title: string;
   };
+  _count: {
+    reactions: number;
+  };
 }
 
 interface BadgeInfo {

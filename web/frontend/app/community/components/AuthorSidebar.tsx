@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -38,6 +39,9 @@ interface AuthorComment {
     id: string;
     title: string;
   };
+  _count: {
+    reactions: number;
+  };
 }
 
 interface AuthorSidebarProps {
@@ -70,7 +74,9 @@ const AuthorSidebar = ({
   const [authorPoints, setAuthorPoints] = useState<UserPointsInfo | null>(null);
   const [authorBadges, setAuthorBadges] = useState<BadgeInfo[]>([]);
   const [isLoadingBadges, setIsLoadingBadges] = useState(true);
-  const [followersCount] = useState(0);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [isLoadingFollowers, setIsLoadingFollowers] = useState(true);
+  const [isFollowing, setIsFollowing] = useState(false);
 
   // Charger les données de l'auteur
   useEffect(() => {
@@ -79,11 +85,16 @@ const AuthorSidebar = ({
     const loadAuthorData = async () => {
       try {
         setIsLoadingBadges(true);
-        
-        // Charger les points et tous les badges de la boutique
-        const [pointsResponse, badgesResponse] = await Promise.all([
-          fetch(`/api/users/points?userId=${author.id}&shopId=${currentUser.shopId}`),
-          fetch(`/api/badges?userId=${author.id}&shopId=${currentUser.shopId}`)
+        setIsLoadingFollowers(true);
+
+        // Charger les points, badges, followers et statut de suivi en parallèle
+        const [pointsResponse, badgesResponse, followersResponse, followStatusResponse] = await Promise.all([
+          fetch(
+            `/api/users/points?userId=${author.id}&shopId=${currentUser.shopId}`
+          ),
+          fetch(`/api/badges?userId=${author.id}&shopId=${currentUser.shopId}`),
+          fetch(`/api/users/${author.id}/followers/count?shopId=${currentUser.shopId}`),
+          fetch(`/api/users/${author.id}/followers/status?currentUserId=${currentUser.id}&shopId=${currentUser.shopId}`),
         ]);
 
         let userPoints = 0;
@@ -92,38 +103,55 @@ const AuthorSidebar = ({
           userPoints = pointsData.points || 0;
           setAuthorPoints({
             points: userPoints,
-            badges: []
+            badges: [],
           });
         }
 
         if (badgesResponse.ok) {
           const allBadges = await badgesResponse.json();
-          
+
           // Calculer quels badges sont débloqués en fonction des points
           const badgesWithStatus = allBadges.map((badge: any) => ({
             ...badge,
-            unlocked: userPoints >= badge.requiredPoints
+            unlocked: userPoints >= badge.requiredPoints,
           }));
-          
+
           // Filtrer pour garder seulement les badges débloqués et trier par ordre croissant de points
           const unlockedBadges = badgesWithStatus
             .filter((badge: BadgeInfo) => badge.unlocked)
             .sort((a, b) => a.requiredPoints - b.requiredPoints);
           setAuthorBadges(unlockedBadges);
-          
+
           // Mettre à jour authorPoints avec les badges
-          setAuthorPoints(prev => prev ? {
-            ...prev,
-            badges: unlockedBadges
-          } : {
-            points: userPoints,
-            badges: unlockedBadges
-          });
+          setAuthorPoints((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  badges: unlockedBadges,
+                }
+              : {
+                  points: userPoints,
+                  badges: unlockedBadges,
+                }
+          );
+        }
+
+        // Charger le nombre de followers
+        if (followersResponse.ok) {
+          const followersData = await followersResponse.json();
+          setFollowersCount(followersData.followersCount || 0);
+        }
+
+        // Charger le statut de suivi
+        if (followStatusResponse.ok) {
+          const followStatusData = await followStatusResponse.json();
+          setIsFollowing(followStatusData.isFollowing || false);
         }
       } catch (error) {
-        console.error('Erreur lors du chargement des données auteur:', error);
+        console.error("Erreur lors du chargement des données auteur:", error);
       } finally {
         setIsLoadingBadges(false);
+        setIsLoadingFollowers(false);
       }
     };
 
@@ -146,7 +174,13 @@ const AuthorSidebar = ({
               <p className="text-[10px] text-gray-500">
                 Membre depuis le {formatDate(author.createdAt)}
               </p>
-              <p className="text-[10px] text-gray-500">{followersCount} abonnés</p>
+              <p className="text-[10px] text-gray-500">
+                {isLoadingFollowers ? (
+                  <span className="inline-block w-8 h-2 bg-gray-200 animate-pulse rounded"></span>
+                ) : (
+                  `${followersCount} abonnés`
+                )}
+              </p>
             </div>
           </div>
 
@@ -156,9 +190,13 @@ const AuthorSidebar = ({
                 targetUserId={author.id}
                 currentUserId={currentUser.id}
                 shopId={currentUser.shopId}
-                isFollowing={false}
-                followersCount={0}
+                isFollowing={isFollowing}
+                followersCount={followersCount}
                 size="default"
+                onToggle={(newIsFollowing, newFollowersCount) => {
+                  setIsFollowing(newIsFollowing);
+                  setFollowersCount(newFollowersCount);
+                }}
               />
             </div>
           )}
@@ -168,20 +206,13 @@ const AuthorSidebar = ({
         <div className="px-6 pb-6">
           <h4 className="font-bold text-[18px] text-gray-900 mb-4">Badges</h4>
 
-          {/* Points de l'utilisateur */}
-          {authorPoints && (
-            <div className="flex items-center gap-2 mb-4">
-              <Coins className="h-4 w-4 text-yellow-600" />
-              <span className="text-sm font-medium">
-                {authorPoints.points} points
-              </span>
-            </div>
-          )}
-
           {isLoadingBadges && (
             <div className="flex gap-2 mb-4">
-              {[1, 2, 3, 4].map(i => (
-                <div key={i} className="w-12 h-12 rounded-full bg-gray-200 animate-pulse"></div>
+              {[1, 2, 3, 4].map((i) => (
+                <div
+                  key={i}
+                  className="w-12 h-12 rounded-full bg-gray-200 animate-pulse"
+                ></div>
               ))}
             </div>
           )}
@@ -202,9 +233,7 @@ const AuthorSidebar = ({
                         height={48}
                         className="rounded-full"
                       />
-                      <span
-                        className="absolute -top-1.5 -right-1.5 text-[8px] px-1 py-0.5 rounded bg-white shadow border border-gray-200"
-                      >
+                      <span className="absolute -top-1.5 -right-1.5 text-[8px] px-1 py-0.5 rounded bg-white shadow border border-gray-200">
                         {badge.requiredPoints}
                       </span>
                     </div>
@@ -227,31 +256,35 @@ const AuthorSidebar = ({
           <h4 className="font-bold text-[18px] text-gray-900 mb-4">
             Posts récents
           </h4>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {authorRecentPosts.length > 0 ? (
               authorRecentPosts.slice(0, 2).map((authorPost) => (
                 <Link key={authorPost.id} href={`/community/${authorPost.id}`}>
-                  <div className="hover:bg-gray-50 -mx-2 px-2 py-3 rounded transition-colors">
-                    <h5 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">
-                      {authorPost.title}
-                    </h5>
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <Heart className="h-3 w-3" />
-                        {authorPost._count.reactions}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <MessageSquare className="h-3 w-3" />
-                        {authorPost._count.comments}
-                      </span>
-                    </div>
-                  </div>
+                  <Card className="p-0 my-2.5 hover:shadow-md transition-shadow cursor-pointer">
+                    <CardContent className="p-4">
+                      <h5 className="text-[13px] font-medium text-gray-900 mb-2 line-clamp-2">
+                        {authorPost.title}
+                      </h5>
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <Heart className="h-3 w-3" />
+                          {authorPost._count.reactions}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MessageSquare className="h-3 w-3" />
+                          {authorPost._count.comments}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </Link>
               ))
             ) : (
-              <div className="text-center py-4">
-                <p className="text-sm text-gray-500">Aucun post récent</p>
-              </div>
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <p className="text-sm text-gray-500">Aucun post récent</p>
+                </CardContent>
+              </Card>
             )}
           </div>
         </div>
@@ -261,33 +294,38 @@ const AuthorSidebar = ({
           <h4 className="font-bold text-[18px] text-gray-900 mb-4">
             Commentaires récents
           </h4>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {authorRecentComments.length > 0 ? (
               authorRecentComments.slice(0, 2).map((comment) => (
                 <Link key={comment.id} href={`/community/${comment.post.id}`}>
-                  <div className="hover:bg-gray-50 -mx-2 px-2 py-3 rounded transition-colors">
-                    <p className="text-sm text-gray-700 mb-2 line-clamp-2">
-                      {comment.content}
-                    </p>
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <Heart className="h-3 w-3" />
-                        24
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <MessageSquare className="h-3 w-3" />
-                        10
-                      </span>
-                    </div>
-                  </div>
+                  <Card className="p-0 my-2.5 hover:shadow-md transition-shadow cursor-pointer">
+                    <CardContent className="p-4">
+                      <p className="text-sm text-gray-700 mb-2 line-clamp-2">
+                        {comment.content}
+                      </p>
+
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <span className="flex items-center gap-1">
+                          <Heart className="h-3 w-3" />
+                          {comment._count.reactions}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <MessageSquare className="h-3 w-3" />
+                          {comment._count.reactions}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </Link>
               ))
             ) : (
-              <div className="text-center py-4">
-                <p className="text-sm text-gray-500">
-                  Aucun commentaire récent
-                </p>
-              </div>
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <p className="text-sm text-gray-500">
+                    Aucun commentaire récent
+                  </p>
+                </CardContent>
+              </Card>
             )}
           </div>
         </div>

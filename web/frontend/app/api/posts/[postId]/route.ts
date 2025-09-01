@@ -111,6 +111,9 @@ export async function GET(
             id: true,
             title: true
           }
+        },
+        _count: {
+          select: { reactions: true }
         }
       },
       orderBy: { createdAt: 'desc' },
