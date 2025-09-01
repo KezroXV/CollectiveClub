@@ -55,7 +55,6 @@ export async function createDefaultBadgesForShop(shopId: string) {
         update: {},
         create: badge,
       });
-      console.log(`✅ Badge "${badge.name}" créé pour la boutique ${shopId}`);
     } catch (error) {
       console.error(`❌ Erreur lors de la création du badge "${badge.name}":`, error);
     }

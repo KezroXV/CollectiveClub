@@ -80,23 +80,35 @@ const AuthorSidebar = ({
       try {
         setIsLoadingBadges(true);
         
-        // Charger les points et badges en parallèle
+        // Charger les points et tous les badges de la boutique
         const [pointsResponse, badgesResponse] = await Promise.all([
           fetch(`/api/users/points?userId=${author.id}&shopId=${currentUser.shopId}`),
-          fetch(`/api/badges/points?userId=${author.id}&shopId=${currentUser.shopId}`)
+          fetch(`/api/badges?userId=${author.id}&shopId=${currentUser.shopId}`)
         ]);
 
+        let userPoints = 0;
         if (pointsResponse.ok) {
           const pointsData = await pointsResponse.json();
+          userPoints = pointsData.points || 0;
           setAuthorPoints({
-            points: pointsData.points || 0,
+            points: userPoints,
             badges: []
           });
         }
 
         if (badgesResponse.ok) {
-          const badgesData = await badgesResponse.json();
-          const unlockedBadges = badgesData.badges?.filter((badge: BadgeInfo) => badge.unlocked) || [];
+          const allBadges = await badgesResponse.json();
+          
+          // Calculer quels badges sont débloqués en fonction des points
+          const badgesWithStatus = allBadges.map((badge: any) => ({
+            ...badge,
+            unlocked: userPoints >= badge.requiredPoints
+          }));
+          
+          // Filtrer pour garder seulement les badges débloqués et trier par ordre croissant de points
+          const unlockedBadges = badgesWithStatus
+            .filter((badge: BadgeInfo) => badge.unlocked)
+            .sort((a, b) => a.requiredPoints - b.requiredPoints);
           setAuthorBadges(unlockedBadges);
           
           // Mettre à jour authorPoints avec les badges
@@ -104,7 +116,7 @@ const AuthorSidebar = ({
             ...prev,
             badges: unlockedBadges
           } : {
-            points: 0,
+            points: userPoints,
             badges: unlockedBadges
           });
         }
@@ -175,53 +187,36 @@ const AuthorSidebar = ({
           )}
 
           {!isLoadingBadges && (
-            <div className="flex gap-2 flex-wrap mb-2">
+            <div className="grid grid-cols-4 gap-2 mb-4">
               {authorBadges.length > 0 ? (
                 authorBadges.map((badge) => (
-                  <div
-                    key={badge.id}
-                    className="relative group cursor-help"
-                    title={`${badge.name} - Débloqué le ${badge.unlockedAt ? new Date(badge.unlockedAt).toLocaleDateString('fr-FR') : 'N/A'}`}
-                  >
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-r from-yellow-100 to-orange-100 border-2 border-yellow-300 flex items-center justify-center overflow-hidden">
-                      {badge.imageUrl ? (
-                        <Image
-                          src={badge.imageUrl}
-                          alt={badge.name}
-                          width={32}
-                          height={32}
-                          className="object-contain"
-                        />
-                      ) : (
-                        <Star className="h-6 w-6 text-yellow-600" />
-                      )}
+                  <div key={badge.id} className="text-center">
+                    <div
+                      className="relative mx-auto mb-1.5 drop-shadow-sm"
+                      style={{ width: 48, height: 48 }}
+                    >
+                      <Image
+                        src={badge.imageUrl}
+                        alt={badge.name}
+                        width={48}
+                        height={48}
+                        className="rounded-full"
+                      />
+                      <span
+                        className="absolute -top-1.5 -right-1.5 text-[8px] px-1 py-0.5 rounded bg-white shadow border border-gray-200"
+                      >
+                        {badge.requiredPoints}
+                      </span>
                     </div>
-                    
-                    {/* Tooltip au hover */}
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                    <p className="font-medium text-[10px] text-gray-900">
                       {badge.name}
-                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-2 border-transparent border-t-gray-900"></div>
-                    </div>
+                    </p>
                   </div>
                 ))
               ) : (
-                <div className="text-center py-4 w-full">
+                <div className="col-span-4 text-center py-4">
                   <p className="text-xs text-gray-500">Aucun badge débloqué</p>
                 </div>
-              )}
-            </div>
-          )}
-
-          {!isLoadingBadges && (
-            <div className="flex gap-2 text-xs text-gray-600 flex-wrap">
-              {authorBadges.length > 0 ? (
-                authorBadges.map((badge) => (
-                  <span key={badge.id} className="bg-gray-100 px-2 py-1 rounded-full">
-                    {badge.name}
-                  </span>
-                ))
-              ) : (
-                <span className="text-gray-400 italic">Aucun badge à afficher</span>
               )}
             </div>
           )}

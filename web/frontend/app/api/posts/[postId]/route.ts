@@ -166,8 +166,7 @@ export async function GET(
         comments: commentsWithReactions
       },
       authorRecentPosts,
-      authorRecentComments,
-      authorBadges
+      authorRecentComments
     };
 
     return NextResponse.json(response);

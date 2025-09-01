@@ -71,9 +71,6 @@ export default function CustomizationModal({
       try {
         const user = JSON.parse(storedUser);
         shopId = user.shopId;
-        console.log("=== CustomizationModal ===");
-        console.log("User from localStorage:", user);
-        console.log("shopId from localStorage:", shopId);
       } catch (error) {
         console.error("Error parsing stored user:", error);
         return;
@@ -87,16 +84,16 @@ export default function CustomizationModal({
 
     setIsLoadingBadges(true);
     try {
-      console.log("Loading badges for userId:", userId, "shopId:", shopId);
       const response = await fetch(`/api/badges?userId=${userId}&shopId=${shopId}`);
-      console.log("Badges response status:", response.status);
       
       if (response.ok) {
         const badgesData = await response.json();
-        console.log("Badges data received:", badgesData);
 
+        // Trier les badges par ordre croissant de points requis
+        const sortedBadges = badgesData.sort((a: any, b: any) => a.requiredPoints - b.requiredPoints);
+        
         // L'API crée automatiquement les badges par défaut si ils n'existent pas
-        setBadges(badgesData);
+        setBadges(sortedBadges);
       } else {
         console.error("Failed to load badges:", response.status, response.statusText);
       }
