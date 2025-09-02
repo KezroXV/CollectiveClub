@@ -1,6 +1,85 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
 
-export function middleware(request: NextRequest) {
+// Instance Prisma pour le middleware
+const prisma = new PrismaClient();
+
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  
+  // 🔄 REDIRECTIONS SEO - Anciennes URLs vers nouvelles
+  
+  // 1. Redirection /community/[postId] vers /community/posts/[slug]
+  const oldPostMatch = pathname.match(/^\/community\/([a-zA-Z0-9_-]+)$/);
+  
+  if (oldPostMatch) {
+    const postId = oldPostMatch[1];
+    
+    try {
+      // Récupérer le slug du post par son ID
+      const post = await prisma.post.findUnique({
+        where: { 
+          id: postId,
+          status: 'PUBLISHED'
+        },
+        select: { 
+          slug: true,
+          id: true
+        }
+      });
+
+      if (post && post.slug) {
+        // Redirection 301 vers la nouvelle URL avec slug
+        const newUrl = new URL(`/community/posts/${post.slug}`, request.url);
+        
+        // Conserver les query parameters s'il y en a
+        if (request.nextUrl.search) {
+          newUrl.search = request.nextUrl.search;
+        }
+
+        
+        return NextResponse.redirect(newUrl, { status: 301 });
+      }
+    } catch (error) {
+      console.error('Error in post redirect middleware:', error);
+    }
+  }
+
+  // 2. Redirection /community?postId=[id] vers /community/posts/[slug]
+  const postIdParam = request.nextUrl.searchParams.get('postId');
+  if (pathname === '/community' && postIdParam) {
+    try {
+      const post = await prisma.post.findUnique({
+        where: { 
+          id: postIdParam,
+          status: 'PUBLISHED'
+        },
+        select: { 
+          slug: true,
+          id: true
+        }
+      });
+
+      if (post && post.slug) {
+        const newUrl = new URL(`/community/posts/${post.slug}`, request.url);
+        
+        // Supprimer le paramètre postId et conserver les autres
+        const searchParams = new URLSearchParams(request.nextUrl.searchParams);
+        searchParams.delete('postId');
+        
+        if (searchParams.toString()) {
+          newUrl.search = searchParams.toString();
+        }
+
+        
+        return NextResponse.redirect(newUrl, { status: 301 });
+      }
+    } catch (error) {
+      console.error('Error in query redirect middleware:', error);
+    }
+  }
+
+  // 🏪 GESTION SHOP (logique existante)
   const response = NextResponse.next();
   
   // Vérifier si on a un paramètre shop dans l'URL
@@ -14,7 +93,6 @@ export function middleware(request: NextRequest) {
       sameSite: 'lax',
       path: '/'
     });
-    
   }
   
   return response;
@@ -24,11 +102,12 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - api (API routes)
+     * - api (API routes) 
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - sitemap.xml, robots.txt (SEO files)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
   ],
 };

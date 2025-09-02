@@ -93,6 +93,7 @@ model Post {
   id        String     @id @default(cuid())
   title     String
   content   String
+  slug      String?    // 🔍 URL-friendly version du titre pour SEO
   imageUrl  String?
   isPinned  Boolean    @default(false)
   pinnedAt  DateTime?  // 📌 Date d'épinglage (max 3 posts épinglés par boutique)
@@ -112,6 +113,7 @@ model Post {
   reactions Reaction[]
   poll      Poll?
 
+  @@unique([shopId, slug]) // Slug unique par shop pour SEO
   @@map("posts")
 }
 

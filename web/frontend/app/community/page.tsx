@@ -445,7 +445,7 @@ export default function CommunityPage() {
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <Link 
-                          href={`/community/${post.id}`}
+                          href={`/community/posts/${post.slug || post.id}`}
                           className="group"
                         >
                           <CardTitle className="text-xl mb-2 group-hover:text-primary transition-colors cursor-pointer line-clamp-2">
@@ -504,7 +504,7 @@ export default function CommunityPage() {
                         onReactionUpdate={fetchPosts}
                       />
                     </div>
-                    <Link href={`/community/${post.id}`}>
+                    <Link href={`/community/posts/${post.slug || post.id}`}>
                       <Button variant="outline" size="sm">
                         Voir le post
                       </Button>

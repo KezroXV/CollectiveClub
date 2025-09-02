@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+"use client";
+
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -271,7 +273,7 @@ const AuthorSidebar = ({
           <div className="space-y-3">
             {authorRecentPosts.length > 0 ? (
               authorRecentPosts.slice(0, 2).map((authorPost) => (
-                <Link key={authorPost.id} href={`/community/${authorPost.id}`}>
+                <Link key={authorPost.id} href={`/community/posts/${authorPost.slug || authorPost.id}`}>
                   <Card className="p-0 my-2.5 hover:shadow-md transition-shadow cursor-pointer">
                     <CardContent className="p-4">
                       <h5 className="text-[13px] font-medium text-gray-900 mb-2 line-clamp-2">
@@ -309,7 +311,7 @@ const AuthorSidebar = ({
           <div className="space-y-3">
             {authorRecentComments.length > 0 ? (
               authorRecentComments.slice(0, 2).map((comment) => (
-                <Link key={comment.id} href={`/community/${comment.post.id}`}>
+                <Link key={comment.id} href={`/community/posts/${comment.post.slug || comment.post.id}`}>
                   <Card className="p-0 my-2.5 hover:shadow-md transition-shadow cursor-pointer">
                     <CardContent className="p-4">
                       <p className="text-sm text-gray-700 mb-2 line-clamp-2">

@@ -114,7 +114,7 @@ export default function PostCard({
         </Button>
 
         <Link
-          href={`/community?postId=${post.id}`}
+          href={`/community/posts/${post.slug || post.id}`}
           className="flex items-center gap-2 text-gray-500 hover:text-primary transition-colors group"
         >
           <Button
