@@ -18,20 +18,128 @@ export async function GET(
 
     const { postId } = await params;
 
-    const comments = await prisma.comment.findMany({
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('userId'); // Pour récupérer les réactions utilisateur
+
+    // Récupérer tous les commentaires principaux (sans parentId)
+    const topLevelComments = await prisma.comment.findMany({
       where: { 
         postId,
-        shopId // ✅ FILTRER PAR BOUTIQUE
+        shopId,
+        OR: [
+          { parentId: null },
+          { parentId: { equals: null } }
+        ]
       },
       include: {
         author: {
           select: { id: true, name: true, email: true, avatar: true },
         },
+        reactions: {
+          select: {
+            type: true,
+            userId: true
+          }
+        },
+        _count: {
+          select: { reactions: true }
+        }
       },
       orderBy: { createdAt: "asc" },
     });
 
-    return NextResponse.json(comments);
+    // Récupérer toutes les réponses et les organiser par parentId
+    const replies = await prisma.comment.findMany({
+      where: { 
+        postId,
+        shopId,
+        parentId: { not: null }
+      },
+      include: {
+        author: {
+          select: { id: true, name: true, email: true, avatar: true },
+        },
+        reactions: {
+          select: {
+            type: true,
+            userId: true
+          }
+        },
+        _count: {
+          select: { reactions: true }
+        }
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
+    // Organiser les réponses par parentId
+    const repliesByParent = new Map();
+    for (const reply of replies) {
+      const parentId = (reply as any).parentId;
+      if (!repliesByParent.has(parentId)) {
+        repliesByParent.set(parentId, []);
+      }
+      repliesByParent.get(parentId).push(reply);
+    }
+
+    // Ajouter les réponses aux commentaires principaux
+    const comments = topLevelComments.map(comment => ({
+      ...comment,
+      replies: repliesByParent.get(comment.id) || [],
+      _count: {
+        ...comment._count,
+        replies: (repliesByParent.get(comment.id) || []).length
+      }
+    }));
+
+    // Traiter les réactions pour chaque commentaire
+    const commentsWithReactions = comments.map((comment: any) => {
+      const commentReactionsGrouped = comment.reactions.reduce((acc: any, reaction: any) => {
+        const existingType = acc.find((r: any) => r.type === reaction.type);
+        if (existingType) {
+          existingType.count += 1;
+        } else {
+          acc.push({ type: reaction.type, count: 1 });
+        }
+        return acc;
+      }, []);
+
+      const commentUserReaction = userId 
+        ? comment.reactions.find((r: any) => r.userId === userId)?.type 
+        : null;
+
+      // Traiter les réactions pour chaque réponse
+      const repliesWithReactions = comment.replies.map((reply: any) => {
+        const replyReactionsGrouped = reply.reactions.reduce((acc: any, reaction: any) => {
+          const existingType = acc.find((r: any) => r.type === reaction.type);
+          if (existingType) {
+            existingType.count += 1;
+          } else {
+            acc.push({ type: reaction.type, count: 1 });
+          }
+          return acc;
+        }, []);
+
+        const replyUserReaction = userId 
+          ? reply.reactions.find((r: any) => r.userId === userId)?.type 
+          : null;
+
+        return {
+          ...reply,
+          reactions: replyReactionsGrouped,
+          userReaction: replyUserReaction
+        };
+      });
+
+      return {
+        ...comment,
+        reactions: commentReactionsGrouped,
+        userReaction: commentUserReaction,
+        replies: repliesWithReactions
+      };
+    });
+
+    return NextResponse.json(commentsWithReactions);
   } catch (error) {
     console.error("Error fetching comments:", error);
     return NextResponse.json(
@@ -53,7 +161,7 @@ export async function POST(
 
     const { postId } = await params;
     const body = await request.json();
-    const { content, authorId } = body;
+    const { content, authorId, parentId } = body;
 
     if (!content || !authorId) {
       return NextResponse.json(
@@ -62,17 +170,47 @@ export async function POST(
       );
     }
 
+    // Si parentId est fourni, vérifier que le commentaire parent existe
+    if (parentId) {
+      const parentComment = await prisma.comment.findFirst({
+        where: { id: parentId, shopId, postId }
+      });
+      
+      if (!parentComment) {
+        return NextResponse.json(
+          { error: "Parent comment not found" },
+          { status: 404 }
+        );
+      }
+    }
+
+    // Créer le commentaire avec parentId
+    const commentData: any = {
+      content,
+      authorId,
+      postId,
+      shopId,
+    };
+
+    if (parentId) {
+      commentData.parentId = parentId;
+    }
+
     const comment = await prisma.comment.create({
-      data: {
-        content,
-        authorId,
-        postId,
-        shopId, // ✅ ASSOCIER À LA BOUTIQUE
-      },
+      data: commentData,
       include: {
         author: {
           select: { id: true, name: true, email: true, avatar: true },
         },
+        reactions: {
+          select: {
+            type: true,
+            userId: true
+          }
+        },
+        _count: {
+          select: { reactions: true }
+        }
       },
     });
 
@@ -84,7 +222,25 @@ export async function POST(
       // Ne pas faire échouer la création du commentaire si l'attribution des points échoue
     }
 
-    return NextResponse.json(comment, { status: 201 });
+    // Traiter les réactions du nouveau commentaire
+    const commentReactionsGrouped = comment.reactions.reduce((acc: any, reaction: any) => {
+      const existingType = acc.find((r: any) => r.type === reaction.type);
+      if (existingType) {
+        existingType.count += 1;
+      } else {
+        acc.push({ type: reaction.type, count: 1 });
+      }
+      return acc;
+    }, []);
+
+    const responseComment = {
+      ...comment,
+      reactions: commentReactionsGrouped,
+      userReaction: null, // Nouveau commentaire, pas de réaction utilisateur
+      replies: [] // Nouveau commentaire, pas de réponses
+    };
+
+    return NextResponse.json(responseComment, { status: 201 });
   } catch (error) {
     console.error("Error creating comment:", error);
     return NextResponse.json(

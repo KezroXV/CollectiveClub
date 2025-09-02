@@ -65,6 +65,11 @@ interface Comment {
   createdAt: string;
   reactions?: ReactionData[];
   userReaction?: ReactionType | null;
+  replies?: Comment[];
+  _count?: {
+    reactions: number;
+    replies?: number;
+  };
 }
 
 interface AuthorPost {
@@ -451,8 +456,10 @@ const PostDetailPage = () => {
                       currentUser={currentUser}
                       newComment={newComment}
                       submittingComment={submittingComment}
+                      postId={post.id}
                       onNewCommentChange={setNewComment}
                       onSubmitComment={handleSubmitComment}
+                      onCommentAdded={fetchPostData}
                       getInitials={getInitials}
                       formatRelativeDate={formatRelativeDate}
                     />

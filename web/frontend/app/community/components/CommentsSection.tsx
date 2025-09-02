@@ -1,8 +1,8 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
-import CommentReactions from "@/components/CommentReactions";
+import CommentItem from "./CommentItem";
 
 type ReactionType = "LIKE" | "LOVE" | "LAUGH" | "WOW" | "APPLAUSE";
 
@@ -23,6 +23,11 @@ interface Comment {
   createdAt: string;
   reactions?: ReactionData[];
   userReaction?: ReactionType | null;
+  replies?: Comment[];
+  _count?: {
+    reactions: number;
+    replies?: number;
+  };
 }
 
 interface CommentsSectionProps {
@@ -35,8 +40,10 @@ interface CommentsSectionProps {
   } | null;
   newComment: string;
   submittingComment: boolean;
+  postId: string;
   onNewCommentChange: (value: string) => void;
   onSubmitComment: (e: React.FormEvent) => void;
+  onCommentAdded: () => void;
   getInitials: (name: string) => string;
   formatRelativeDate: (dateString: string) => string;
 }
@@ -47,8 +54,10 @@ const CommentsSection = ({
   currentUser,
   newComment,
   submittingComment,
+  postId,
   onNewCommentChange,
   onSubmitComment,
+  onCommentAdded,
   getInitials,
   formatRelativeDate,
 }: CommentsSectionProps) => {
@@ -87,38 +96,18 @@ const CommentsSection = ({
       )}
 
       {/* Comments List */}
-      <div className="space-y-4">
+      <div className="space-y-6">
         {comments.length > 0 ? (
           comments.map((comment) => (
-            <div key={comment.id} className="flex gap-3">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={comment.author.avatar} />
-                <AvatarFallback className="text-xs">
-                  {getInitials(comment.author.name)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 bg-gray-50 rounded-lg p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-medium text-sm">
-                    {comment.author.name}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {formatRelativeDate(comment.createdAt)}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-700 mb-2">
-                  {comment.content}
-                </p>
-                {/* Réactions du commentaire */}
-                <CommentReactions
-                  commentId={comment.id}
-                  shopId={currentUser?.shopId || ""}
-                  userId={currentUser?.id}
-                  reactions={comment.reactions || []}
-                  userReaction={comment.userReaction}
-                />
-              </div>
-            </div>
+            <CommentItem
+              key={comment.id}
+              comment={comment}
+              currentUser={currentUser}
+              postId={postId}
+              getInitials={getInitials}
+              formatRelativeDate={formatRelativeDate}
+              onCommentAdded={onCommentAdded}
+            />
           ))
         ) : (
           <p className="text-gray-500 text-center py-8">

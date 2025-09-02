@@ -51,20 +51,6 @@ export async function GET(
             },
           },
         },
-        comments: {
-          include: {
-            author: {
-              select: { id: true, name: true, email: true, avatar: true },
-            },
-            reactions: {
-              select: {
-                type: true,
-                userId: true
-              }
-            }
-          },
-          orderBy: { createdAt: "desc" },
-        },
         reactions: true,
         _count: {
           select: { comments: true, reactions: true },
@@ -75,6 +61,78 @@ export async function GET(
     if (!post) {
       return NextResponse.json({ error: "Post not found in this shop" }, { status: 404 });
     }
+
+    // 🔧 FIX: Récupérer les commentaires avec structure hiérarchique (commentaires + réponses imbriquées)
+    // Récupérer tous les commentaires principaux (sans parentId)
+    const topLevelComments = await prisma.comment.findMany({
+      where: { 
+        postId,
+        shopId,
+        OR: [
+          { parentId: null },
+          { parentId: { equals: null } }
+        ]
+      },
+      include: {
+        author: {
+          select: { id: true, name: true, email: true, avatar: true },
+        },
+        reactions: {
+          select: {
+            type: true,
+            userId: true
+          }
+        },
+        _count: {
+          select: { reactions: true }
+        }
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
+    // Récupérer toutes les réponses et les organiser par parentId
+    const replies = await prisma.comment.findMany({
+      where: { 
+        postId,
+        shopId,
+        parentId: { not: null }
+      },
+      include: {
+        author: {
+          select: { id: true, name: true, email: true, avatar: true },
+        },
+        reactions: {
+          select: {
+            type: true,
+            userId: true
+          }
+        },
+        _count: {
+          select: { reactions: true }
+        }
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
+    // Organiser les réponses par parentId
+    const repliesByParent = new Map();
+    for (const reply of replies) {
+      const parentId = (reply as any).parentId;
+      if (!repliesByParent.has(parentId)) {
+        repliesByParent.set(parentId, []);
+      }
+      repliesByParent.get(parentId).push(reply);
+    }
+
+    // Ajouter les réponses aux commentaires principaux
+    const comments = topLevelComments.map(comment => ({
+      ...comment,
+      replies: repliesByParent.get(comment.id) || [],
+      _count: {
+        ...comment._count,
+        replies: (repliesByParent.get(comment.id) || []).length
+      }
+    }));
 
     // Récupérer les posts récents de l'auteur (excluant le post actuel)
     const authorRecentPosts = await prisma.post.findMany({
@@ -138,8 +196,8 @@ export async function GET(
       ? post.reactions.find((r: any) => r.userId === userId)?.type 
       : null;
 
-    // Traiter les réactions des commentaires
-    const commentsWithReactions = post.comments.map((comment: any) => {
+    // Traiter les réactions pour chaque commentaire et ses réponses
+    const commentsWithReactions = comments.map((comment: any) => {
       const commentReactionsGrouped = comment.reactions.reduce((acc: any, reaction: any) => {
         const existingType = acc.find((r: any) => r.type === reaction.type);
         if (existingType) {
@@ -154,10 +212,34 @@ export async function GET(
         ? comment.reactions.find((r: any) => r.userId === userId)?.type 
         : null;
 
+      // Traiter les réactions pour chaque réponse
+      const repliesWithReactions = comment.replies.map((reply: any) => {
+        const replyReactionsGrouped = reply.reactions.reduce((acc: any, reaction: any) => {
+          const existingType = acc.find((r: any) => r.type === reaction.type);
+          if (existingType) {
+            existingType.count += 1;
+          } else {
+            acc.push({ type: reaction.type, count: 1 });
+          }
+          return acc;
+        }, []);
+
+        const replyUserReaction = userId 
+          ? reply.reactions.find((r: any) => r.userId === userId)?.type 
+          : null;
+
+        return {
+          ...reply,
+          reactions: replyReactionsGrouped,
+          userReaction: replyUserReaction
+        };
+      });
+
       return {
         ...comment,
         reactions: commentReactionsGrouped,
-        userReaction: commentUserReaction
+        userReaction: commentUserReaction,
+        replies: repliesWithReactions
       };
     });
 
