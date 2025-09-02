@@ -142,7 +142,12 @@ const PostDetailPage = () => {
   const router = useRouter();
   const [data, setData] = useState<PostDetailData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<{
+    id: string;
+    name: string;
+    shopId: string;
+    role?: string;
+  } | null>(null);
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
