@@ -24,6 +24,7 @@ export default function DashboardPage() {
     id: string;
     shopId: string;
     name?: string;
+    role?: string;
   } | null>(null);
   const [shopId, setShopId] = useState<string | undefined>();
   const { loadUserTheme } = useTheme();
@@ -160,6 +161,7 @@ export default function DashboardPage() {
               onClose={() => setShowPostsModal(false)}
               userId={currentUser?.id}
               shopId={shopId}
+              userRole={currentUser?.role}
             />
 
             <ClientsModal

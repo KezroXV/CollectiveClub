@@ -20,6 +20,8 @@ import {
   Trash2,
   AlertTriangle,
   Loader2,
+  Pin,
+  PinOff,
 } from "lucide-react";
 
 interface PostData {
@@ -27,6 +29,7 @@ interface PostData {
   title: string;
   content: string;
   createdAt: string;
+  isPinned?: boolean;
   author: {
     name: string;
     email: string;
@@ -47,12 +50,14 @@ interface PostsModalProps {
   onClose: () => void;
   userId?: string;
   shopId?: string;
+  userRole?: string;
 }
 
 export default function PostsModal({
   isOpen,
   onClose,
   userId,
+  userRole,
 }: PostsModalProps) {
   const [posts, setPosts] = useState<PostData[]>([]);
   const [filteredPosts, setFilteredPosts] = useState<PostData[]>([]);
@@ -63,6 +68,7 @@ export default function PostsModal({
     title: string;
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [pinningPostId, setPinningPostId] = useState<string | null>(null);
 
   const fetchPosts = async () => {
     if (!isOpen) return;
@@ -118,7 +124,7 @@ export default function PostsModal({
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({ userId }),
+        body: JSON.stringify({ userId, userRole }),
       });
 
       if (!response.ok) {
@@ -133,6 +139,42 @@ export default function PostsModal({
       console.error("Error deleting post:", error);
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleTogglePin = async (postId: string, isPinned: boolean) => {
+    if (!userId || !["ADMIN", "MODERATOR"].includes(userRole || "")) return;
+
+    try {
+      setPinningPostId(postId);
+      const endpoint = `/api/posts/${postId}/pin`;
+      const method = isPinned ? "DELETE" : "POST";
+
+      const response = await fetch(endpoint, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          userId,
+          userRole,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Erreur lors de l'épinglage");
+      }
+
+      // Mettre à jour le post dans la liste locale
+      const updatePost = (post: PostData) =>
+        post.id === postId ? { ...post, isPinned: !isPinned } : post;
+
+      setPosts((prev) => prev.map(updatePost));
+      setFilteredPosts((prev) => prev.map(updatePost));
+    } catch (error) {
+      console.error("Error toggling pin:", error);
+    } finally {
+      setPinningPostId(null);
     }
   };
 
@@ -216,16 +258,16 @@ export default function PostsModal({
                   className="hover:shadow-md transition-all duration-200"
                 >
                   <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start mb-0 justify-between">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between mb-2">
-                          <h4 className="font-semibold text-gray-900 truncate">
+                        <div className="flex items-start justify-between ">
+                          <h4 className="font-semibold mb-2 text-gray-900 truncate">
                             {post.title}
                           </h4>
                           {post.category && (
                             <Badge
                               variant="secondary"
-                              className="ml-2 shrink-0"
+                              className="ml-2 my-auto  shrink-0"
                               style={{
                                 backgroundColor: `${post.category.color}20`,
                                 color: post.category.color,
@@ -245,34 +287,64 @@ export default function PostsModal({
                           <span>{formatDate(post.createdAt)}</span>
                         </div>
 
-                        <div className="flex items-center gap-4 mt-2">
-                          <div className="flex items-center gap-1 text-sm text-gray-600">
-                            <Heart className="h-4 w-4" />
-                            {post._count.reactions}
-                          </div>
-                          <div className="flex items-center gap-1 text-sm text-gray-600">
-                            <MessageSquare className="h-4 w-4" />
-                            {post._count.comments}
-                          </div>
-                          {post._count.views !== undefined && (
+                        <div className="flex items-center justify-between mt-2">
+                          <div className="flex items-center gap-4">
                             <div className="flex items-center gap-1 text-sm text-gray-600">
-                              <Eye className="h-4 w-4" />
-                              {post._count.views}
+                              <Heart className="h-4 w-4" />
+                              {post._count.reactions}
                             </div>
-                          )}
+                            <div className="flex items-center gap-1 text-sm text-gray-600">
+                              <MessageSquare className="h-4 w-4" />
+                              {post._count.comments}
+                            </div>
+                            {post._count.views !== undefined && (
+                              <div className="flex items-center gap-1 text-sm text-gray-600">
+                                <Eye className="h-4 w-4" />
+                                {post._count.views}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
 
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          setDeleteConfirm({ id: post.id, title: post.title })
-                        }
-                        className="ml-4 text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-2 ml-4">
+                        {/* Bouton Pin/Unpin pour admin/mod */}
+                        {["ADMIN", "MODERATOR"].includes(userRole || "") && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              handleTogglePin(post.id, post.isPinned || false)
+                            }
+                            disabled={pinningPostId === post.id}
+                            className={`${
+                              post.isPinned
+                                ? "text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                : "text-gray-600 hover:text-gray-700 hover:bg-gray-50"
+                            }`}
+                            title={post.isPinned ? "Désépingler" : "Épingler"}
+                          >
+                            {pinningPostId === post.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : post.isPinned ? (
+                              <PinOff className="h-4 w-4" />
+                            ) : (
+                              <Pin className="h-4 w-4" />
+                            )}
+                          </Button>
+                        )}
+
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            setDeleteConfirm({ id: post.id, title: post.title })
+                          }
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
