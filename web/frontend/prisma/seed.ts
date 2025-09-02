@@ -91,42 +91,56 @@ async function main() {
       name: "Shop Owner",
       role: "ADMIN",
       isOwner: true,
+      isBanned: false,
     },
     {
       email: "admin@collective-club.com",
       name: "Admin User",
       role: "ADMIN",
       isOwner: false,
+      isBanned: false,
     },
     {
       email: "moderator@collective-club.com",
       name: "Moderator User",
       role: "MODERATOR",
       isOwner: false,
+      isBanned: false,
     },
     {
       email: "member1@collective-club.com",
       name: "Marie Martin",
       role: "MEMBER",
       isOwner: false,
+      isBanned: false,
     },
     {
       email: "member2@collective-club.com",
       name: "Pierre Dupont",
       role: "MEMBER",
       isOwner: false,
+      isBanned: true, // 🚫 Utilisateur banni pour test
     },
     {
       email: "member3@collective-club.com",
       name: "Sophie Bernard",
       role: "MEMBER",
       isOwner: false,
+      isBanned: false,
+    },
+    {
+      email: "banned-user@collective-club.com",
+      name: "Utilisateur Banni",
+      role: "MEMBER",
+      isOwner: false,
+      isBanned: true, // 🚫 Autre utilisateur banni pour test
     },
   ];
 
   let ownerUser = null;
   let adminUser = null;
 
+  // Première passe : créer tous les utilisateurs sans les infos de bannissement
   for (const userData of testUsers) {
     const user = await prisma.user.upsert({
       where: {
@@ -156,6 +170,25 @@ async function main() {
 
     if (userData.email === "admin@collective-club.com") {
       adminUser = user;
+    }
+  }
+
+  // Deuxième passe : mettre à jour les utilisateurs bannis avec bannedBy
+  for (const userData of testUsers) {
+    if (userData.isBanned) {
+      await prisma.user.update({
+        where: {
+          shopId_email: {
+            shopId: defaultShop.id,
+            email: userData.email,
+          },
+        },
+        data: {
+          isBanned: true,
+          bannedAt: new Date(),
+          bannedBy: ownerUser?.id,
+        },
+      });
     }
   }
 

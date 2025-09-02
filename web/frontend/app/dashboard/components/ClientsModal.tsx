@@ -20,6 +20,9 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
+  Ban,
+  CheckCircle,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -30,6 +33,7 @@ interface MemberData {
   role: string;
   createdAt: string;
   isActive: boolean;
+  isBanned?: boolean;
   postsCount: number;
   commentsCount: number;
   reactionsCount: number;
@@ -48,12 +52,14 @@ interface ClientsModalProps {
   onClose: () => void;
   userId?: string;
   shopId?: string;
+  userRole?: string;
 }
 
 export default function ClientsModal({
   isOpen,
   onClose,
   userId,
+  userRole,
 }: ClientsModalProps) {
   const [members, setMembers] = useState<MemberData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -62,6 +68,12 @@ export default function ClientsModal({
   const [totalPages, setTotalPages] = useState(1);
   const [totalMembers, setTotalMembers] = useState(0);
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [banningUserId, setBanningUserId] = useState<string | null>(null);
+  const [banConfirm, setBanConfirm] = useState<{
+    id: string;
+    name: string;
+    isBanned: boolean;
+  } | null>(null);
 
   const ITEMS_PER_PAGE = 10;
 
@@ -145,6 +157,42 @@ export default function ClientsModal({
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
     fetchMembers(newPage, debouncedSearch);
+  };
+
+  const handleToggleBan = async (memberId: string, isBanned: boolean) => {
+    if (!userId || !['ADMIN', 'MODERATOR'].includes(userRole || '')) return;
+    
+    try {
+      setBanningUserId(memberId);
+      const endpoint = `/api/users/${memberId}/ban`;
+      const method = isBanned ? 'DELETE' : 'POST';
+      
+      const response = await fetch(endpoint, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          userId,
+          userRole,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erreur lors du bannissement');
+      }
+
+      // Mettre à jour le membre dans la liste locale
+      const updateMember = (member: MemberData) => 
+        member.id === memberId ? { ...member, isBanned: !isBanned } : member;
+      
+      setMembers((prev) => prev.map(updateMember));
+      setBanConfirm(null);
+    } catch (error) {
+      console.error('Error toggling ban:', error);
+    } finally {
+      setBanningUserId(null);
+    }
   };
 
   useEffect(() => {
@@ -239,14 +287,21 @@ export default function ClientsModal({
                             >
                               {getRoleLabel(member.role)}
                             </Badge>
-                            {member.isActive && (
+                            {member.isBanned ? (
+                              <Badge
+                                variant="destructive"
+                                className="text-xs bg-red-100 text-red-800 border-red-200"
+                              >
+                                Banni
+                              </Badge>
+                            ) : member.isActive ? (
                               <Badge
                                 variant="secondary"
                                 className="text-xs bg-green-100 text-green-800"
                               >
                                 Actif
                               </Badge>
-                            )}
+                            ) : null}
                           </div>
                         </div>
 
@@ -278,6 +333,36 @@ export default function ClientsModal({
                           </div>
                         </div>
                       </div>
+
+                      {/* Actions de modération */}
+                      {['ADMIN', 'MODERATOR'].includes(userRole || '') && member.role !== 'ADMIN' && (
+                        <div className="flex items-center gap-2 ml-4">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setBanConfirm({
+                              id: member.id,
+                              name: member.name,
+                              isBanned: member.isBanned || false
+                            })}
+                            disabled={banningUserId === member.id}
+                            className={`${
+                              member.isBanned
+                                ? 'text-green-600 hover:text-green-700 hover:bg-green-50'
+                                : 'text-red-600 hover:text-red-700 hover:bg-red-50'
+                            }`}
+                            title={member.isBanned ? 'Débannir' : 'Bannir'}
+                          >
+                            {banningUserId === member.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : member.isBanned ? (
+                              <CheckCircle className="h-4 w-4" />
+                            ) : (
+                              <Ban className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -339,6 +424,51 @@ export default function ClientsModal({
             </div>
           )}
         </div>
+
+        {/* Modal de confirmation de ban/unban */}
+        {banConfirm && (
+          <Dialog open={true} onOpenChange={() => setBanConfirm(null)}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className={`flex items-center gap-2 ${
+                  banConfirm.isBanned ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  <AlertTriangle className="h-5 w-5" />
+                  {banConfirm.isBanned ? 'Débannir' : 'Bannir'} l'utilisateur
+                </DialogTitle>
+                <DialogDescription>
+                  Êtes-vous sûr de vouloir {banConfirm.isBanned ? 'débannir' : 'bannir'} l'utilisateur "{banConfirm.name}" ?
+                  {!banConfirm.isBanned && (
+                    <><br />L'utilisateur ne pourra plus se connecter ni interagir avec la communauté.</>
+                  )}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex justify-end gap-2 mt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setBanConfirm(null)}
+                  disabled={banningUserId !== null}
+                >
+                  Annuler
+                </Button>
+                <Button
+                  variant={banConfirm.isBanned ? "default" : "destructive"}
+                  onClick={() => handleToggleBan(banConfirm.id, banConfirm.isBanned)}
+                  disabled={banningUserId !== null}
+                >
+                  {banningUserId !== null ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      {banConfirm.isBanned ? 'Débannissement...' : 'Bannissement...'}
+                    </>
+                  ) : (
+                    banConfirm.isBanned ? 'Débannir' : 'Bannir'
+                  )}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
       </DialogContent>
     </Dialog>
   );

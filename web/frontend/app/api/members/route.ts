@@ -13,6 +13,7 @@ interface MemberResponse {
   createdAt: string;
   isActive: boolean;
   isOwner?: boolean;
+  isBanned?: boolean;
   postsCount: number;
   commentsCount: number;
   reactionsCount: number;
@@ -87,6 +88,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<PaginatedM
         name: true,
         email: true,
         role: true,
+        isBanned: true,
         createdAt: true,
         _count: {
           select: {
@@ -112,6 +114,7 @@ export async function GET(request: NextRequest): Promise<NextResponse<PaginatedM
       createdAt: user.createdAt.toISOString(),
       isActive: (user._count.posts + user._count.comments + user._count.reactions) > 0,
       isOwner: user.id === shop.ownerId, // Déterminer si c'est le propriétaire du shop
+      isBanned: user.isBanned,
       postsCount: user._count.posts,
       commentsCount: user._count.comments,
       reactionsCount: user._count.reactions,

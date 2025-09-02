@@ -169,6 +169,7 @@ export default function DashboardPage() {
               onClose={() => setShowClientsModal(false)}
               userId={currentUser?.id}
               shopId={shopId}
+              userRole={currentUser?.role}
             />
 
             {/* Roles modal removed; rendered inline above */}
