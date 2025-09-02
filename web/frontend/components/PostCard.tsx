@@ -67,14 +67,6 @@ export default function PostCard({
     <div className={`pb-8 ${!isLast ? "border-b border-gray-100" : ""}`}>
       {/* Post Title and Content */}
       <div className="mb-6 pt-7 pl-16 relative">
-        {/* Indicateur post épinglé */}
-        {post?.isPinned && (
-          <div className="absolute -top-2 -left-2 bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 shadow-sm">
-            <Pin className="h-3 w-3" />
-            Épinglé
-          </div>
-        )}
-        
         <h2 className="text-[10px] md:text-[13px] font-semibold text-gray-900 mb-2 leading-tight line-clamp-1">
           {post.title}
         </h2>

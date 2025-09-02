@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     ensureShopIsolation(shopId);
 
     const { searchParams } = new URL(request.url);
-    const filter = searchParams.get('filter'); // Pour filtre "pinned"
+    const pinnedOnly = searchParams.get('pinnedOnly'); // Pour filtre "pinned"
     const sortBy = searchParams.get('sortBy') || 'newest';
     const categoryId = searchParams.get('categoryId');
     const search = searchParams.get('search');
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     // Construction de la clause where
     const whereClause: any = { shopId };
 
-    if (filter === 'pinned') {
+    if (pinnedOnly === 'true') {
       whereClause.isPinned = true;
     }
 
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     const orderBy: any[] = [];
     
     // Toujours mettre les épinglés en premier (sauf si on filtre uniquement les épinglés)
-    if (filter !== 'pinned') {
+    if (pinnedOnly !== 'true') {
       orderBy.push({ isPinned: 'desc' });
     }
     

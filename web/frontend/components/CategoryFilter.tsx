@@ -283,7 +283,7 @@ export default function CategoryFilter({
           {/* Bouton de filtre pour les posts épinglés */}
           <button
             onClick={() => onPinnedFilterChange?.(!showPinnedOnly)}
-            className={`flex items-center gap-2.5 px-2.5 py-1 rounded-2xl whitespace-nowrap transition-all text-xs font-medium border ${
+            className={`flex items-center gap-2.5 px-2.5 py-2.5 rounded-2xl whitespace-nowrap transition-all text-xs font-medium border ${
               showPinnedOnly
                 ? "bg-blue-50 text-blue-700 border-blue-200"
                 : "bg-white text-gray-900 border-gray-300 hover:bg-gray-50"
@@ -294,16 +294,6 @@ export default function CategoryFilter({
                 showPinnedOnly ? "text-blue-600" : "text-gray-500"
               }`}
             />
-            <span>Épinglés</span>
-            {pinnedCount > 0 && (
-              <span className={`text-xs px-2 py-0.5 rounded-full ${
-                showPinnedOnly 
-                  ? "bg-blue-100 text-blue-600" 
-                  : "bg-gray-100 text-gray-500"
-              }`}>
-                {pinnedCount}
-              </span>
-            )}
           </button>
         </div>
       </div>

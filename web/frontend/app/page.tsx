@@ -53,6 +53,8 @@ export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
+  const [showPinnedOnly, setShowPinnedOnly] = useState(false);
+  const [pinnedCount, setPinnedCount] = useState(0);
 
   const searchParams = useSearchParams();
   const [sortBy, setSortBy] = useState("newest");
@@ -108,11 +110,18 @@ export default function HomePage() {
   // Fetch posts
   const fetchPosts = async () => {
     try {
-      const response = await fetch("/api/posts");
+      const params = new URLSearchParams();
+      if (showPinnedOnly) {
+        params.append('pinnedOnly', 'true');
+      }
+      
+      const response = await fetch(`/api/posts?${params}`);
       const data = await response.json();
       const postsArray = data.posts || data; // Support nouvelle et ancienne structure
+      const pinnedPostsCount = data.pinnedCount || 0;
       setPosts(postsArray);
       setFilteredPosts(postsArray);
+      setPinnedCount(pinnedPostsCount);
     } catch (error) {
       console.error("Error fetching posts:", error);
     }
@@ -120,7 +129,7 @@ export default function HomePage() {
 
   useEffect(() => {
     fetchPosts();
-  }, []);
+  }, [showPinnedOnly]);
 
   // Filter posts
   // Modifier le filtering par catégorie :
@@ -188,6 +197,9 @@ export default function HomePage() {
                 onCreatePost={() => setShowCreateModal(true)}
                 sortBy={sortBy}
                 onSortChange={setSortBy}
+                showPinnedOnly={showPinnedOnly}
+                onPinnedFilterChange={setShowPinnedOnly}
+                pinnedCount={pinnedCount}
               />
               {/* Séparateur entre filtres et posts */}
               <div className="w-full h-px bg-gray-200 "></div>
