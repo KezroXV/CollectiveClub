@@ -1,0 +1,192 @@
+import { NextRequest, NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
+import { getShopId, ensureShopIsolation } from "@/lib/shopIsolation";
+
+const prisma = new PrismaClient();
+
+// DELETE /api/users/[userId] - Supprimer un utilisateur définitivement
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { userId: string } }
+) {
+  try {
+    console.log('DELETE USER API: Starting request');
+    
+    // 🏪 ISOLATION MULTI-TENANT
+    const shopId = await getShopId(request);
+    ensureShopIsolation(shopId);
+    console.log('DELETE USER API: ShopId obtained', { shopId });
+
+    const { userId: targetUserId } = await params;
+    const body = await request.json();
+    const { userId: currentUserId, userRole } = body;
+    
+    console.log('DELETE USER API: Request data', { targetUserId, currentUserId, userRole });
+
+    if (!currentUserId || !userRole) {
+      return NextResponse.json(
+        { error: "User ID and role are required" },
+        { status: 400 }
+      );
+    }
+
+    // Vérifier les permissions - seulement les ADMIN peuvent supprimer
+    if (userRole !== 'ADMIN') {
+      console.log('DELETE USER API: Permission denied', { userRole });
+      return NextResponse.json(
+        { error: "Seuls les administrateurs peuvent supprimer des utilisateurs" },
+        { status: 403 }
+      );
+    }
+
+    console.log('DELETE USER API: Permissions OK');
+
+    // Vérifier que l'utilisateur cible existe et appartient à la bonne boutique
+    const targetUser = await prisma.user.findFirst({
+      where: { 
+        id: targetUserId, 
+        shopId 
+      }
+    });
+
+    console.log('DELETE USER API: Target user query result', { found: !!targetUser, targetUserId, shopId });
+
+    if (!targetUser) {
+      console.log('DELETE USER API: Target user not found');
+      return NextResponse.json(
+        { error: "Utilisateur non trouvé dans cette boutique" },
+        { status: 404 }
+      );
+    }
+
+    // Empêcher la suppression d'un administrateur par un autre admin
+    if (targetUser.role === 'ADMIN') {
+      return NextResponse.json(
+        { error: "Impossible de supprimer un administrateur" },
+        { status: 400 }
+      );
+    }
+
+    // Empêcher l'auto-suppression
+    if (targetUserId === currentUserId) {
+      return NextResponse.json(
+        { error: "Vous ne pouvez pas vous supprimer vous-même" },
+        { status: 400 }
+      );
+    }
+
+    console.log('DELETE USER API: User found, proceeding with deletion');
+
+    // Supprimer l'utilisateur (cascade supprimera automatiquement posts, comments, etc.)
+    await prisma.user.delete({
+      where: { id: targetUserId }
+    });
+
+    return NextResponse.json({ 
+      success: true, 
+      message: "Utilisateur supprimé définitivement"
+    });
+
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    return NextResponse.json(
+      { error: "Failed to delete user" },
+      { status: 500 }
+    );
+  }
+}
+
+// PUT /api/users/[userId] - Modifier le rôle d'un utilisateur
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { userId: string } }
+) {
+  try {
+    console.log('UPDATE USER ROLE API: Starting request');
+    
+    // 🏪 ISOLATION MULTI-TENANT
+    const shopId = await getShopId(request);
+    ensureShopIsolation(shopId);
+    console.log('UPDATE USER ROLE API: ShopId obtained', { shopId });
+
+    const { userId: targetUserId } = await params;
+    const body = await request.json();
+    const { userId: currentUserId, userRole, newRole } = body;
+    
+    console.log('UPDATE USER ROLE API: Request data', { targetUserId, currentUserId, userRole, newRole });
+
+    if (!currentUserId || !userRole || !newRole) {
+      return NextResponse.json(
+        { error: "User ID, role and new role are required" },
+        { status: 400 }
+      );
+    }
+
+    // Vérifier les permissions - seulement les ADMIN peuvent modifier les rôles
+    if (userRole !== 'ADMIN') {
+      console.log('UPDATE USER ROLE API: Permission denied', { userRole });
+      return NextResponse.json(
+        { error: "Seuls les administrateurs peuvent modifier les rôles" },
+        { status: 403 }
+      );
+    }
+
+    // Vérifier que le nouveau rôle est valide
+    const validRoles = ['ADMIN', 'MODERATOR', 'MEMBER'];
+    if (!validRoles.includes(newRole)) {
+      return NextResponse.json(
+        { error: "Rôle invalide" },
+        { status: 400 }
+      );
+    }
+
+    // Vérifier que l'utilisateur cible existe et appartient à la bonne boutique
+    const targetUser = await prisma.user.findFirst({
+      where: { 
+        id: targetUserId, 
+        shopId 
+      }
+    });
+
+    if (!targetUser) {
+      return NextResponse.json(
+        { error: "Utilisateur non trouvé dans cette boutique" },
+        { status: 404 }
+      );
+    }
+
+    // Empêcher la modification de son propre rôle
+    if (targetUserId === currentUserId) {
+      return NextResponse.json(
+        { error: "Vous ne pouvez pas modifier votre propre rôle" },
+        { status: 400 }
+      );
+    }
+
+    console.log('UPDATE USER ROLE API: Updating user role');
+
+    // Mettre à jour le rôle de l'utilisateur
+    const updatedUser = await prisma.user.update({
+      where: { id: targetUserId },
+      data: { role: newRole as any }
+    });
+
+    return NextResponse.json({ 
+      success: true, 
+      message: `Rôle modifié vers ${newRole}`,
+      user: {
+        id: updatedUser.id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        role: updatedUser.role
+      }
+    });
+
+  } catch (error) {
+    console.error("Error updating user role:", error);
+    return NextResponse.json(
+      { error: "Failed to update user role" },
+      { status: 500 }
+    );
+  }
+}

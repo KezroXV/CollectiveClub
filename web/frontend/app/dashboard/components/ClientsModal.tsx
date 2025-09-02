@@ -23,8 +23,18 @@ import {
   Ban,
   CheckCircle,
   AlertTriangle,
+  Trash2,
+  Settings,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 interface MemberData {
   id: string;
@@ -74,6 +84,12 @@ export default function ClientsModal({
     name: string;
     isBanned: boolean;
   } | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [roleChangeUserId, setRoleChangeUserId] = useState<string | null>(null);
 
   const ITEMS_PER_PAGE = 10;
 
@@ -160,17 +176,17 @@ export default function ClientsModal({
   };
 
   const handleToggleBan = async (memberId: string, isBanned: boolean) => {
-    if (!userId || !['ADMIN', 'MODERATOR'].includes(userRole || '')) return;
-    
+    if (!userId || !["ADMIN", "MODERATOR"].includes(userRole || "")) return;
+
     try {
       setBanningUserId(memberId);
       const endpoint = `/api/users/${memberId}/ban`;
-      const method = isBanned ? 'DELETE' : 'POST';
-      
+      const method = isBanned ? "DELETE" : "POST";
+
       const response = await fetch(endpoint, {
         method,
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           userId,
           userRole,
@@ -179,19 +195,88 @@ export default function ClientsModal({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Erreur lors du bannissement');
+        throw new Error(errorData.error || "Erreur lors du bannissement");
       }
 
       // Mettre à jour le membre dans la liste locale
-      const updateMember = (member: MemberData) => 
+      const updateMember = (member: MemberData) =>
         member.id === memberId ? { ...member, isBanned: !isBanned } : member;
-      
+
       setMembers((prev) => prev.map(updateMember));
       setBanConfirm(null);
     } catch (error) {
-      console.error('Error toggling ban:', error);
+      console.error("Error toggling ban:", error);
     } finally {
       setBanningUserId(null);
+    }
+  };
+
+  const handleDeleteUser = async (memberId: string) => {
+    if (!userId || !["ADMIN"].includes(userRole || "")) return; // Seulement les ADMIN
+
+    try {
+      setDeletingUserId(memberId);
+
+      const response = await fetch(`/api/users/${memberId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          userId,
+          userRole,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Erreur lors de la suppression");
+      }
+
+      // Retirer l'utilisateur de la liste locale
+      setMembers((prev) => prev.filter((member) => member.id !== memberId));
+      setTotalMembers((prev) => prev - 1);
+      setDeleteConfirm(null);
+    } catch (error) {
+      console.error("Error deleting user:", error);
+    } finally {
+      setDeletingUserId(null);
+    }
+  };
+
+  const handleChangeRole = async (memberId: string, newRole: string) => {
+    if (!userId || userRole !== "ADMIN") return; // Seulement les ADMIN
+
+    try {
+      setRoleChangeUserId(memberId);
+
+      const response = await fetch(`/api/users/${memberId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          userId,
+          userRole,
+          newRole,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.error || "Erreur lors de la modification du rôle"
+        );
+      }
+
+      // Mettre à jour le membre dans la liste locale
+      setMembers((prev) =>
+        prev.map((member) =>
+          member.id === memberId ? { ...member, role: newRole } : member
+        )
+      );
+    } catch (error) {
+      console.error("Error changing role:", error);
+    } finally {
+      setRoleChangeUserId(null);
     }
   };
 
@@ -335,34 +420,119 @@ export default function ClientsModal({
                       </div>
 
                       {/* Actions de modération */}
-                      {['ADMIN', 'MODERATOR'].includes(userRole || '') && member.role !== 'ADMIN' && (
-                        <div className="flex items-center gap-2 ml-4">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setBanConfirm({
-                              id: member.id,
-                              name: member.name,
-                              isBanned: member.isBanned || false
-                            })}
-                            disabled={banningUserId === member.id}
-                            className={`${
-                              member.isBanned
-                                ? 'text-green-600 hover:text-green-700 hover:bg-green-50'
-                                : 'text-red-600 hover:text-red-700 hover:bg-red-50'
-                            }`}
-                            title={member.isBanned ? 'Débannir' : 'Bannir'}
-                          >
-                            {banningUserId === member.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : member.isBanned ? (
-                              <CheckCircle className="h-4 w-4" />
-                            ) : (
-                              <Ban className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </div>
-                      )}
+                      {["ADMIN", "MODERATOR"].includes(userRole || "") &&
+                        member.role !== "ADMIN" && (
+                          <div className="flex items-center gap-2 ml-4">
+                            {/* Menu Actions */}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled={
+                                    roleChangeUserId === member.id ||
+                                    deletingUserId === member.id ||
+                                    banningUserId === member.id
+                                  }
+                                  className="text-gray-600 hover:text-gray-700 hover:bg-gray-50"
+                                  title="Actions"
+                                >
+                                  {roleChangeUserId === member.id ||
+                                  deletingUserId === member.id ||
+                                  banningUserId === member.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <>
+                                      <Settings className="h-4 w-4" />
+                                      <ChevronDown className="h-3 w-3 ml-1" />
+                                    </>
+                                  )}
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-56">
+                                {/* Bannir/Débannir - ADMIN et MODERATOR */}
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    setBanConfirm({
+                                      id: member.id,
+                                      name: member.name,
+                                      isBanned: member.isBanned || false,
+                                    })
+                                  }
+                                  disabled={banningUserId === member.id}
+                                  className={`flex items-center gap-2 ${
+                                    member.isBanned
+                                      ? "text-green-600 focus:text-green-600 focus:bg-green-50"
+                                      : "text-red-600 focus:text-red-600 focus:bg-red-50"
+                                  }`}
+                                >
+                                  {banningUserId === member.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                  ) : member.isBanned ? (
+                                    <CheckCircle className="h-4 w-4 mr-2" />
+                                  ) : (
+                                    <Ban className="h-4 w-4 mr-2" />
+                                  )}
+                                  {member.isBanned ? "Débannir" : "Bannir"}{" "}
+                                  l&apos;utilisateur
+                                </DropdownMenuItem>
+
+                                {/* Actions réservées aux ADMIN */}
+                                {userRole === "ADMIN" && (
+                                  <>
+                                    <DropdownMenuSeparator />
+
+                                    {/* Changer le rôle */}
+                                    <DropdownMenuItem
+                                      disabled
+                                      className="text-xs font-medium text-gray-500 uppercase"
+                                    >
+                                      Changer le rôle
+                                    </DropdownMenuItem>
+                                    {["MEMBER", "MODERATOR", "ADMIN"]
+                                      .filter((role) => role !== member.role)
+                                      .map((role) => (
+                                        <DropdownMenuItem
+                                          key={role}
+                                          onClick={() =>
+                                            handleChangeRole(member.id, role)
+                                          }
+                                          className="flex items-center gap-2"
+                                        >
+                                          <span
+                                            className={`w-2 h-2 rounded-full ${
+                                              role === "ADMIN"
+                                                ? "bg-red-500"
+                                                : role === "MODERATOR"
+                                                ? "bg-blue-500"
+                                                : "bg-green-500"
+                                            }`}
+                                          />
+                                          {getRoleLabel(role)}
+                                        </DropdownMenuItem>
+                                      ))}
+
+                                    <DropdownMenuSeparator />
+
+                                    {/* Supprimer */}
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        setDeleteConfirm({
+                                          id: member.id,
+                                          name: member.name,
+                                        })
+                                      }
+                                      className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                                    >
+                                      <Trash2 className="h-4 w-4 mr-2" />
+                                      Supprimer définitivement
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        )}
                     </div>
                   </CardContent>
                 </Card>
@@ -430,16 +600,24 @@ export default function ClientsModal({
           <Dialog open={true} onOpenChange={() => setBanConfirm(null)}>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle className={`flex items-center gap-2 ${
-                  banConfirm.isBanned ? 'text-green-600' : 'text-red-600'
-                }`}>
+                <DialogTitle
+                  className={`flex items-center gap-2 ${
+                    banConfirm.isBanned ? "text-green-600" : "text-red-600"
+                  }`}
+                >
                   <AlertTriangle className="h-5 w-5" />
-                  {banConfirm.isBanned ? 'Débannir' : 'Bannir'} l'utilisateur
+                  {banConfirm.isBanned ? "Débannir" : "Bannir"} l'utilisateur
                 </DialogTitle>
                 <DialogDescription>
-                  Êtes-vous sûr de vouloir {banConfirm.isBanned ? 'débannir' : 'bannir'} l'utilisateur "{banConfirm.name}" ?
+                  Êtes-vous sûr de vouloir{" "}
+                  {banConfirm.isBanned ? "débannir" : "bannir"} l'utilisateur "
+                  {banConfirm.name}" ?
                   {!banConfirm.isBanned && (
-                    <><br />L'utilisateur ne pourra plus se connecter ni interagir avec la communauté.</>
+                    <>
+                      <br />
+                      L'utilisateur ne pourra plus se connecter ni interagir
+                      avec la communauté.
+                    </>
                   )}
                 </DialogDescription>
               </DialogHeader>
@@ -453,16 +631,74 @@ export default function ClientsModal({
                 </Button>
                 <Button
                   variant={banConfirm.isBanned ? "default" : "destructive"}
-                  onClick={() => handleToggleBan(banConfirm.id, banConfirm.isBanned)}
+                  onClick={() =>
+                    handleToggleBan(banConfirm.id, banConfirm.isBanned)
+                  }
                   disabled={banningUserId !== null}
                 >
                   {banningUserId !== null ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      {banConfirm.isBanned ? 'Débannissement...' : 'Bannissement...'}
+                      {banConfirm.isBanned
+                        ? "Débannissement..."
+                        : "Bannissement..."}
+                    </>
+                  ) : banConfirm.isBanned ? (
+                    "Débannir"
+                  ) : (
+                    "Bannir"
+                  )}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {/* Modal de confirmation de suppression */}
+        {deleteConfirm && (
+          <Dialog open={true} onOpenChange={() => setDeleteConfirm(null)}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-red-600">
+                  <AlertTriangle className="h-5 w-5" />
+                  Supprimer définitivement l'utilisateur
+                </DialogTitle>
+                <DialogDescription>
+                  Êtes-vous sûr de vouloir supprimer définitivement
+                  l'utilisateur "{deleteConfirm.name}" ?<br />
+                  <strong className="text-red-600">
+                    Cette action est irréversible
+                  </strong>{" "}
+                  et supprimera :
+                  <ul className="list-disc list-inside mt-2 text-sm">
+                    <li>Tous ses posts et commentaires</li>
+                    <li>Toutes ses réactions</li>
+                    <li>Son profil complet</li>
+                    <li>Toutes ses données associées</li>
+                  </ul>
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex justify-end gap-2 mt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setDeleteConfirm(null)}
+                  disabled={deletingUserId !== null}
+                >
+                  Annuler
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => handleDeleteUser(deleteConfirm.id)}
+                  disabled={deletingUserId !== null}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  {deletingUserId !== null ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Suppression...
                     </>
                   ) : (
-                    banConfirm.isBanned ? 'Débannir' : 'Bannir'
+                    "Supprimer définitivement"
                   )}
                 </Button>
               </div>
