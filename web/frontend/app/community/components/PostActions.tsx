@@ -1,12 +1,19 @@
 import { Button } from "@/components/ui/button";
-import { Heart, MessageSquare, Share2, ChevronDown } from "lucide-react";
+import { Heart, MessageSquare, Share2 } from "lucide-react";
 
 type ReactionType = "LIKE" | "LOVE" | "LAUGH" | "WOW" | "APPLAUSE";
+
+interface ReactionData {
+  type: ReactionType;
+  count: number;
+}
 
 interface PostActionsProps {
   totalReactions: number;
   commentsCount: number;
   showReactionDropdown: boolean;
+  reactions?: ReactionData[];
+  userReaction?: ReactionType | null;
   currentUser: {
     id: string;
     name: string;
@@ -30,6 +37,8 @@ const PostActions = ({
   totalReactions,
   commentsCount,
   showReactionDropdown,
+  reactions,
+  userReaction,
   currentUser,
   onReactionClick,
   onReaction,
@@ -42,31 +51,59 @@ const PostActions = ({
         {/* Reactions with dropdown */}
         <div className="relative">
           <button
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+            className={`flex items-center gap-2 transition-colors ${
+              userReaction
+                ? "text-red-600 hover:text-red-700"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
             onClick={onReactionClick}
           >
-            <Heart className="h-5 w-5" />
-            <span className="text-sm font-medium">
-              {totalReactions}
-            </span>
-            <ChevronDown className="h-4 w-4" />
+            <Heart
+              className={`h-5 w-5 ${userReaction ? "fill-current" : ""}`}
+            />
+            <span className="text-sm font-medium">{totalReactions}</span>
           </button>
 
           {/* Dropdown des réactions */}
           {showReactionDropdown && currentUser && (
-            <div className="absolute bottom-full left-0 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg p-2 flex gap-1 z-10">
-              {Object.entries(REACTION_EMOJIS).map(
-                ([type, emoji]) => (
-                  <button
-                    key={type}
-                    onClick={() => onReaction(type as ReactionType)}
-                    className="p-2 hover:bg-gray-100 rounded transition-colors text-lg"
-                    title={type}
-                  >
-                    {emoji}
-                  </button>
-                )
-              )}
+            <div className="reaction-dropdown absolute bottom-full left-0 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-10">
+              <div className="flex gap-1 mb-2">
+                {Object.entries(REACTION_EMOJIS).map(([type, emoji]) => {
+                  const isSelected = userReaction === type;
+                  const reactionCount =
+                    reactions?.find((r) => r.type === type)?.count || 0;
+                  return (
+                    <div key={type} className="flex flex-col items-center">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onReaction(type as ReactionType);
+                        }}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                        }}
+                        className={`p-2 rounded transition-colors text-lg relative ${
+                          isSelected
+                            ? "bg-blue-100 border-2 border-blue-300"
+                            : "hover:bg-gray-100"
+                        }`}
+                        title={type}
+                      >
+                        {emoji}
+                        {isSelected && (
+                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border border-white" />
+                        )}
+                      </button>
+                      {reactionCount > 0 && (
+                        <span className="text-xs text-gray-500 mt-1">
+                          {reactionCount}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
@@ -76,9 +113,7 @@ const PostActions = ({
           onClick={onCommentsClick}
         >
           <MessageSquare className="h-5 w-5" />
-          <span className="text-sm font-medium">
-            {commentsCount}
-          </span>
+          <span className="text-sm font-medium">{commentsCount}</span>
         </button>
       </div>
 

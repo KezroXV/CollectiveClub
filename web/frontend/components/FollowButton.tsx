@@ -127,13 +127,12 @@ export default function FollowButton({
       disabled={isLoading || disabled}
       size={"lg"}
       variant={getButtonVariant()}
-      className={`gap-2 font-semibold cursor-pointer text-[10px] ${
+      className={`gap-2 px-3 py-1 font-semibold cursor-pointer text-[12px] ${
         isFollowing
           ? "hover:bg-red-50 hover:text-red-600 hover:border-red-200"
           : ""
       }`}
     >
-      {getButtonIcon()}
       {getButtonText()}
     </Button>
   );

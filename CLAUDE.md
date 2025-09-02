@@ -21,6 +21,8 @@ CollectiveClub is a Shopify app that provides a community forum platform for Sho
 
 ## Development Commands
 
+**IMPORTANT**: All development work should be done from the `web/frontend/` directory.
+
 ### Root Level (Shopify CLI)
 - `npm run dev` - Start Shopify app development server
 - `npm run build` - Build Shopify app for production  
@@ -33,7 +35,7 @@ CollectiveClub is a Shopify app that provides a community forum platform for Sho
 - `npm run start` - Start production Next.js server
 - `npm run lint` - Run ESLint with Next.js rules and auto-fix issues
 
-### Database & Scripts
+### Database & Scripts (in web/frontend/)
 - `npm run seed` or `npm run db:seed` - Seed database with initial data
 - `npm run admin` - Ensure admin user exists (scripts/ensure-admin.ts)
 - `npm run recovery` - Run data recovery script (scripts/data-recovery.ts)
@@ -41,10 +43,15 @@ CollectiveClub is a Shopify app that provides a community forum platform for Sho
 - `npx prisma migrate dev` - Apply database migrations in development
 - `npx prisma studio` - Open Prisma Studio for database management
 
+### Additional Utility Scripts (in web/frontend/)
+- `tsx scripts/create-dev-shop.ts` - Create development shop
+- `tsx scripts/seed-demo-data.ts` - Seed demo data for testing
+- `tsx scripts/update-default-badges.ts` - Update default badge system
+
 ## Architecture
 
 ### Technology Stack
-- **Shopify App**: Built with Shopify CLI v3 and Shopify API v11
+- **Shopify App**: Built with Shopify CLI v3 and Shopify API v11 (API version 2025-07)
 - **Frontend**: Next.js 15 with App Router, React 19, TypeScript 5
 - **Database**: PostgreSQL with Prisma ORM
 - **UI Framework**: Radix UI components with Tailwind CSS v4
@@ -66,13 +73,13 @@ All models include `shopId` for multi-tenant isolation:
 - **Follow**: Social following between users
 - **CustomizationSettings**: Per-user theming and personalization
 
-### Key Directories
-- `app/api/` - Next.js API routes for backend functionality
+### Key Directories (in web/frontend/)
+- `app/api/` - Next.js API routes for backend functionality (auth, posts, users, etc.)
 - `app/community/` - Main forum pages and post creation
 - `app/dashboard/` - Admin dashboard for shop configuration
 - `components/` - Reusable React components
 - `prisma/` - Database schema, migrations, and seed data
-- `scripts/` - Utility scripts for admin and data management
+- `scripts/` - Utility scripts for admin, data management, and development
 
 ### Multi-tenant Architecture
 - Each shop is isolated by `shopId` in all database operations

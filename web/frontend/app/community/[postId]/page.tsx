@@ -184,7 +184,12 @@ const PostDetailPage = () => {
     fetchPostData();
   }, [fetchPostData]);
 
-  const handleClickOutside = useCallback(() => {
+  const handleClickOutside = useCallback((event: MouseEvent) => {
+    const target = event.target as Element;
+    // Ne pas fermer si on clique à l'intérieur du dropdown de réactions
+    if (target?.closest('.reaction-dropdown')) {
+      return;
+    }
     setShowReactionDropdown(false);
   }, []);
 
@@ -427,6 +432,8 @@ const PostDetailPage = () => {
                     totalReactions={totalReactions}
                     commentsCount={post._count.comments || 0}
                     showReactionDropdown={showReactionDropdown}
+                    reactions={post.reactions}
+                    userReaction={post.userReaction}
                     currentUser={currentUser}
                     onReactionClick={() =>
                       setShowReactionDropdown(!showReactionDropdown)
