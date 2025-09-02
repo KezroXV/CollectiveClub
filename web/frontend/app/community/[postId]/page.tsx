@@ -5,9 +5,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import {
-  ArrowLeft,
-} from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import ThemeWrapper from "@/components/ThemeWrapper";
 import Header from "@/components/Header";
@@ -112,7 +110,6 @@ interface PostDetailData {
   authorPoints?: UserPointsInfo;
 }
 
-
 const getRoleColor = (role: string) => {
   switch (role) {
     case "ADMIN":
@@ -146,7 +143,6 @@ const PostDetailPage = () => {
   const [submittingComment, setSubmittingComment] = useState(false);
   const [showReactionDropdown, setShowReactionDropdown] = useState(false);
 
-
   // Fetch current user
   useEffect(() => {
     const storedUser = localStorage.getItem("currentUser");
@@ -162,16 +158,16 @@ const PostDetailPage = () => {
 
   const fetchPostData = useCallback(async () => {
     if (!params.postId) return;
-    
+
     try {
       const url = currentUser
         ? `/api/posts/${params.postId}?userId=${currentUser.id}`
         : `/api/posts/${params.postId}`;
       const response = await fetch(url);
-      
+
       if (response.ok) {
         const postData = await response.json();
-        
+
         setData(postData);
       } else {
         router.push("/community");
@@ -195,7 +191,8 @@ const PostDetailPage = () => {
   useEffect(() => {
     if (showReactionDropdown) {
       document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [showReactionDropdown, handleClickOutside]);
 
@@ -207,18 +204,22 @@ const PostDetailPage = () => {
     });
   }, []);
 
-  const formatRelativeDate = useCallback((dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMs = now.getTime() - date.getTime();
-    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+  const formatRelativeDate = useCallback(
+    (dateString: string) => {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffInMs = now.getTime() - date.getTime();
+      const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
 
-    if (diffInDays === 0) return "Aujourd'hui";
-    if (diffInDays === 1) return "Hier";
-    if (diffInDays < 7) return `Il y a ${diffInDays} jours`;
-    if (diffInDays < 30) return `Il y a ${Math.floor(diffInDays / 7)} semaines`;
-    return formatDate(dateString);
-  }, [formatDate]);
+      if (diffInDays === 0) return "Aujourd'hui";
+      if (diffInDays === 1) return "Hier";
+      if (diffInDays < 7) return `Il y a ${diffInDays} jours`;
+      if (diffInDays < 30)
+        return `Il y a ${Math.floor(diffInDays / 7)} semaines`;
+      return formatDate(dateString);
+    },
+    [formatDate]
+  );
 
   const getInitials = useCallback((name: string) => {
     return (
@@ -230,7 +231,6 @@ const PostDetailPage = () => {
     );
   }, []);
 
-
   const handleShare = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
@@ -241,84 +241,88 @@ const PostDetailPage = () => {
     }
   }, []);
 
+  const handleReaction = useCallback(
+    async (type: ReactionType) => {
+      if (!currentUser || !data) return;
 
-  const handleReaction = useCallback(async (type: ReactionType) => {
-    if (!currentUser || !data) return;
+      setShowReactionDropdown(false);
 
-    setShowReactionDropdown(false);
+      try {
+        const response = await fetch(`/api/posts/${data.post.id}/reactions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type,
+            userId: currentUser.id,
+            shopId: currentUser.shopId,
+          }),
+        });
 
-    try {
-      const response = await fetch(`/api/posts/${data.post.id}/reactions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type,
-          userId: currentUser.id,
-          shopId: currentUser.shopId,
-        }),
-      });
-
-      if (response.ok) {
-        await fetchPostData();
-        toast.success("Réaction ajoutée !");
-      } else {
+        if (response.ok) {
+          await fetchPostData();
+          toast.success("Réaction ajoutée !");
+        } else {
+          toast.error("Erreur lors de l'ajout de la réaction");
+        }
+      } catch (error) {
+        console.error("Error adding reaction:", error);
         toast.error("Erreur lors de l'ajout de la réaction");
       }
-    } catch (error) {
-      console.error("Error adding reaction:", error);
-      toast.error("Erreur lors de l'ajout de la réaction");
-    }
-  }, [currentUser, data, fetchPostData]);
+    },
+    [currentUser, data, fetchPostData]
+  );
 
   const totalReactions = useMemo(() => {
     return data?.post.reactions?.reduce((sum, r) => sum + r.count, 0) || 0;
   }, [data?.post.reactions]);
 
+  const handleSubmitComment = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!newComment.trim() || !currentUser || !data) return;
 
-  const handleSubmitComment = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newComment.trim() || !currentUser || !data) return;
+      setSubmittingComment(true);
+      try {
+        const response = await fetch(`/api/posts/${data.post.id}/comments`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            content: newComment.trim(),
+            authorId: currentUser.id,
+          }),
+        });
 
-    setSubmittingComment(true);
-    try {
-      const response = await fetch(`/api/posts/${data.post.id}/comments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: newComment.trim(),
-          authorId: currentUser.id,
-        }),
-      });
-
-      if (response.ok) {
-        const comment = await response.json();
-        setData((prev) =>
-          prev
-            ? {
-                ...prev,
-                post: {
-                  ...prev.post,
-                  comments: [comment, ...prev.post.comments],
-                  _count: {
-                    ...prev.post._count,
-                    comments: prev.post._count.comments + 1,
+        if (response.ok) {
+          const comment = await response.json();
+          setData((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  post: {
+                    ...prev.post,
+                    comments: [comment, ...prev.post.comments],
+                    _count: {
+                      ...prev.post._count,
+                      comments: prev.post._count.comments + 1,
+                    },
                   },
-                },
-              }
-            : null
-        );
-        setNewComment("");
-        toast.success("Commentaire ajouté !");
-      } else {
+                }
+              : null
+          );
+          setNewComment("");
+          toast.success("Commentaire ajouté !");
+        } else {
+          toast.error("Erreur lors de l'ajout du commentaire");
+        }
+      } catch (error) {
+        console.error("Error submitting comment:", error);
         toast.error("Erreur lors de l'ajout du commentaire");
+      } finally {
+        setSubmittingComment(false);
       }
-    } catch (error) {
-      console.error("Error submitting comment:", error);
-      toast.error("Erreur lors de l'ajout du commentaire");
-    } finally {
-      setSubmittingComment(false);
-    }
-  }, [newComment, currentUser, data]);
+    },
+    [newComment, currentUser, data]
+  );
 
   if (loading) {
     return (
@@ -396,7 +400,7 @@ const PostDetailPage = () => {
             {/* Colonne principale (66%) */}
             <div className="lg:col-span-2">
               <Card className="shadow-sm">
-                <CardHeader className="pb-4">
+                <CardHeader className="">
                   <PostHeader
                     author={post.author}
                     createdAt={post.createdAt}
@@ -406,6 +410,7 @@ const PostDetailPage = () => {
                     formatDate={formatDate}
                     getRoleColor={getRoleColor}
                     getRoleLabel={getRoleLabel}
+                    currentUser={currentUser}
                   />
                 </CardHeader>
 
@@ -423,7 +428,9 @@ const PostDetailPage = () => {
                     commentsCount={post._count.comments || 0}
                     showReactionDropdown={showReactionDropdown}
                     currentUser={currentUser}
-                    onReactionClick={() => setShowReactionDropdown(!showReactionDropdown)}
+                    onReactionClick={() =>
+                      setShowReactionDropdown(!showReactionDropdown)
+                    }
                     onReaction={handleReaction}
                     onCommentsClick={() => setShowComments(!showComments)}
                     onShare={handleShare}
@@ -463,6 +470,6 @@ const PostDetailPage = () => {
       </div>
     </ThemeWrapper>
   );
-}
+};
 
 export default PostDetailPage;

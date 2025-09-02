@@ -30,13 +30,6 @@ const PostContent = ({
 }: PostContentProps) => {
   return (
     <>
-      {/* Post Content */}
-      <div className="prose max-w-none mb-6">
-        <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-          {content}
-        </p>
-      </div>
-
       {/* Post Image */}
       {imageUrl && (
         <div className="mb-6">
@@ -44,13 +37,19 @@ const PostContent = ({
             <Image
               src={imageUrl}
               alt={title}
-              width={800}
-              height={400}
+              width={702}
+              height={285}
               className="w-full h-auto object-cover"
             />
           </div>
         </div>
       )}
+      {/* Post Content */}
+      <div className="prose max-w-none mb-6">
+        <p className="text-gray-700 text-[13px] leading-relaxed whitespace-pre-wrap">
+          {content}
+        </p>
+      </div>
 
       {/* Poll Display */}
       {poll && (

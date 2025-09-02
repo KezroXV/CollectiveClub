@@ -88,13 +88,22 @@ const AuthorSidebar = ({
         setIsLoadingFollowers(true);
 
         // Charger les points, badges, followers et statut de suivi en parallèle
-        const [pointsResponse, badgesResponse, followersResponse, followStatusResponse] = await Promise.all([
+        const [
+          pointsResponse,
+          badgesResponse,
+          followersResponse,
+          followStatusResponse,
+        ] = await Promise.all([
           fetch(
             `/api/users/points?userId=${author.id}&shopId=${currentUser.shopId}`
           ),
           fetch(`/api/badges?userId=${author.id}&shopId=${currentUser.shopId}`),
-          fetch(`/api/users/${author.id}/followers/count?shopId=${currentUser.shopId}`),
-          fetch(`/api/users/${author.id}/followers/status?currentUserId=${currentUser.id}&shopId=${currentUser.shopId}`),
+          fetch(
+            `/api/users/${author.id}/followers/count?shopId=${currentUser.shopId}`
+          ),
+          fetch(
+            `/api/users/${author.id}/followers/status?currentUserId=${currentUser.id}&shopId=${currentUser.shopId}`
+          ),
         ]);
 
         let userPoints = 0;
@@ -119,7 +128,10 @@ const AuthorSidebar = ({
           // Filtrer pour garder seulement les badges débloqués et trier par ordre croissant de points
           const unlockedBadges = badgesWithStatus
             .filter((badge: BadgeInfo) => badge.unlocked)
-            .sort((a, b) => a.requiredPoints - b.requiredPoints);
+            .sort(
+              (a: { requiredPoints: number }, b: { requiredPoints: number }) =>
+                a.requiredPoints - b.requiredPoints
+            );
           setAuthorBadges(unlockedBadges);
 
           // Mettre à jour authorPoints avec les badges
