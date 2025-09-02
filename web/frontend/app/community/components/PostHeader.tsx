@@ -2,9 +2,24 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { MoreHorizontal, Pin, PinOff, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 
 interface PostHeaderProps {
   author: {
@@ -21,13 +36,22 @@ interface PostHeaderProps {
     color: string;
   };
   title: string;
+  post: {
+    id: string;
+    isPinned?: boolean;
+    authorId: string;
+  };
   getInitials: (name: string) => string;
   formatDate: (dateString: string) => string;
   getRoleColor: (role: string) => string;
   getRoleLabel: (role: string) => string;
   currentUser?: {
+    id: string;
     shopId: string;
+    role?: string;
   };
+  onPin?: () => void;
+  onDelete?: () => void;
 }
 
 const PostHeader = ({
@@ -35,14 +59,27 @@ const PostHeader = ({
   createdAt,
   category,
   title,
+  post,
   getInitials,
   formatDate,
   getRoleColor,
   getRoleLabel,
   currentUser,
+  onPin,
+  onDelete,
 }: PostHeaderProps) => {
   const [highestBadge, setHighestBadge] = useState<any>(null);
   const [isLoadingBadge, setIsLoadingBadge] = useState(true);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isPinning, setIsPinning] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Permissions
+  const canPin = currentUser && ['ADMIN', 'MODERATOR'].includes(currentUser.role || '');
+  const canDelete = currentUser && (
+    ['ADMIN', 'MODERATOR'].includes(currentUser.role || '') ||
+    post.authorId === currentUser.id
+  );
 
   // Charger le badge le plus élevé de l'auteur
   useEffect(() => {
@@ -87,6 +124,83 @@ const PostHeader = ({
 
     loadHighestBadge();
   }, [author.id, currentUser?.shopId]);
+
+  const handleTogglePin = async () => {
+    if (!currentUser || !canPin || !post?.id) {
+      console.log('handleTogglePin: Missing requirements', { currentUser: !!currentUser, canPin, postId: post?.id });
+      return;
+    }
+
+    console.log('handleTogglePin: Starting', { postId: post.id, isPinned: post.isPinned, userRole: currentUser.role });
+
+    setIsPinning(true);
+    try {
+      const endpoint = `/api/posts/${post.id}/pin`;
+      const method = post.isPinned ? 'DELETE' : 'POST';
+      
+      const response = await fetch(endpoint, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUser.id,
+          userRole: currentUser.role,
+        }),
+      });
+
+      console.log('handleTogglePin: Response received', { 
+        ok: response.ok, 
+        status: response.status, 
+        statusText: response.statusText 
+      });
+
+      if (response.ok) {
+        const responseData = await response.json();
+        console.log('handleTogglePin: Success response', responseData);
+        const action = post.isPinned ? 'désépinglé' : 'épinglé';
+        toast.success(`Post ${action} avec succès !`);
+        onPin?.(); // Callback pour rafraîchir la liste
+      } else {
+        const errorData = await response.json();
+        console.log('handleTogglePin: Error response', errorData);
+        toast.error(errorData.error || 'Erreur lors de l\'épinglage');
+      }
+    } catch (error) {
+      console.error('Error toggling pin:', error);
+      toast.error('Erreur lors de l\'épinglage');
+    } finally {
+      setIsPinning(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!currentUser || !canDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/posts/${post.id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUser.id,
+          userRole: currentUser.role,
+        }),
+      });
+
+      if (response.ok) {
+        setShowDeleteDialog(false);
+        toast.success('Post supprimé avec succès !');
+        onDelete?.(); // Callback pour rafraîchir la liste
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || 'Erreur lors de la suppression');
+      }
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      toast.error('Erreur lors de la suppression');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
   return (
     <>
       {/* Post Header */}
@@ -126,9 +240,47 @@ const PostHeader = ({
             </div>
           </div>
         </div>
-        <Button variant="ghost" size="sm">
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
+        
+        {/* Menu dropdown pour les actions modération */}
+        {(canPin || canDelete) && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              {canPin && (
+                <DropdownMenuItem 
+                  onClick={handleTogglePin}
+                  disabled={isPinning}
+                >
+                  {post?.isPinned ? (
+                    <>
+                      <PinOff className="mr-2 h-4 w-4" />
+                      {isPinning ? 'Désépinglage...' : 'Désépingler'}
+                    </>
+                  ) : (
+                    <>
+                      <Pin className="mr-2 h-4 w-4" />
+                      {isPinning ? 'Épinglage...' : 'Épingler'}
+                    </>
+                  )}
+                </DropdownMenuItem>
+              )}
+              
+              {canDelete && (
+                <DropdownMenuItem 
+                  onClick={() => setShowDeleteDialog(true)}
+                  className="text-red-600 focus:text-red-600"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Supprimer
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
 
       {/* Post Title */}
@@ -145,6 +297,35 @@ const PostHeader = ({
           </div>
         )}
       </div>
+
+      {/* Dialog de confirmation de suppression */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Supprimer le post</DialogTitle>
+            <DialogDescription>
+              Êtes-vous sûr de vouloir supprimer ce post ? Cette action est irréversible et supprimera également tous les commentaires et réactions associés.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+              disabled={isDeleting}
+            >
+              Annuler
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? 'Suppression...' : 'Supprimer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

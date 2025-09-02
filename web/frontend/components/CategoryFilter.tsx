@@ -61,6 +61,7 @@ interface CategoryFilterProps {
   onSortChange?: (sort: string) => void;
   showPinnedOnly?: boolean;
   onPinnedFilterChange?: (showPinnedOnly: boolean) => void;
+  pinnedCount?: number;
 }
 
 export default function CategoryFilter({
@@ -72,6 +73,7 @@ export default function CategoryFilter({
   onSortChange,
   showPinnedOnly = false,
   onPinnedFilterChange,
+  pinnedCount = 0,
 }: CategoryFilterProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
@@ -292,6 +294,16 @@ export default function CategoryFilter({
                 showPinnedOnly ? "text-blue-600" : "text-gray-500"
               }`}
             />
+            <span>Épinglés</span>
+            {pinnedCount > 0 && (
+              <span className={`text-xs px-2 py-0.5 rounded-full ${
+                showPinnedOnly 
+                  ? "bg-blue-100 text-blue-600" 
+                  : "bg-gray-100 text-gray-500"
+              }`}>
+                {pinnedCount}
+              </span>
+            )}
           </button>
         </div>
       </div>

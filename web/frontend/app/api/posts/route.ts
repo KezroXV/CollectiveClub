@@ -14,8 +14,54 @@ export async function GET(request: NextRequest) {
     const shopId = await getShopId(request);
     ensureShopIsolation(shopId);
 
+    const { searchParams } = new URL(request.url);
+    const filter = searchParams.get('filter'); // Pour filtre "pinned"
+    const sortBy = searchParams.get('sortBy') || 'newest';
+    const categoryId = searchParams.get('categoryId');
+    const search = searchParams.get('search');
+
+    // Construction de la clause where
+    const whereClause: any = { shopId };
+
+    if (filter === 'pinned') {
+      whereClause.isPinned = true;
+    }
+
+    if (categoryId && categoryId !== 'all') {
+      whereClause.categoryId = categoryId;
+    }
+
+    if (search) {
+      whereClause.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { content: { contains: search, mode: 'insensitive' } }
+      ];
+    }
+
+    // Construction de la clause orderBy
+    const orderBy: any[] = [];
+    
+    // Toujours mettre les épinglés en premier (sauf si on filtre uniquement les épinglés)
+    if (filter !== 'pinned') {
+      orderBy.push({ isPinned: 'desc' });
+    }
+    
+    // Ajouter le tri secondaire
+    switch (sortBy) {
+      case 'oldest':
+        orderBy.push({ createdAt: 'asc' });
+        break;
+      case 'popular':
+        orderBy.push({ reactions: { _count: 'desc' } });
+        break;
+      case 'newest':
+      default:
+        orderBy.push({ createdAt: 'desc' });
+        break;
+    }
+
     const posts = await prisma.post.findMany({
-      where: { shopId }, // ✅ FILTRER PAR BOUTIQUE
+      where: whereClause,
       include: {
         author: {
           select: { id: true, name: true, email: true, avatar: true },
@@ -51,10 +97,18 @@ export async function GET(request: NextRequest) {
           select: { comments: true, reactions: true },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy,
     });
 
-    return NextResponse.json(posts);
+    // Compter les posts épinglés pour le badge
+    const pinnedCount = await prisma.post.count({
+      where: { shopId, isPinned: true }
+    });
+
+    return NextResponse.json({
+      posts,
+      pinnedCount
+    });
   } catch (error) {
     console.error("Error fetching posts:", error);
     return NextResponse.json(

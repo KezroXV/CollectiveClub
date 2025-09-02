@@ -84,8 +84,9 @@ export default function PostsModal({
       }
 
       const data = await response.json();
-      setPosts(data);
-      setFilteredPosts(data);
+      const postsArray = data.posts || data; // Support nouvelle et ancienne structure
+      setPosts(postsArray);
+      setFilteredPosts(postsArray);
     } catch (error) {
       console.error("Error fetching posts:", error);
     } finally {

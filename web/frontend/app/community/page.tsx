@@ -108,7 +108,8 @@ export default function CommunityPage() {
       const response = await fetch("/api/posts");
       if (response.ok) {
         const data = await response.json();
-        setPosts(data);
+        const postsArray = data.posts || data; // Support nouvelle et ancienne structure
+        setPosts(postsArray);
       }
     } catch (error) {
       console.error("Error fetching posts:", error);

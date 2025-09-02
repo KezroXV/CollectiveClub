@@ -29,6 +29,7 @@ interface Post {
   title: string;
   content: string;
   imageUrl?: string;
+  isPinned?: boolean;
   category?: {
     id: string;
     name: string;
@@ -421,11 +422,18 @@ const PostDetailPage = () => {
                     createdAt={post.createdAt}
                     category={post.category}
                     title={post.title}
+                    post={{
+                      id: post.id,
+                      isPinned: post.isPinned,
+                      authorId: post.author.id
+                    }}
                     getInitials={getInitials}
                     formatDate={formatDate}
                     getRoleColor={getRoleColor}
                     getRoleLabel={getRoleLabel}
                     currentUser={currentUser}
+                    onPin={fetchPostData}
+                    onDelete={() => router.push('/community')}
                   />
                 </CardHeader>
 

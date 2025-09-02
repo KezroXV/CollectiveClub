@@ -263,3 +263,76 @@ export async function GET(
     );
   }
 }
+
+// DELETE /api/posts/[postId] - Supprimer un post avec permissions étendues
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ postId: string }> }
+) {
+  try {
+    // 🏪 ISOLATION MULTI-TENANT
+    const shopId = await getShopId(request);
+    ensureShopIsolation(shopId);
+
+    const { postId } = await params;
+    const body = await request.json();
+    const { userId, userRole } = body;
+
+    if (!userId || !userRole) {
+      return NextResponse.json(
+        { error: "User ID and role are required" },
+        { status: 400 }
+      );
+    }
+
+    // Récupérer le post avec ses informations
+    const post = await prisma.post.findFirst({
+      where: { 
+        id: postId, 
+        shopId 
+      },
+      include: {
+        author: {
+          select: { id: true, role: true }
+        }
+      }
+    });
+
+    if (!post) {
+      return NextResponse.json(
+        { error: "Post not found in this shop" },
+        { status: 404 }
+      );
+    }
+
+    // Vérifier les permissions de suppression
+    const canDelete = 
+      userRole === 'ADMIN' ||                           // Admin peut tout supprimer
+      userRole === 'MODERATOR' ||                       // Modérateur peut tout supprimer
+      post.author.id === userId;                        // Auteur peut supprimer ses posts
+
+    if (!canDelete) {
+      return NextResponse.json(
+        { error: "You don't have permission to delete this post" },
+        { status: 403 }
+      );
+    }
+
+    // Supprimer le post (Prisma gère automatiquement la cascade des commentaires et réactions)
+    await prisma.post.delete({
+      where: { id: postId }
+    });
+
+    return NextResponse.json({ 
+      success: true, 
+      message: "Post supprimé avec succès"
+    });
+
+  } catch (error) {
+    console.error("Error deleting post:", error);
+    return NextResponse.json(
+      { error: "Failed to delete post" },
+      { status: 500 }
+    );
+  }
+}

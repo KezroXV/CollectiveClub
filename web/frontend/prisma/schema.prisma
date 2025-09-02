@@ -92,6 +92,7 @@ model Post {
   content   String
   imageUrl  String?
   isPinned  Boolean    @default(false)
+  pinnedAt  DateTime?  // 📌 Date d'épinglage (max 3 posts épinglés par boutique)
   status    PostStatus @default(PUBLISHED)
   shopId    String     // ✅ OBLIGATOIRE pour multi-tenant
   createdAt DateTime   @default(now())
