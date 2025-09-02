@@ -12,6 +12,7 @@ interface HeaderProps {
     name: string;
     email: string;
     avatar?: string;
+    role?: string;
   };
 }
 
@@ -19,14 +20,18 @@ export default function Header({ currentUser }: HeaderProps) {
   const [showMenu, setShowMenu] = useState(false);
   const pathname = usePathname();
 
+  // Vérifier si l'utilisateur est admin ou modérateur
+  const isAdminOrMod = currentUser?.role === "ADMIN" || currentUser?.role === "MODERATOR";
+
   const navigation = [
     { name: "Accueil", href: "/", current: pathname === "/" },
     { name: "Post", href: "/community", current: pathname === "/community" },
-    {
+    // Dashboard visible uniquement pour les admins et modérateurs
+    ...(isAdminOrMod ? [{
       name: "Dashboard",
       href: "/dashboard",
       current: pathname === "/dashboard",
-    },
+    }] : []),
     { name: "Profil", href: "/profile", current: pathname === "/profile" },
   ];
 

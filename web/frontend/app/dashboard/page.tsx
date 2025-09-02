@@ -14,6 +14,7 @@ import { FileText, Users, Home } from "lucide-react";
 import CustomizationModal from "./components/CustomizationModal";
 import { useTheme } from "@/contexts/ThemeContext";
 import ThemeWrapper from "@/components/ThemeWrapper";
+import { useRouter } from "next/navigation";
 
 export default function DashboardPage() {
   const [showCustomization, setShowCustomization] = useState(false);
@@ -27,7 +28,10 @@ export default function DashboardPage() {
     role?: string;
   } | null>(null);
   const [shopId, setShopId] = useState<string | undefined>();
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [loading, setLoading] = useState(true);
   const { loadUserTheme } = useTheme();
+  const router = useRouter();
 
   // Handlers pour les modals
   const handleClientsClick = () => setShowClientsModal(true);
@@ -35,24 +39,78 @@ export default function DashboardPage() {
   const handleThemeClick = () => setShowThemeModal(true);
   // Roles rendered inline; no modal trigger needed
 
-  // Charger l'utilisateur depuis localStorage
+  // Charger l'utilisateur et vérifier les permissions
   useEffect(() => {
     const storedUser = localStorage.getItem("currentUser");
 
     if (storedUser) {
       try {
         const user = JSON.parse(storedUser);
+
+        // Vérifier si l'utilisateur est admin ou modérateur
+        const isAdminOrMod = user.role === "ADMIN" || user.role === "MODERATOR";
+
+        if (!isAdminOrMod) {
+          // Rediriger vers la page community si pas autorisé
+          router.push("/");
+          return;
+        }
+
         setCurrentUser(user);
         setShopId(user.shopId);
+        setIsAuthorized(true);
+
         // Charger le thème de l'utilisateur
         if (user.id) {
           loadUserTheme(user.id);
         }
       } catch (error) {
         console.error("Error parsing stored user:", error);
+        router.push("/community");
       }
+    } else {
+      // Pas d'utilisateur connecté, rediriger
+      router.push("/community");
     }
-  }, [loadUserTheme]);
+
+    setLoading(false);
+  }, [loadUserTheme, router]);
+
+  // Afficher un loader pendant la vérification
+  if (loading) {
+    return (
+      <ThemeWrapper
+        applyBackgroundColor={true}
+        className="min-h-screen flex items-center justify-center"
+      >
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">Vérification des permissions...</p>
+        </div>
+      </ThemeWrapper>
+    );
+  }
+
+  // Afficher un message d'erreur si pas autorisé (ne devrait pas arriver à cause de la redirection)
+  if (!isAuthorized) {
+    return (
+      <ThemeWrapper
+        applyBackgroundColor={true}
+        className="min-h-screen flex items-center justify-center"
+      >
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Accès refusé</h1>
+          <p className="text-gray-600 mb-4">
+            Vous devez être administrateur ou modérateur pour accéder au
+            dashboard.
+          </p>
+          <Link href="/community">
+            <Button>Retour à la communauté</Button>
+          </Link>
+        </div>
+      </ThemeWrapper>
+    );
+  }
 
   return (
     <ThemeWrapper applyBackgroundColor={true} className="min-h-screen p-8">
