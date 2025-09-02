@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { UserPlus, UserMinus, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface FollowButtonProps {
@@ -31,6 +31,15 @@ export default function FollowButton({
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
   const [followersCount, setFollowersCount] = useState(initialFollowersCount);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Synchroniser l'état avec les props quand elles changent
+  useEffect(() => {
+    setIsFollowing(initialIsFollowing);
+  }, [initialIsFollowing]);
+
+  useEffect(() => {
+    setFollowersCount(initialFollowersCount);
+  }, [initialFollowersCount]);
 
   // Ne pas afficher le bouton si c'est le même utilisateur
   if (currentUserId === targetUserId) {
@@ -110,17 +119,6 @@ export default function FollowButton({
     return variant;
   };
 
-  const getButtonIcon = () => {
-    if (isLoading) {
-      return <Loader2 className="h-4 w-4 animate-spin" />;
-    }
-    return isFollowing ? (
-      <UserMinus className="h-4 w-4" />
-    ) : (
-      <UserPlus className="h-4 w-4" />
-    );
-  };
-
   return (
     <Button
       onClick={handleToggleFollow}
@@ -133,6 +131,7 @@ export default function FollowButton({
           : ""
       }`}
     >
+      {isLoading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
       {getButtonText()}
     </Button>
   );
