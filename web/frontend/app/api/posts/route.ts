@@ -4,6 +4,7 @@ import { PrismaClient } from "@prisma/client";
 import { getShopId, ensureShopIsolation } from "@/lib/shopIsolation";
 import { awardPoints } from "@/lib/points";
 import { PointAction } from "@prisma/client";
+import { getAuthContext } from "@/lib/auth-context";
 
 const prisma = new PrismaClient();
 
@@ -64,7 +65,7 @@ export async function GET(request: NextRequest) {
       where: whereClause,
       include: {
         author: {
-          select: { id: true, name: true, email: true, avatar: true },
+          select: { id: true, name: true, email: true, image: true },
         },
         category: {
           select: { id: true, name: true, color: true },
@@ -72,7 +73,7 @@ export async function GET(request: NextRequest) {
         comments: {
           include: {
             author: {
-              select: { id: true, name: true, email: true, avatar: true },
+              select: { id: true, name: true, email: true, image: true },
             },
           },
         },
@@ -121,35 +122,24 @@ export async function GET(request: NextRequest) {
 // POST /api/posts - Créer un nouveau post avec sondage (isolé par boutique)
 export async function POST(request: NextRequest) {
   try {
-    // 🏪 ISOLATION MULTI-TENANT
-    const shopId = await getShopId(request);
-    ensureShopIsolation(shopId);
+    // 🔐 AUTHENTICATION: Vérifier que l'utilisateur est connecté
+    const { user, shopId } = await getAuthContext();
+    
+    console.log("📝 Creating post:", { userId: user.id, email: user.email, role: user.role, shopId });
 
     const body = await request.json();
-    const { title, content, imageUrl, category, authorId, poll } = body; // ✅ AJOUTER poll
+    const { title, content, imageUrl, category, poll } = body;
 
-    if (!title || !content || !authorId) {
+    if (!title || !content) {
       return NextResponse.json(
-        { error: "Title, content, and authorId are required" },
+        { error: "Title and content are required" },
         { status: 400 }
       );
     }
 
-    // 🔒 SÉCURITÉ: Vérifier que l'auteur existe et appartient à cette boutique
-    const author = await prisma.user.findFirst({
-      where: {
-        id: authorId,
-        shopId: shopId
-      },
-      select: { id: true, role: true }
-    });
-
-    if (!author) {
-      return NextResponse.json(
-        { error: "Author not found or doesn't belong to this shop" },
-        { status: 403 }
-      );
-    }
+    // 🔒 SÉCURITÉ: Vérifier que l'utilisateur connecté peut poster
+    // Tous les rôles peuvent créer des posts (ADMIN, MODERATOR, MEMBER)
+    const authorId = user.id;
 
     // Convertir category (nom) en categoryId avec isolation par boutique
     let categoryId = null;
@@ -195,7 +185,7 @@ export async function POST(request: NextRequest) {
       },
       include: {
         author: {
-          select: { id: true, name: true, email: true, avatar: true },
+          select: { id: true, name: true, email: true, image: true },
         },
         category: {
           select: { id: true, name: true, color: true },

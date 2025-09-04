@@ -13,6 +13,7 @@
     "recovery": "tsx scripts/data-recovery.ts"
   },
   "dependencies": {
+    "@auth/prisma-adapter": "^2.10.0",
     "@hookform/resolvers": "^5.2.1",
     "@prisma/client": "^6.14.0",
     "@radix-ui/react-avatar": "^1.1.10",
@@ -32,6 +33,7 @@
     "date-fns": "^4.1.0",
     "lucide-react": "^0.540.0",
     "next": "15.4.7",
+    "next-auth": "^4.24.11",
     "next-cloudinary": "^6.16.0",
     "next-themes": "^0.4.6",
     "react": "19.1.0",

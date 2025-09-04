@@ -32,7 +32,7 @@ export default async function PostBySlugPage({ params }: PageProps) {
             id: true,
             name: true,
             email: true,
-            avatar: true,
+            image: true,
             createdAt: true,
             role: true,
           },

@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { withAuth } from "next-auth/middleware"
 
 // Instance Prisma pour le middleware
 const prisma = new PrismaClient();
 
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+export default withAuth(
+  async function middleware(request: NextRequest) {
+    const { pathname } = request.nextUrl;
   
   // 🔄 REDIRECTIONS SEO - Anciennes URLs vers nouvelles
   
@@ -96,7 +98,33 @@ export async function middleware(request: NextRequest) {
   }
   
   return response;
-}
+  },
+  {
+    callbacks: {
+      authorized: ({ token, req }) => {
+        const { pathname } = req.nextUrl;
+        
+        // Routes publiques
+        const publicRoutes = ['/auth/signin', '/auth/error', '/community'];
+        if (publicRoutes.includes(pathname) || pathname.startsWith('/community/posts/')) {
+          return true;
+        }
+        
+        // Routes protégées nécessitent une authentification
+        if (pathname.startsWith('/dashboard') || pathname.startsWith('/api/admin')) {
+          return !!token;
+        }
+        
+        // Routes API nécessitent une authentification
+        if (pathname.startsWith('/api/')) {
+          return !!token;
+        }
+        
+        return true;
+      },
+    },
+  }
+)
 
 export const config = {
   matcher: [

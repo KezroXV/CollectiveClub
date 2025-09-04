@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { getShopId, ensureShopIsolation } from "@/lib/shopIsolation";
 import { awardPoints } from "@/lib/points";
 import { PointAction } from "@prisma/client";
+import { getAuthContext } from "@/lib/auth-context";
 
 const prisma = new PrismaClient();
 
@@ -33,7 +34,7 @@ export async function GET(
       },
       include: {
         author: {
-          select: { id: true, name: true, email: true, avatar: true },
+          select: { id: true, name: true, email: true, image: true },
         },
         reactions: {
           select: {
@@ -57,7 +58,7 @@ export async function GET(
       },
       include: {
         author: {
-          select: { id: true, name: true, email: true, avatar: true },
+          select: { id: true, name: true, email: true, image: true },
         },
         reactions: {
           select: {
@@ -155,20 +156,23 @@ export async function POST(
   { params }: { params: { postId: string } }
 ) {
   try {
-    // 🏪 ISOLATION MULTI-TENANT
-    const shopId = await getShopId(request);
-    ensureShopIsolation(shopId);
+    // 🔐 AUTHENTICATION: Vérifier que l'utilisateur est connecté
+    const { user, shopId } = await getAuthContext();
+    
+    console.log("💬 Creating comment:", { userId: user.id, email: user.email, role: user.role, shopId });
 
     const { postId } = await params;
     const body = await request.json();
-    const { content, authorId, parentId } = body;
+    const { content, parentId } = body;
 
-    if (!content || !authorId) {
+    if (!content) {
       return NextResponse.json(
-        { error: "Content and authorId are required" },
+        { error: "Content is required" },
         { status: 400 }
       );
     }
+
+    const authorId = user.id;
 
     // Si parentId est fourni, vérifier que le commentaire parent existe
     if (parentId) {
@@ -200,7 +204,7 @@ export async function POST(
       data: commentData,
       include: {
         author: {
-          select: { id: true, name: true, email: true, avatar: true },
+          select: { id: true, name: true, email: true, image: true },
         },
         reactions: {
           select: {

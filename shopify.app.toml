@@ -2,9 +2,9 @@
 
 client_id = "b4e0f05c3b167ee4454a2bb3785bf717"
 name = "Collective Club"
-handle = "collective-club"
 application_url = "http://localhost:3000/"
 embedded = false
+handle = "collective-club"
 
 [webhooks]
 api_version = "2025-07"

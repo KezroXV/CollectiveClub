@@ -28,7 +28,7 @@ export async function GET(
             id: true, 
             name: true, 
             email: true, 
-            avatar: true,
+            image: true,
             createdAt: true,
             role: true
           },
@@ -75,7 +75,7 @@ export async function GET(
       },
       include: {
         author: {
-          select: { id: true, name: true, email: true, avatar: true },
+          select: { id: true, name: true, email: true, image: true },
         },
         reactions: {
           select: {
@@ -99,7 +99,7 @@ export async function GET(
       },
       include: {
         author: {
-          select: { id: true, name: true, email: true, avatar: true },
+          select: { id: true, name: true, email: true, image: true },
         },
         reactions: {
           select: {

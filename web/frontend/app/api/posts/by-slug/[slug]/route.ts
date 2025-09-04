@@ -39,7 +39,7 @@ export async function GET(
             id: true,
             name: true,
             email: true,
-            avatar: true,
+            image: true,
             createdAt: true,
             role: true,
           },
@@ -65,7 +65,7 @@ export async function GET(
                 id: true,
                 name: true,
                 email: true,
-                avatar: true,
+                image: true,
               },
             },
             replies: {
@@ -75,7 +75,7 @@ export async function GET(
                     id: true,
                     name: true,
                     email: true,
-                    avatar: true,
+                    image: true,
                   },
                 },
                 _count: {

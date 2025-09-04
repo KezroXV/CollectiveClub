@@ -1,6 +1,140 @@
-import { PrismaClient } from "@prisma/client";
+import { NextAuthOptions } from "next-auth"
+import { PrismaAdapter } from "@auth/prisma-adapter"
+import GoogleProvider from "next-auth/providers/google"
+import { prisma } from "@/lib/prisma"
+import { getCurrentShopId } from "@/lib/shop-context"
 
-const prisma = new PrismaClient();
+export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma),
+  
+  providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
+  ],
+
+  callbacks: {
+    async signIn({ user, account, profile }) {
+      console.log("🔐 SignIn callback:", { 
+        userId: user.id, 
+        email: user.email, 
+        name: user.name,
+        provider: account?.provider 
+      });
+      
+      // Simplement autoriser la connexion Google
+      if (!user.email || account?.provider !== 'google') return false;
+      
+      return true; // La logique d'admin sera dans jwt callback
+    },
+
+    async session({ session, token }) {
+      console.log("📝 Session callback:", { 
+        sessionUser: session.user?.email, 
+        tokenSub: token?.sub,
+        tokenRole: token?.role
+      });
+      
+      // Récupérer les infos depuis le token JWT
+      if (token && session.user) {
+        session.user.id = token.sub!;
+        session.user.name = token.name || session.user.name;
+        session.user.image = token.picture || session.user.image;
+        session.user.role = (token.role as any) || "MEMBER";
+        session.user.isShopOwner = (token.isShopOwner as boolean) || false;
+      }
+      return session;
+    },
+
+    async jwt({ token, user, account }) {
+      console.log("🎫 JWT callback:", { 
+        tokenSub: token.sub, 
+        userId: user?.id,
+        userName: user?.name,
+        provider: account?.provider 
+      });
+      
+      // Au premier sign-in, configurer l'utilisateur
+      if (user && account?.provider === 'google') {
+        try {
+          // Récupérer le contexte boutique
+          const shopId = await getCurrentShopId();
+          console.log("🏪 Shop context in JWT:", shopId);
+          
+          if (shopId) {
+            // Vérifier si un admin existe déjà pour cette boutique
+            const existingAdmin = await prisma.user.findFirst({
+              where: {
+                shopId: shopId,
+                role: 'ADMIN'
+              }
+            });
+            
+            console.log("👑 Existing admin for shop:", existingAdmin?.email || "None");
+            
+            // Déterminer le rôle
+            const role = !existingAdmin ? 'ADMIN' : 'MEMBER';
+            const isShopOwner = !existingAdmin;
+            
+            // Mettre à jour l'utilisateur avec shopId et rôle
+            const updatedUser = await prisma.user.update({
+              where: { id: user.id },
+              data: { 
+                shopId: shopId,
+                role: role,
+                isShopOwner: isShopOwner
+              },
+              select: { role: true, isShopOwner: true, name: true }
+            });
+            
+            console.log("✅ User configured:", { 
+              email: user.email, 
+              name: updatedUser.name,
+              role: updatedUser.role, 
+              isShopOwner: updatedUser.isShopOwner,
+              shopId 
+            });
+            
+            token.role = updatedUser.role;
+            token.isShopOwner = updatedUser.isShopOwner;
+          } else {
+            // Pas de shopId, utilisateur normal
+            token.role = "MEMBER";
+            token.isShopOwner = false;
+          }
+        } catch (error) {
+          console.error("❌ JWT callback error:", error);
+          token.role = "MEMBER";
+          token.isShopOwner = false;
+        }
+      } else if (user) {
+        // Connexions suivantes, récupérer depuis DB
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { role: true, isShopOwner: true }
+        });
+        
+        token.role = dbUser?.role || "MEMBER";
+        token.isShopOwner = dbUser?.isShopOwner || false;
+      }
+      
+      return token;
+    }
+  },
+
+  pages: {
+    signIn: '/auth/signin',
+    error: '/auth/error',
+  },
+
+  session: {
+    strategy: "jwt", // Changer pour JWT temporairement
+    maxAge: 30 * 24 * 60 * 60, // 30 jours
+  },
+  
+  debug: process.env.NODE_ENV === "development"
+}
 
 export async function verifyAdminRole(userId: string, shopId?: string): Promise<{ isAdmin: boolean; error?: string }> {
   try {

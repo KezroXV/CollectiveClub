@@ -13,6 +13,46 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Modèles NextAuth standards
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verificationtokens")
+}
+
 // 🏪 MODÈLE SHOP POUR MULTI-TENANT
 model Shop {
   id          String   @id @default(cuid())
@@ -24,7 +64,6 @@ model Shop {
   updatedAt   DateTime @updatedAt
   
   // Relations
-  users       User[]
   posts       Post[]
   categories  Category[]
   badges      Badge[]
@@ -39,35 +78,40 @@ model Shop {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   
-  name      String?
-  avatar    String?
-  shopId    String   // ✅ OBLIGATOIRE pour multi-tenant
-  shopDomain String?  // Gardé pour la compatibilité
-  role      Role     @default(MEMBER)
-  isBanned  Boolean  @default(false) // 🚫 Status de bannissement
-  bannedAt  DateTime? // 🚫 Date de bannissement
-  bannedBy  String?  // 🚫 ID de l'admin qui a banni
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(cuid())
+  email         String   @unique // Global unique pour tous
+  name          String?
+  image         String?  // Avatar NextAuth
+  emailVerified DateTime? // Requis NextAuth
+  role          Role     @default(MEMBER) // Rôle global
+  isShopOwner   Boolean  @default(false) // Marqueur propriétaire boutique
+  shopId        String?  // ID de la boutique - optionnel pour multi-tenant
+  shopDomain    String?  // Domain de la boutique pour référence
+  isBanned      Boolean  @default(false)
+  bannedAt      DateTime?
+  bannedBy      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  // Relations
-  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  // Relations NextAuth
+  accounts Account[]
+  sessions Session[]
+
+  // Relations forum (contextuelles par shopId via requêtes)
   posts     Post[]
   comments  Comment[]
   reactions Reaction[]
   PollVote  PollVote[]
   customizationSettings CustomizationSettings[]
   
-  // Nouvelles relations sociales
+  // Relations sociales
   following Follow[] @relation("UserFollows")
   followers Follow[] @relation("UserFollowed")
   userPoints UserPoints[]
   pointTransactions PointTransaction[]
   userBadges UserBadge[]
 
-  @@unique([shopId, email]) // Email unique par shop
+  @@unique([shopId, email], name: "shopId_email")
   @@map("users")
 }
 model Category {

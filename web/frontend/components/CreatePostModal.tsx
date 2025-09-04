@@ -104,7 +104,6 @@ export default function CreatePostModal({
           content: content.trim(),
           category: selectedCategory || undefined,
           imageUrl: imageUrl || undefined,
-          authorId: currentUser.id,
           poll: pollData, // ✅ ENVOYER LES DONNÉES DU SONDAGE
         }),
       });

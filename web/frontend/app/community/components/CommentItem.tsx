@@ -150,7 +150,6 @@ const CommentItem = ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content: replyContent.trim(),
-          authorId: currentUser.id,
           parentId: comment.id,
         }),
       });

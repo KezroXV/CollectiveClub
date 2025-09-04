@@ -75,16 +75,24 @@ All models include `shopId` for multi-tenant isolation:
 
 ### Key Directories (in web/frontend/)
 - `app/api/` - Next.js API routes for backend functionality (auth, posts, users, etc.)
+- `app/api/auth/[...nextauth]/` - NextAuth.js authentication endpoints
+- `app/api/admin/` - Admin-specific API routes for management operations
+- `app/auth/` - Authentication pages and flows
 - `app/community/` - Main forum pages and post creation
 - `app/dashboard/` - Admin dashboard for shop configuration
 - `components/` - Reusable React components
+- `components/providers/` - React context providers (session, theme)
+- `lib/hooks/` - Custom React hooks
 - `prisma/` - Database schema, migrations, and seed data
 - `scripts/` - Utility scripts for admin, data management, and development
+- `types/` - TypeScript type definitions
 
-### Multi-tenant Architecture
+### Authentication & Multi-tenant Architecture
+- **NextAuth.js v4** with Google OAuth provider integration
+- **Prisma Adapter** for database session management
 - Each shop is isolated by `shopId` in all database operations
-- User authentication via Shopify OAuth
-- Shop-specific customization (colors, fonts, branding)
+- Dual authentication system: Shopify OAuth + Google OAuth for users
+- Shop-specific customization (colors, fonts, branding)  
 - Per-shop categories, badges, and user management
 
 ### Environment Variables Required
@@ -95,13 +103,24 @@ All models include `shopId` for multi-tenant isolation:
 - `CLOUDINARY_CLOUD_NAME` - Cloudinary configuration
 - `CLOUDINARY_API_KEY` - Cloudinary API key
 - `CLOUDINARY_API_SECRET` - Cloudinary API secret
+- `GOOGLE_CLIENT_ID` - Google OAuth client ID for authentication
+- `GOOGLE_CLIENT_SECRET` - Google OAuth client secret for authentication
+- `NEXTAUTH_SECRET` - NextAuth.js secret for session encryption
+- `NEXTAUTH_URL` - Base URL for NextAuth.js callbacks
+
+### App Installation Flow
+1. **Shopify App Store**: Merchants install the app, Shopify redirects to your app with `?shop=store.myshopify.com`
+2. **Admin Access**: Users access the app from Shopify Admin → Apps → CollectiveClub
+3. **Direct Link**: For development: `https://your-app.com/?shop=store.myshopify.com`
+4. **Google Auth**: First user to connect via Google becomes admin for that shop
 
 ### Important Implementation Notes
 - Always include `shopId` when creating or querying database records
 - Use `@relation(onDelete: Cascade)` to maintain referential integrity
 - French locale is set in root layout (`lang="fr"`)
 - Prisma client is generated to `node_modules/.prisma/client`
-- OAuth redirect URLs configured for local development (localhost:3000)
+- Shop parameter detection via URL params and middleware cookies
+- Google OAuth replaces previous Shopify OAuth admin detection
 
 ## Testing & Quality
 - No formal test framework currently configured

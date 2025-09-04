@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Header from "@/components/Header";
 import HeroBanner from "@/components/HeroBanner";
 import CategoryFilter from "@/components/CategoryFilter";
@@ -47,6 +48,7 @@ interface Post {
 }
 
 export default function HomePage() {
+  const { data: session } = useSession();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -130,6 +132,22 @@ export default function HomePage() {
   useEffect(() => {
     fetchPosts();
   }, [showPinnedOnly]);
+
+  // Update currentUser from session
+  useEffect(() => {
+    if (session?.user) {
+      setCurrentUser({
+        id: session.user.id,
+        email: session.user.email,
+        name: session.user.name,
+        image: session.user.image,
+        role: session.user.role
+      });
+      console.log("👤 CurrentUser updated:", session.user);
+    } else {
+      setCurrentUser(null);
+    }
+  }, [session]);
 
   // Filter posts
   // Modifier le filtering par catégorie :
