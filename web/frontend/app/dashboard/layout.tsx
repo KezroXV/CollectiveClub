@@ -1,27 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useEffect } from "react";
 import Header from "@/components/Header";
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [currentUser, setCurrentUser] = useState<any>(null);
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem("currentUser");
-    if (storedUser) {
-      try {
-        const user = JSON.parse(storedUser);
-        setCurrentUser(user);
-      } catch (error) {
-        console.error("Error parsing stored user:", error);
-      }
-    }
-  }, []);
+  const { currentUser } = useCurrentUser();
 
   return (
     <div className="min-h-screen bg-gray-50">

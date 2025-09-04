@@ -62,51 +62,6 @@ export default function HomePage() {
   
   // 🏪 Initialiser la persistance du shop
   const { currentShop } = useShopPersistence();
-  // Auth user detection
-  useEffect(() => {
-    const shop = searchParams.get("shop");
-    const hmac = searchParams.get("hmac");
-
-    if (shop && hmac) {
-      console.log("🔥 Shopify auth detected for shop:", shop);
-      createOrUpdateUser(shop);
-    } else {
-      // Load from localStorage
-      const storedUser = localStorage.getItem("currentUser");
-      if (storedUser) {
-        try {
-          const user = JSON.parse(storedUser);
-          setCurrentUser(user);
-        } catch (error) {
-          console.error("Error parsing stored user:", error);
-        }
-      }
-    }
-  }, [searchParams]);
-
-  // Create/update user
-  const createOrUpdateUser = async (shop: string) => {
-    try {
-      const response = await fetch("/api/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: `admin@${shop}`,
-          name: `Admin de ${shop}`,
-          shopDomain: shop,
-        }),
-      });
-
-      if (response.ok) {
-        const user = await response.json();
-        setCurrentUser(user);
-        localStorage.setItem("currentUser", JSON.stringify(user));
-        console.log("✅ User created/updated:", user.id);
-      }
-    } catch (error) {
-      console.error("❌ Error creating user:", error);
-    }
-  };
 
   // Fetch posts
   const fetchPosts = async () => {
