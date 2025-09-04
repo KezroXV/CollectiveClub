@@ -90,7 +90,6 @@ export const authOptions: NextAuthOptions = {
             token.shopId = undefined;
           }
         } catch (error) {
-          console.error("❌ JWT callback error:", error);
           token.role = "MEMBER";
           token.isShopOwner = false;
           token.shopId = undefined;
@@ -167,7 +166,6 @@ export async function verifyAdminRole(userId: string, shopId?: string): Promise<
 
     return { isAdmin: true };
   } catch (error) {
-    console.error("Error verifying admin role:", error);
     return { isAdmin: false, error: "Authorization check failed" };
   }
 }
@@ -205,7 +203,6 @@ export async function getShopAdmin(shopId: string) {
       });
 
     } catch (error) {
-      console.error("Error creating admin user:", error);
       throw new Error("No admin user found and failed to create one");
     }
   }
