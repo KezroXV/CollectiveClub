@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-// import RolesSection from "@/components/RolesSection";
 import CategoriesSection from "@/components/CategoriesSection";
 import RolesMembersModal from "./components/RolesMembersModal";
 import StatsCards from "./components/StatsCards";
@@ -15,23 +14,20 @@ import CustomizationModal from "./components/CustomizationModal";
 import { useTheme } from "@/contexts/ThemeContext";
 import ThemeWrapper from "@/components/ThemeWrapper";
 import { useRouter } from "next/navigation";
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 
 export default function DashboardPage() {
+  const { currentUser, loading, isAdmin, isModerator } = useCurrentUser();
   const [showCustomization, setShowCustomization] = useState(false);
   const [showPostsModal, setShowPostsModal] = useState(false);
   const [showClientsModal, setShowClientsModal] = useState(false);
   const [showThemeModal, setShowThemeModal] = useState(false);
-  const [currentUser, setCurrentUser] = useState<{
-    id: string;
-    shopId: string;
-    name?: string;
-    role?: string;
-  } | null>(null);
-  const [shopId, setShopId] = useState<string | undefined>();
-  const [isAuthorized, setIsAuthorized] = useState(false);
-  const [loading, setLoading] = useState(true);
   const { loadUserTheme } = useTheme();
   const router = useRouter();
+  
+  // Vérifier si l'utilisateur a accès au dashboard
+  const hasAccess = isAdmin || isModerator;
+  const shopId = currentUser?.shopId || '';
 
   // Handlers pour les modals
   const handleClientsClick = () => setShowClientsModal(true);
@@ -39,42 +35,16 @@ export default function DashboardPage() {
   const handleThemeClick = () => setShowThemeModal(true);
   // Roles rendered inline; no modal trigger needed
 
-  // Charger l'utilisateur et vérifier les permissions
-  useEffect(() => {
-    const storedUser = localStorage.getItem("currentUser");
+  // Rediriger si pas d'accès
+  if (!loading && !hasAccess) {
+    router.push("/");
+    return null;
+  }
 
-    if (storedUser) {
-      try {
-        const user = JSON.parse(storedUser);
-
-        // Vérifier si l'utilisateur est admin ou modérateur
-        const isAdminOrMod = user.role === "ADMIN" || user.role === "MODERATOR";
-
-        if (!isAdminOrMod) {
-          // Rediriger vers la page community si pas autorisé
-          router.push("/");
-          return;
-        }
-
-        setCurrentUser(user);
-        setShopId(user.shopId);
-        setIsAuthorized(true);
-
-        // Charger le thème de l'utilisateur
-        if (user.id) {
-          loadUserTheme(user.id);
-        }
-      } catch (error) {
-        console.error("Error parsing stored user:", error);
-        router.push("/community");
-      }
-    } else {
-      // Pas d'utilisateur connecté, rediriger
-      router.push("/community");
-    }
-
-    setLoading(false);
-  }, [loadUserTheme, router]);
+  // Charger le thème utilisateur
+  if (currentUser?.id && hasAccess) {
+    loadUserTheme(currentUser.id);
+  }
 
   // Afficher un loader pendant la vérification
   if (loading) {
@@ -92,7 +62,7 @@ export default function DashboardPage() {
   }
 
   // Afficher un message d'erreur si pas autorisé (ne devrait pas arriver à cause de la redirection)
-  if (!isAuthorized) {
+  if (!hasAccess) {
     return (
       <ThemeWrapper
         applyBackgroundColor={true}

@@ -21,20 +21,20 @@ import {
   Image as ImageIcon,
   BarChart3,
 } from "lucide-react";
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 
 interface CreatePostModalProps {
   isOpen: boolean;
   onClose: () => void;
-  currentUser: any;
   onPostCreated: () => void;
 }
 
 export default function CreatePostModal({
   isOpen,
   onClose,
-  currentUser,
   onPostCreated,
 }: CreatePostModalProps) {
+  const { currentUser } = useCurrentUser();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");

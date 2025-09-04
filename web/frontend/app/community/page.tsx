@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import {
   Card,
   CardContent,
@@ -59,11 +60,11 @@ interface Comment {
 }
 
 export default function CommunityPage() {
+  const { currentUser } = useCurrentUser();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newPost, setNewPost] = useState({ title: "", content: "" });
-  const [currentUser, setCurrentUser] = useState<any>(null);
   const [selectedPost, setSelectedPost] = useState<string | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
@@ -72,32 +73,7 @@ export default function CommunityPage() {
 
   const searchParams = useSearchParams();
 
-  // Remplacer l'useEffect currentUser par :
-  useEffect(() => {
-    // 1. Essayer depuis l'URL
-    const shop = searchParams.get("shop");
-
-    if (shop) {
-      setCurrentUser({
-        id: "current-user-id",
-        email: `admin@${shop}`,
-        name: `Admin de ${shop}`,
-        shopDomain: shop,
-      });
-    } else {
-      // 2. Essayer depuis localStorage
-      const storedUser = localStorage.getItem("currentUser");
-      if (storedUser) {
-        try {
-          const user = JSON.parse(storedUser);
-          setCurrentUser(user);
-          console.log("✅ User loaded from localStorage:", user);
-        } catch (error) {
-          console.error("Error parsing stored user:", error);
-        }
-      }
-    }
-  }, [searchParams]);
+  // Ancien code d'authentification retiré - maintenant géré par useCurrentUser
 
   useEffect(() => {
     fetchPosts();

@@ -6,22 +6,16 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
+import { signOut } from "next-auth/react";
 
-interface HeaderProps {
-  currentUser?: {
-    name: string;
-    email: string;
-    avatar?: string;
-    role?: string;
-  };
-}
-
-export default function Header({ currentUser }: HeaderProps) {
+export default function Header() {
+  const { currentUser, isAdmin, isModerator } = useCurrentUser();
   const [showMenu, setShowMenu] = useState(false);
   const pathname = usePathname();
 
   // Vérifier si l'utilisateur est admin ou modérateur
-  const isAdminOrMod = currentUser?.role === "ADMIN" || currentUser?.role === "MODERATOR";
+  const isAdminOrMod = isAdmin || isModerator;
 
   const navigation = [
     { name: "Accueil", href: "/", current: pathname === "/" },
@@ -111,7 +105,10 @@ export default function Header({ currentUser }: HeaderProps) {
                     >
                       ❓ Aide
                     </Link>
-                    <button className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                    <button 
+                      onClick={() => signOut()}
+                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                    >
                       🚪 Se déconnecter
                     </button>
                   </div>

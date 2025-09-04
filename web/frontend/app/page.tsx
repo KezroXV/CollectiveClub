@@ -3,8 +3,8 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { useSession } from "next-auth/react";
 import Header from "@/components/Header";
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import HeroBanner from "@/components/HeroBanner";
 import CategoryFilter from "@/components/CategoryFilter";
 import CreatePostModal from "@/components/CreatePostModal";
@@ -48,10 +48,9 @@ interface Post {
 }
 
 export default function HomePage() {
-  const { data: session } = useSession();
+  const { currentUser } = useCurrentUser();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
-  const [currentUser, setCurrentUser] = useState<any>(null);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
@@ -133,21 +132,6 @@ export default function HomePage() {
     fetchPosts();
   }, [showPinnedOnly]);
 
-  // Update currentUser from session
-  useEffect(() => {
-    if (session?.user) {
-      setCurrentUser({
-        id: session.user.id,
-        email: session.user.email,
-        name: session.user.name,
-        image: session.user.image,
-        role: session.user.role
-      });
-      console.log("👤 CurrentUser updated:", session.user);
-    } else {
-      setCurrentUser(null);
-    }
-  }, [session]);
 
   // Filter posts
   // Modifier le filtering par catégorie :
@@ -199,7 +183,7 @@ export default function HomePage() {
   return (
     <ThemeWrapper applyBackgroundColor={true} className="min-h-screen">
       {/* Header */}
-      <Header currentUser={currentUser ?? undefined} />
+      <Header />
 
       {/* Hero Banner */}
       <HeroBanner />
@@ -237,7 +221,6 @@ export default function HomePage() {
       <CreatePostModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        currentUser={currentUser}
         onPostCreated={fetchPosts}
       />
     </ThemeWrapper>

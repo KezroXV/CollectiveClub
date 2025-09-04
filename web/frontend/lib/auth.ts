@@ -1,5 +1,5 @@
 import { NextAuthOptions } from "next-auth"
-import { PrismaAdapter } from "@auth/prisma-adapter"
+import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import GoogleProvider from "next-auth/providers/google"
 import { prisma } from "@/lib/prisma"
 import { getCurrentShopId } from "@/lib/shop-context"
@@ -43,6 +43,7 @@ export const authOptions: NextAuthOptions = {
         session.user.image = token.picture || session.user.image;
         session.user.role = (token.role as any) || "MEMBER";
         session.user.isShopOwner = (token.isShopOwner as boolean) || false;
+        session.user.shopId = (token.shopId as string) || undefined;
       }
       return session;
     },
@@ -98,25 +99,41 @@ export const authOptions: NextAuthOptions = {
             
             token.role = updatedUser.role;
             token.isShopOwner = updatedUser.isShopOwner;
+            token.shopId = shopId;
           } else {
             // Pas de shopId, utilisateur normal
             token.role = "MEMBER";
             token.isShopOwner = false;
+            token.shopId = undefined;
           }
         } catch (error) {
           console.error("❌ JWT callback error:", error);
           token.role = "MEMBER";
           token.isShopOwner = false;
+          token.shopId = undefined;
         }
-      } else if (user) {
-        // Connexions suivantes, récupérer depuis DB
+      } else if (token.sub) {
+        // Connexions suivantes, récupérer depuis DB avec token.sub
+        console.log("🔄 Loading user from DB with ID:", token.sub);
         const dbUser = await prisma.user.findUnique({
-          where: { id: user.id },
-          select: { role: true, isShopOwner: true }
+          where: { id: token.sub },
+          select: { role: true, isShopOwner: true, shopId: true, email: true }
         });
         
-        token.role = dbUser?.role || "MEMBER";
-        token.isShopOwner = dbUser?.isShopOwner || false;
+        console.log("📄 DB User found:", dbUser);
+        
+        if (dbUser) {
+          token.role = dbUser.role;
+          token.isShopOwner = dbUser.isShopOwner;
+          token.shopId = dbUser.shopId;
+          console.log("✅ Token updated:", { role: token.role, isShopOwner: token.isShopOwner, shopId: token.shopId });
+        } else {
+          // Utilisateur n'existe plus en DB
+          console.log("❌ User not found in DB, setting defaults");
+          token.role = "MEMBER";
+          token.isShopOwner = false;
+          token.shopId = undefined;
+        }
       }
       
       return token;
