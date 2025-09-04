@@ -15,14 +15,7 @@ export const authOptions: NextAuthOptions = {
   ],
 
   callbacks: {
-    async signIn({ user, account, profile }) {
-      console.log("🔐 SignIn callback:", { 
-        userId: user.id, 
-        email: user.email, 
-        name: user.name,
-        provider: account?.provider 
-      });
-      
+    async signIn({ user, account }) {
       // Simplement autoriser la connexion Google
       if (!user.email || account?.provider !== 'google') return false;
       
@@ -30,12 +23,6 @@ export const authOptions: NextAuthOptions = {
     },
 
     async session({ session, token }) {
-      console.log("📝 Session callback:", { 
-        sessionUser: session.user?.email, 
-        tokenSub: token?.sub,
-        tokenRole: token?.role
-      });
-      
       // Récupérer les infos depuis le token JWT
       if (token && session.user) {
         session.user.id = token.sub!;
@@ -49,19 +36,11 @@ export const authOptions: NextAuthOptions = {
     },
 
     async jwt({ token, user, account }) {
-      console.log("🎫 JWT callback:", { 
-        tokenSub: token.sub, 
-        userId: user?.id,
-        userName: user?.name,
-        provider: account?.provider 
-      });
-      
       // Au premier sign-in, configurer l'utilisateur
       if (user && account?.provider === 'google') {
         try {
           // Récupérer le contexte boutique
           const shopId = await getCurrentShopId();
-          console.log("🏪 Shop context in JWT:", shopId);
           
           if (shopId) {
             // Vérifier si un admin existe déjà pour cette boutique
@@ -72,7 +51,6 @@ export const authOptions: NextAuthOptions = {
               }
             });
             
-            console.log("👑 Existing admin for shop:", existingAdmin?.email || "None");
             
             // Déterminer le rôle
             const role = !existingAdmin ? 'ADMIN' : 'MEMBER';
@@ -87,14 +65,6 @@ export const authOptions: NextAuthOptions = {
                 isShopOwner: isShopOwner
               },
               select: { role: true, isShopOwner: true, name: true }
-            });
-            
-            console.log("✅ User configured:", { 
-              email: user.email, 
-              name: updatedUser.name,
-              role: updatedUser.role, 
-              isShopOwner: updatedUser.isShopOwner,
-              shopId 
             });
             
             token.role = updatedUser.role;
@@ -114,22 +84,18 @@ export const authOptions: NextAuthOptions = {
         }
       } else if (token.sub) {
         // Connexions suivantes, récupérer depuis DB avec token.sub
-        console.log("🔄 Loading user from DB with ID:", token.sub);
         const dbUser = await prisma.user.findUnique({
           where: { id: token.sub },
           select: { role: true, isShopOwner: true, shopId: true, email: true }
         });
         
-        console.log("📄 DB User found:", dbUser);
         
         if (dbUser) {
           token.role = dbUser.role;
           token.isShopOwner = dbUser.isShopOwner;
           token.shopId = dbUser.shopId;
-          console.log("✅ Token updated:", { role: token.role, isShopOwner: token.isShopOwner, shopId: token.shopId });
         } else {
           // Utilisateur n'existe plus en DB
-          console.log("❌ User not found in DB, setting defaults");
           token.role = "MEMBER";
           token.isShopOwner = false;
           token.shopId = undefined;
@@ -225,7 +191,6 @@ export async function getShopAdmin(shopId: string) {
         select: { id: true, role: true, email: true, shopId: true, name: true }
       });
 
-      console.log(`✅ Auto-created admin for shop ${shopId}:`, adminUser.email);
     } catch (error) {
       console.error("Error creating admin user:", error);
       throw new Error("No admin user found and failed to create one");
