@@ -43,33 +43,46 @@ export const authOptions: NextAuthOptions = {
           const shopId = await getCurrentShopId();
           
           if (shopId) {
-            // Vérifier si un admin existe déjà pour cette boutique
-            const existingAdmin = await prisma.user.findFirst({
+            // Vérifier si cet utilisateur existe déjà pour cette boutique spécifique
+            let shopUser = await prisma.user.findFirst({
               where: {
-                shopId: shopId,
-                role: 'ADMIN'
+                email: user.email,
+                shopId: shopId
               }
             });
             
+            if (!shopUser) {
+              // Vérifier si un admin existe déjà pour cette boutique
+              const existingAdmin = await prisma.user.findFirst({
+                where: {
+                  shopId: shopId,
+                  role: 'ADMIN'
+                }
+              });
+              
+              // Déterminer le rôle pour ce nouvel utilisateur dans cette boutique
+              const role = !existingAdmin ? 'ADMIN' : 'MEMBER';
+              const isShopOwner = !existingAdmin;
+              
+              // Créer un nouvel utilisateur pour cette boutique
+              shopUser = await prisma.user.create({
+                data: {
+                  email: user.email!,
+                  name: user.name!,
+                  image: user.image,
+                  shopId: shopId,
+                  role: role,
+                  isShopOwner: isShopOwner
+                }
+              });
+              
+              // Mettre à jour l'ID du token avec le nouvel utilisateur de cette boutique
+              token.sub = shopUser.id;
+            }
             
-            // Déterminer le rôle
-            const role = !existingAdmin ? 'ADMIN' : 'MEMBER';
-            const isShopOwner = !existingAdmin;
-            
-            // Mettre à jour l'utilisateur avec shopId et rôle
-            const updatedUser = await prisma.user.update({
-              where: { id: user.id },
-              data: { 
-                shopId: shopId,
-                role: role,
-                isShopOwner: isShopOwner
-              },
-              select: { role: true, isShopOwner: true, name: true }
-            });
-            
-            token.role = updatedUser.role;
-            token.isShopOwner = updatedUser.isShopOwner;
-            token.shopId = shopId;
+            token.role = shopUser.role;
+            token.isShopOwner = shopUser.isShopOwner;
+            token.shopId = shopUser.shopId;
           } else {
             // Pas de shopId, utilisateur normal
             token.role = "MEMBER";
