@@ -264,9 +264,6 @@ const AuthorSidebar = ({
                         height={48}
                         className="rounded-full"
                       />
-                      <span className="absolute -top-1.5 -right-1.5 text-[8px] px-1 py-0.5 rounded bg-white shadow border border-chart-4">
-                        {badge.requiredPoints}
-                      </span>
                     </div>
                     <p className="font-medium text-[10px] text-gray-900">
                       {badge.name}
