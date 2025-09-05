@@ -371,7 +371,9 @@ export default function ShopManagementSection({
   );
 
   // Pagination pour les catégories
-  const totalCategoryPages = Math.ceil(filteredCategories.length / CATEGORIES_PER_PAGE);
+  const totalCategoryPages = Math.ceil(
+    filteredCategories.length / CATEGORIES_PER_PAGE
+  );
   const paginatedCategories = filteredCategories.slice(
     categoryCurrentPage * CATEGORIES_PER_PAGE,
     (categoryCurrentPage + 1) * CATEGORIES_PER_PAGE
@@ -391,7 +393,9 @@ export default function ShopManagementSection({
   };
 
   const handleCategoryNextPage = () => {
-    setCategoryCurrentPage((prev) => Math.min(totalCategoryPages - 1, prev + 1));
+    setCategoryCurrentPage((prev) =>
+      Math.min(totalCategoryPages - 1, prev + 1)
+    );
   };
 
   // Reset pagination when search changes
@@ -406,7 +410,7 @@ export default function ShopManagementSection({
   return (
     <div className="col-span-4">
       <Card className="hover:shadow-sm border-chart-4">
-        <CardContent className="p-6">
+        <CardContent className="">
           {/* Section Rôles */}
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Rôles</h3>
@@ -420,18 +424,18 @@ export default function ShopManagementSection({
                   className="pl-10 w-32 h-8 text-sm"
                 />
               </div>
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="h-8 w-8"
                 onClick={handleUserPrevPage}
                 disabled={userCurrentPage === 0}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="h-8 w-8"
                 onClick={handleUserNextPage}
                 disabled={userCurrentPage >= totalUserPages - 1}
@@ -561,9 +565,7 @@ export default function ShopManagementSection({
 
           {/* Section Catégories */}
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">
-              Mes Catégories
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-900">Catégories</h3>
             <div className="flex items-center gap-2">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -574,18 +576,18 @@ export default function ShopManagementSection({
                   className="pl-10 w-32 h-8 text-sm"
                 />
               </div>
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="h-8 w-8"
                 onClick={handleCategoryPrevPage}
                 disabled={categoryCurrentPage === 0}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="h-8 w-8"
                 onClick={handleCategoryNextPage}
                 disabled={categoryCurrentPage >= totalCategoryPages - 1}
