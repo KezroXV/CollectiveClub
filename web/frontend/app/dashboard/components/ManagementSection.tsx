@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { FileText, Users, Home } from "lucide-react";
+import { FileText, Users, Home, Palette } from "lucide-react";
 
 interface ManagementSectionProps {
   onClientsClick: () => void;
@@ -17,29 +17,33 @@ export default function ManagementSection({
   return (
     <div className="col-span-8 space-y-6">
       <Card className="hover:shadow-sm border-chart-4">
-        <CardContent className="p-6">
+        <CardContent className="">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Gérer</h3>
           <nav className="space-y-1">
-            <button
+            <Button
+              variant="ghost"
               onClick={onClientsClick}
-              className="w-full flex items-center px-3 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-50 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-left"
+              className="w-full text-md justify-start h-16  py-5 text-gray-600 bg-chart-6 border-chart-4 mb-4 border"
+              icon={<Users className="h-4 w-4" />}
             >
-              <Users className="h-4 w-4 mr-3 transition-colors duration-200" />
               Clients
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
               onClick={onPostsClick}
-              className="w-full flex items-center px-3 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-50 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-left"
+              className="w-full text-md justify-start h-16  py-5 text-gray-600 bg-chart-6 border-chart-4 mb-4 border"
+              icon={<FileText className="h-4 w-4" />}
             >
-              <FileText className="h-4 w-4 mr-3 transition-colors duration-200" />
               Posts
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="ghost"
               onClick={onThemeClick}
-              className="w-full flex items-center px-3 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-50 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200 cursor-pointer text-left"
+              className="w-full text-md justify-start h-16  py-5 text-gray-600 bg-chart-6 border-chart-4  border"
+              icon={<Palette className="h-4 w-4" />}
             >
-              🎨 Thème
-            </button>
+              Thème
+            </Button>
           </nav>
         </CardContent>
       </Card>
