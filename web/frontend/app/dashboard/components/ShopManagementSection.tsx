@@ -68,6 +68,7 @@ export default function ShopManagementSection({
 
   // États pour la recherche
   const [userSearchQuery, setUserSearchQuery] = useState("");
+  const [categorySearchQuery, setCategorySearchQuery] = useState("");
 
   // États pour le changement de rôle
   const [loadingRoleChange, setLoadingRoleChange] = useState<string | null>(
@@ -351,6 +352,11 @@ export default function ShopManagementSection({
       user.email.toLowerCase().includes(userSearchQuery.toLowerCase())
   );
 
+  // Filtrer les catégories selon la recherche
+  const filteredCategories = categories.filter((category) =>
+    category.name.toLowerCase().includes(categorySearchQuery.toLowerCase())
+  );
+
   return (
     <div className="col-span-4">
       <Card className="hover:shadow-sm border-chart-4">
@@ -505,6 +511,8 @@ export default function ShopManagementSection({
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   placeholder="Rechercher..."
+                  value={categorySearchQuery}
+                  onChange={(e) => setCategorySearchQuery(e.target.value)}
                   className="pl-10 w-32 h-8 text-sm"
                 />
               </div>
@@ -533,12 +541,14 @@ export default function ShopManagementSection({
                   </div>
                 ))}
               </>
-            ) : categories.length === 0 ? (
+            ) : filteredCategories.length === 0 ? (
               <p className="text-sm text-gray-500 col-span-3">
-                Aucune catégorie trouvée
+                {categorySearchQuery
+                  ? "Aucune catégorie trouvée"
+                  : "Aucune catégorie trouvée"}
               </p>
             ) : (
-              categories.map((category) => (
+              filteredCategories.map((category) => (
                 <div
                   key={category.id}
                   className="flex items-center h-6 px-2 py-2 justify-between rounded-full border border-gray-200 hover:bg-gray-50 transition-colors"
