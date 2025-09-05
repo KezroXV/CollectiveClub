@@ -1,23 +1,29 @@
-import * as React from "react"
+import * as React from "react";
 
-import { cn } from "@/lib/utils"
-import { COMPONENT_ANIMATIONS } from "@/lib/animations"
+import { cn } from "@/lib/utils";
+import { COMPONENT_ANIMATIONS } from "@/lib/animations";
 
 interface CardProps extends React.ComponentProps<"div"> {
-  hover?: boolean
-  interactive?: boolean
-  elevation?: 'none' | 'sm' | 'md' | 'lg' | 'xl'
+  hover?: boolean;
+  interactive?: boolean;
+  elevation?: "none" | "sm" | "md" | "lg" | "xl";
 }
 
-function Card({ className, hover = false, interactive = false, elevation = 'sm', ...props }: CardProps) {
+function Card({
+  className,
+  hover = false,
+  interactive = false,
+  elevation = "sm",
+  ...props
+}: CardProps) {
   const elevationClasses = {
-    none: 'shadow-none',
-    sm: 'shadow-sm',
-    md: 'shadow-md',
-    lg: 'shadow-lg hover:shadow-xl',
-    xl: 'shadow-xl hover:shadow-2xl'
-  }
-  
+    none: "shadow-none",
+    sm: "shadow-sm",
+    md: "shadow-md",
+    lg: "shadow-lg hover:shadow-xl",
+    xl: "shadow-xl hover:shadow-2xl",
+  };
+
   return (
     <div
       data-slot="card"
@@ -25,19 +31,24 @@ function Card({ className, hover = false, interactive = false, elevation = 'sm',
         "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 transition-all duration-300",
         elevationClasses[elevation],
         hover && "hover:-translate-y-1 hover:shadow-xl",
-        interactive && "cursor-pointer hover:-translate-y-2 hover:shadow-2xl hover:shadow-primary/10",
+        interactive &&
+          "cursor-pointer hover:-translate-y-2 hover:shadow-2xl hover:shadow-primary/10",
         className
       )}
       {...props}
     />
-  )
+  );
 }
 
 interface CardHeaderProps extends React.ComponentProps<"div"> {
-  centerContent?: boolean
+  centerContent?: boolean;
 }
 
-function CardHeader({ className, centerContent = false, ...props }: CardHeaderProps) {
+function CardHeader({
+  className,
+  centerContent = false,
+  ...props
+}: CardHeaderProps) {
   return (
     <div
       data-slot="card-header"
@@ -48,48 +59,60 @@ function CardHeader({ className, centerContent = false, ...props }: CardHeaderPr
       )}
       {...props}
     />
-  )
+  );
 }
 
 interface CardTitleProps extends React.ComponentProps<"div"> {
-  size?: 'sm' | 'md' | 'lg' | 'xl'
+  size?: "sm" | "md" | "lg" | "xl";
 }
 
-function CardTitle({ className, size = 'md', ...props }: CardTitleProps) {
+function CardTitle({ className, size = "md", ...props }: CardTitleProps) {
   const sizeClasses = {
-    sm: 'text-sm font-semibold',
-    md: 'text-base font-semibold', 
-    lg: 'text-lg font-semibold',
-    xl: 'text-xl font-bold'
-  }
-  
+    sm: "text-sm font-semibold",
+    md: "text-base font-semibold",
+    lg: "text-lg font-semibold",
+    xl: "text-xl font-bold",
+  };
+
   return (
     <div
       data-slot="card-title"
-      className={cn("leading-tight transition-colors duration-200", sizeClasses[size], className)}
+      className={cn(
+        "leading-tight transition-colors duration-200",
+        sizeClasses[size],
+        className
+      )}
       {...props}
     />
-  )
+  );
 }
 
 interface CardDescriptionProps extends React.ComponentProps<"div"> {
-  size?: 'xs' | 'sm' | 'md'
+  size?: "xs" | "sm" | "md";
 }
 
-function CardDescription({ className, size = 'sm', ...props }: CardDescriptionProps) {
+function CardDescription({
+  className,
+  size = "sm",
+  ...props
+}: CardDescriptionProps) {
   const sizeClasses = {
-    xs: 'text-xs',
-    sm: 'text-sm',
-    md: 'text-base'
-  }
-  
+    xs: "text-xs",
+    sm: "text-sm",
+    md: "text-base",
+  };
+
   return (
     <div
       data-slot="card-description"
-      className={cn("text-muted-foreground leading-relaxed transition-colors duration-200", sizeClasses[size], className)}
+      className={cn(
+        "text-muted-foreground leading-relaxed transition-colors duration-200",
+        sizeClasses[size],
+        className
+      )}
       {...props}
     />
-  )
+  );
 }
 
 function CardAction({ className, ...props }: React.ComponentProps<"div">) {
@@ -102,36 +125,49 @@ function CardAction({ className, ...props }: React.ComponentProps<"div">) {
       )}
       {...props}
     />
-  )
+  );
 }
 
 interface CardContentProps extends React.ComponentProps<"div"> {
-  noPadding?: boolean
+  noPadding?: boolean;
 }
 
-function CardContent({ className, noPadding = false, ...props }: CardContentProps) {
+function CardContent({
+  className,
+  noPadding = false,
+  ...props
+}: CardContentProps) {
   return (
     <div
       data-slot="card-content"
-      className={cn(!noPadding && "px-6", "transition-all duration-200", className)}
+      className={cn(
+        !noPadding && "px-6",
+        "transition-all duration-200",
+        className
+      )}
       {...props}
     />
-  )
+  );
 }
 
 interface CardFooterProps extends React.ComponentProps<"div"> {
-  justify?: 'start' | 'center' | 'end' | 'between'
-  noPadding?: boolean
+  justify?: "start" | "center" | "end" | "between";
+  noPadding?: boolean;
 }
 
-function CardFooter({ className, justify = 'start', noPadding = false, ...props }: CardFooterProps) {
+function CardFooter({
+  className,
+  justify = "start",
+  noPadding = false,
+  ...props
+}: CardFooterProps) {
   const justifyClasses = {
-    start: 'justify-start',
-    center: 'justify-center', 
-    end: 'justify-end',
-    between: 'justify-between'
-  }
-  
+    start: "justify-start",
+    center: "justify-center",
+    end: "justify-end",
+    between: "justify-between",
+  };
+
   return (
     <div
       data-slot="card-footer"
@@ -143,7 +179,7 @@ function CardFooter({ className, justify = 'start', noPadding = false, ...props 
       )}
       {...props}
     />
-  )
+  );
 }
 
 export {
@@ -154,4 +190,4 @@ export {
   CardAction,
   CardDescription,
   CardContent,
-}
+};

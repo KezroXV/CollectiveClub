@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { FileText, TrendingUp, Users, HelpCircle } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { HelpCircle } from "lucide-react";
+import Image from "next/image";
 
 interface StatData {
   total: number;
   variation: number;
-  trend: 'up' | 'down';
+  trend: "up" | "down";
 }
 
 interface StatsData {
@@ -20,12 +21,19 @@ interface StatCardProps {
   title: string;
   value: number;
   variation: number;
-  trend: 'up' | 'down';
-  icon: React.ComponentType<{ className?: string }>;
+  trend: "up" | "down";
+  iconSrc: string;
   isLoading?: boolean;
 }
 
-function StatCard({ title, value, variation, trend, icon: Icon, isLoading }: StatCardProps) {
+function StatCard({
+  title,
+  value,
+  variation,
+  trend,
+  iconSrc,
+  isLoading,
+}: StatCardProps) {
   const [displayValue, setDisplayValue] = useState(0);
 
   // Animation du compteur au chargement
@@ -69,24 +77,35 @@ function StatCard({ title, value, variation, trend, icon: Icon, isLoading }: Sta
     );
   }
 
-  const trendColor = trend === 'up' ? 'text-green-500 bg-green-50' : 'text-red-500 bg-red-50';
-  const trendIcon = trend === 'up' ? '↑' : '↓';
-  const valueColor = title === 'Posts' ? 'text-blue-600' : 'text-gray-900';
+  const trendColor =
+    trend === "up" ? "text-green-500 bg-green-50" : "text-red-500 bg-red-50";
+  const trendIcon = trend === "up" ? "↑" : "↓";
+  const valueColor = title === "Posts" ? "text-blue-600" : "text-gray-900";
 
   return (
-    <Card className="shadow-sm border-gray-200 hover:shadow-md transition-all duration-300 hover:-translate-y-1">
+    <Card className="shadow-sm border-chart-4 hover:shadow-md transition-all pt-0 h-32 duration-300 hover:-translate-y-1">
       <CardContent className="p-6">
         <div className="flex items-center justify-between mb-1">
-          <p className="text-sm text-gray-500">{title}</p>
+          <p className="text-lg text-black text-semibold">{title}</p>
           <HelpCircle className="h-4 w-4 text-gray-400" />
         </div>
         <div className="flex items-center gap-2 mb-1">
-          <Icon className="h-5 w-5 text-blue-600" />
-          <span className={`text-3xl font-bold ${valueColor} transition-all duration-300`}>
+          <Image
+            src={iconSrc}
+            alt={title}
+            width={13.75}
+            height={13.75}
+            className="text-blue-600"
+          />
+          <span
+            className={`text-3xl font-bold ${valueColor} transition-all duration-300`}
+          >
             {displayValue.toLocaleString()}
           </span>
           {variation > 0 && (
-            <span className={`text-xs px-2 py-1 rounded ${trendColor} transition-all duration-200`}>
+            <span
+              className={`text-xs px-2 py-1 rounded ${trendColor} transition-all duration-200`}
+            >
               {trendIcon} {variation}%
             </span>
           )}
@@ -109,14 +128,14 @@ export default function StatsCards({ shopId }: StatsCardsProps) {
     try {
       setIsLoading(true);
       setError(null);
-      
-      const response = await fetch('/api/dashboard/stats', {
-        method: 'GET',
+
+      const response = await fetch("/api/dashboard/stats", {
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         // Inclure les credentials pour l'authentification
-        credentials: 'include',
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -126,14 +145,14 @@ export default function StatsCards({ shopId }: StatsCardsProps) {
       const data = await response.json();
       setStats(data);
     } catch (error) {
-      console.error('Error fetching stats:', error);
-      setError('Erreur lors du chargement des statistiques');
-      
+      console.error("Error fetching stats:", error);
+      setError("Erreur lors du chargement des statistiques");
+
       // Fallback avec données par défaut pour éviter l'interface vide
       setStats({
-        posts: { total: 0, variation: 0, trend: 'up' },
-        engagement: { total: 0, variation: 0, trend: 'up' },
-        members: { total: 0, variation: 0, trend: 'up' },
+        posts: { total: 0, variation: 0, trend: "up" },
+        engagement: { total: 0, variation: 0, trend: "up" },
+        members: { total: 0, variation: 0, trend: "up" },
       });
     } finally {
       setIsLoading(false);
@@ -142,10 +161,10 @@ export default function StatsCards({ shopId }: StatsCardsProps) {
 
   useEffect(() => {
     fetchStats();
-    
+
     // Rafraîchir les stats toutes les 5 minutes
     const interval = setInterval(fetchStats, 5 * 60 * 1000);
-    
+
     return () => clearInterval(interval);
   }, [shopId]);
 
@@ -167,26 +186,26 @@ export default function StatsCards({ shopId }: StatsCardsProps) {
         title="Posts"
         value={stats?.posts.total || 0}
         variation={stats?.posts.variation || 0}
-        trend={stats?.posts.trend || 'up'}
-        icon={FileText}
+        trend={stats?.posts.trend || "up"}
+        iconSrc="/postIcon.svg"
         isLoading={isLoading}
       />
-      
+
       <StatCard
         title="Engagement"
         value={stats?.engagement.total || 0}
         variation={stats?.engagement.variation || 0}
-        trend={stats?.engagement.trend || 'up'}
-        icon={TrendingUp}
+        trend={stats?.engagement.trend || "up"}
+        iconSrc="/EngagementIcon.svg"
         isLoading={isLoading}
       />
-      
+
       <StatCard
         title="Membres actifs"
         value={stats?.members.total || 0}
         variation={stats?.members.variation || 0}
-        trend={stats?.members.trend || 'up'}
-        icon={Users}
+        trend={stats?.members.trend || "up"}
+        iconSrc="/FollowIcon.svg"
         isLoading={isLoading}
       />
     </div>
