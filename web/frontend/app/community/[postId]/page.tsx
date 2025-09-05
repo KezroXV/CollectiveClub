@@ -198,7 +198,7 @@ const PostDetailPage = () => {
   const handleClickOutside = useCallback((event: MouseEvent) => {
     const target = event.target as Element;
     // Ne pas fermer si on clique à l'intérieur du dropdown de réactions
-    if (target?.closest('.reaction-dropdown')) {
+    if (target?.closest(".reaction-dropdown")) {
       return;
     }
     setShowReactionDropdown(false);
@@ -401,16 +401,6 @@ const PostDetailPage = () => {
             </span>
           </nav>
 
-          {/* Bouton retour */}
-          <div className="mb-6">
-            <Link href="/community">
-              <Button variant="outline" className="gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                Retour au forum
-              </Button>
-            </Link>
-          </div>
-
           {/* Layout 2 colonnes */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Colonne principale (66%) */}
@@ -425,7 +415,7 @@ const PostDetailPage = () => {
                     post={{
                       id: post.id,
                       isPinned: post.isPinned,
-                      authorId: post.author.id
+                      authorId: post.author.id,
                     }}
                     getInitials={getInitials}
                     formatDate={formatDate}
@@ -433,7 +423,7 @@ const PostDetailPage = () => {
                     getRoleLabel={getRoleLabel}
                     currentUser={currentUser}
                     onPin={fetchPostData}
-                    onDelete={() => router.push('/community')}
+                    onDelete={() => router.push("/community")}
                   />
                 </CardHeader>
 

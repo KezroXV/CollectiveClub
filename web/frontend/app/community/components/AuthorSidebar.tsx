@@ -192,7 +192,7 @@ const AuthorSidebar = ({
     <Card className="overflow-hidden bg-white max-w-[400px]">
       <CardContent className="p-0">
         {/* Profil de l'auteur */}
-        <div className="p-6 flex   gap-4">
+        <div className={`p-6 ${currentUser && currentUser.id !== author.id ? 'flex gap-4' : ''}`}>
           <div className="flex items-center gap-3 mb-4">
             <Avatar className="h-16 w-16">
               <AvatarImage src={author.image} />
@@ -215,7 +215,7 @@ const AuthorSidebar = ({
             </div>
           </div>
 
-          {currentUser && currentUser.id !== author.id && (
+          {currentUser && currentUser.id && author.id && currentUser.id !== author.id && (
             <div className="w-fit flex justify-end">
               <FollowButton
                 targetUserId={author.id}

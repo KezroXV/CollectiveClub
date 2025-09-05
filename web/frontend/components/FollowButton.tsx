@@ -42,7 +42,7 @@ export default function FollowButton({
   }, [initialFollowersCount]);
 
   // Ne pas afficher le bouton si c'est le même utilisateur
-  if (currentUserId === targetUserId) {
+  if (!currentUserId || !targetUserId || currentUserId === targetUserId) {
     return null;
   }
 
