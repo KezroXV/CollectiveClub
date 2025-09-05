@@ -70,6 +70,12 @@ export default function ShopManagementSection({
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [categorySearchQuery, setCategorySearchQuery] = useState("");
 
+  // États pour la pagination
+  const [userCurrentPage, setUserCurrentPage] = useState(0);
+  const [categoryCurrentPage, setCategoryCurrentPage] = useState(0);
+  const USERS_PER_PAGE = 3;
+  const CATEGORIES_PER_PAGE = 9;
+
   // États pour le changement de rôle
   const [loadingRoleChange, setLoadingRoleChange] = useState<string | null>(
     null
@@ -357,6 +363,46 @@ export default function ShopManagementSection({
     category.name.toLowerCase().includes(categorySearchQuery.toLowerCase())
   );
 
+  // Pagination pour les utilisateurs
+  const totalUserPages = Math.ceil(filteredUsers.length / USERS_PER_PAGE);
+  const paginatedUsers = filteredUsers.slice(
+    userCurrentPage * USERS_PER_PAGE,
+    (userCurrentPage + 1) * USERS_PER_PAGE
+  );
+
+  // Pagination pour les catégories
+  const totalCategoryPages = Math.ceil(filteredCategories.length / CATEGORIES_PER_PAGE);
+  const paginatedCategories = filteredCategories.slice(
+    categoryCurrentPage * CATEGORIES_PER_PAGE,
+    (categoryCurrentPage + 1) * CATEGORIES_PER_PAGE
+  );
+
+  // Fonctions de navigation
+  const handleUserPrevPage = () => {
+    setUserCurrentPage((prev) => Math.max(0, prev - 1));
+  };
+
+  const handleUserNextPage = () => {
+    setUserCurrentPage((prev) => Math.min(totalUserPages - 1, prev + 1));
+  };
+
+  const handleCategoryPrevPage = () => {
+    setCategoryCurrentPage((prev) => Math.max(0, prev - 1));
+  };
+
+  const handleCategoryNextPage = () => {
+    setCategoryCurrentPage((prev) => Math.min(totalCategoryPages - 1, prev + 1));
+  };
+
+  // Reset pagination when search changes
+  useEffect(() => {
+    setUserCurrentPage(0);
+  }, [userSearchQuery]);
+
+  useEffect(() => {
+    setCategoryCurrentPage(0);
+  }, [categorySearchQuery]);
+
   return (
     <div className="col-span-4">
       <Card className="hover:shadow-sm border-chart-4">
@@ -374,10 +420,22 @@ export default function ShopManagementSection({
                   className="pl-10 w-32 h-8 text-sm"
                 />
               </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8"
+                onClick={handleUserPrevPage}
+                disabled={userCurrentPage === 0}
+              >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8"
+                onClick={handleUserNextPage}
+                disabled={userCurrentPage >= totalUserPages - 1}
+              >
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -402,14 +460,14 @@ export default function ShopManagementSection({
                   </div>
                 ))}
               </div>
-            ) : filteredUsers.length === 0 ? (
+            ) : paginatedUsers.length === 0 ? (
               <p className="text-sm text-gray-500">
                 {userSearchQuery
                   ? "Aucun utilisateur trouvé"
                   : "Aucun administrateur ou modérateur trouvé"}
               </p>
             ) : (
-              filteredUsers.map((user) => (
+              paginatedUsers.map((user) => (
                 <div
                   key={user.id}
                   className="flex items-center justify-between"
@@ -516,10 +574,22 @@ export default function ShopManagementSection({
                   className="pl-10 w-32 h-8 text-sm"
                 />
               </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8"
+                onClick={handleCategoryPrevPage}
+                disabled={categoryCurrentPage === 0}
+              >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8"
+                onClick={handleCategoryNextPage}
+                disabled={categoryCurrentPage >= totalCategoryPages - 1}
+              >
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -541,14 +611,14 @@ export default function ShopManagementSection({
                   </div>
                 ))}
               </>
-            ) : filteredCategories.length === 0 ? (
+            ) : paginatedCategories.length === 0 ? (
               <p className="text-sm text-gray-500 col-span-3">
                 {categorySearchQuery
                   ? "Aucune catégorie trouvée"
                   : "Aucune catégorie trouvée"}
               </p>
             ) : (
-              filteredCategories.map((category) => (
+              paginatedCategories.map((category) => (
                 <div
                   key={category.id}
                   className="flex items-center h-6 px-2 py-2 justify-between rounded-full border border-gray-200 hover:bg-gray-50 transition-colors"
