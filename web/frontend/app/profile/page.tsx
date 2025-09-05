@@ -1,7 +1,7 @@
 "use client";
 
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Header from "@/components/Header";
 import ThemeWrapper from "@/components/ThemeWrapper";
@@ -38,6 +38,14 @@ interface AuthorComment {
   };
 }
 
+interface BadgeInfo {
+  id: string;
+  name: string;
+  imageUrl: string;
+  requiredPoints: number;
+  unlocked: boolean;
+}
+
 export default function ProfilePage() {
   const { currentUser, loading } = useCurrentUser();
   const { update: updateSession } = useSession();
@@ -45,6 +53,9 @@ export default function ProfilePage() {
   const [authorRecentComments, setAuthorRecentComments] = useState<
     AuthorComment[]
   >([]);
+  const [badges, setBadges] = useState<BadgeInfo[]>([]);
+  const [points, setPoints] = useState<number>(0);
+  const [loadingProfileData, setLoadingProfileData] = useState(false);
 
   // États pour l'édition du profil
   const [isEditing, setIsEditing] = useState(false);
@@ -75,6 +86,36 @@ export default function ProfilePage() {
       day: "numeric",
     });
   };
+
+  // Charger les données du profil
+  useEffect(() => {
+    const loadProfileData = async () => {
+      if (!currentUser) return;
+      
+      setLoadingProfileData(true);
+      try {
+        const response = await fetch('/api/profile/data');
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            console.log('Profile data received:', result.data);
+            setAuthorRecentPosts(result.data.authorRecentPosts || []);
+            setAuthorRecentComments(result.data.authorRecentComments || []);
+            setBadges(result.data.badges || []);
+            setPoints(result.data.points || 0);
+            console.log('Badges set:', result.data.badges);
+            console.log('Points set:', result.data.points);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading profile data:', error);
+      } finally {
+        setLoadingProfileData(false);
+      }
+    };
+
+    loadProfileData();
+  }, [currentUser]);
 
   // Initialiser le formulaire quand l'utilisateur est chargé
   if (currentUser && !editForm.name && !editForm.email) {
@@ -475,6 +516,8 @@ export default function ProfilePage() {
                 currentUser={null} // Pas de bouton follow sur son propre profil
                 getInitials={getInitials}
                 formatDate={formatDate}
+                badges={badges}
+                points={points}
               />
             </div>
           </div>

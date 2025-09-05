@@ -63,6 +63,8 @@ interface AuthorSidebarProps {
   } | null;
   getInitials: (name: string) => string;
   formatDate: (dateString: string) => string;
+  badges?: BadgeInfo[]; // Optionnel - si fourni, évite l'appel API
+  points?: number; // Optionnel - si fourni, évite l'appel API
 }
 
 const AuthorSidebar = ({
@@ -72,6 +74,8 @@ const AuthorSidebar = ({
   currentUser,
   getInitials,
   formatDate,
+  badges: propBadges,
+  points: propPoints,
 }: AuthorSidebarProps) => {
   const [authorPoints, setAuthorPoints] = useState<UserPointsInfo | null>(null);
   const [authorBadges, setAuthorBadges] = useState<BadgeInfo[]>([]);
@@ -82,7 +86,20 @@ const AuthorSidebar = ({
 
   // Charger les données de l'auteur
   useEffect(() => {
-    if (!author.id || !currentUser?.shopId) return;
+    if (!author.id) return;
+
+    // Si les badges et points sont fournis en props, les utiliser directement
+    if (propBadges !== undefined && propPoints !== undefined) {
+      setAuthorBadges(propBadges); // Utiliser tous les badges avec leur statut
+      setAuthorPoints({
+        points: propPoints,
+        badges: propBadges
+      });
+      setIsLoadingBadges(false);
+      return;
+    }
+
+    if (!currentUser?.shopId) return;
 
     const loadAuthorData = async () => {
       try {
@@ -170,7 +187,7 @@ const AuthorSidebar = ({
     };
 
     loadAuthorData();
-  }, [author.id, currentUser?.shopId]);
+  }, [author.id, currentUser?.shopId, propBadges, propPoints]);
   return (
     <Card className="overflow-hidden bg-white max-w-[400px]">
       <CardContent className="p-0">
