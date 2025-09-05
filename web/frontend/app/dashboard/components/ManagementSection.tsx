@@ -16,7 +16,7 @@ export default function ManagementSection({
 }: ManagementSectionProps) {
   return (
     <div className="col-span-8 space-y-6">
-      <Card className="shadow-sm border-gray-200">
+      <Card className="hover:shadow-sm border-chart-4">
         <CardContent className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Gérer</h3>
           <nav className="space-y-1">

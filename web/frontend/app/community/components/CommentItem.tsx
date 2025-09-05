@@ -251,7 +251,7 @@ const CommentItem = ({
 
               {/* Dropdown des réactions */}
               {showReactionDropdown && currentUser && (
-                <div className="reaction-dropdown absolute bottom-full left-0 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-10">
+                <div className="reaction-dropdown absolute bottom-full left-0 mb-2 bg-white border border-chart-4 rounded-lg shadow-lg p-2 z-10">
                   <div className="flex gap-1">
                     {Object.entries(REACTION_EMOJIS).map(([type, emoji]) => {
                       const isSelected = comment.userReaction === type;
@@ -390,7 +390,7 @@ const CommentItem = ({
                         value={replyContent}
                         onChange={(e) => setReplyContent(e.target.value)}
                         disabled={submittingReply}
-                        className="text-sm border-gray-200 rounded-xl bg-white"
+                        className="text-sm border-chart-4 rounded-xl bg-white"
                       />
                       <Button
                         type="submit"

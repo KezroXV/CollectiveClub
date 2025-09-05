@@ -245,7 +245,7 @@ export default function CategoriesSection({
       {filteredCategories.map((category) => (
         <div
           key={category.id}
-          className="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-gray-200 hover:bg-gray-50 transition-all"
+          className="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-chart-4 hover:bg-gray-50 transition-all"
         >
           <span className={`w-2.5 h-2.5 rounded-full ${category.color}`} />
           <span className="text-[12px] font-medium text-gray-900">
@@ -318,7 +318,7 @@ export default function CategoriesSection({
       {variant === "inline" ? (
         InlineContent
       ) : (
-        <Card className="border-gray-200">
+        <Card className="border-chart-4">
           <CardHeader>{Header}</CardHeader>
           <CardContent className="space-y-4">
             {Chips}

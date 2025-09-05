@@ -145,7 +145,7 @@ export default function HomePage() {
       {/* Section unifiée: Filtres + Posts */}
       <div className="bg-white min-h-screen">
         <div className="container mx-auto px-6 py-8">
-          <div className="max-w-4xl mx-auto rounded-[22px] border border-primary/20 bg-white shadow-sm overflow-hidden">
+          <div className="max-w-4xl mx-auto rounded-[22px] border border-primary/20 bg-white hover:shadow-sm overflow-hidden">
             <div className="p-6">
               <CategoryFilter
                 selectedCategory={selectedCategory}

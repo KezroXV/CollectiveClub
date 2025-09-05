@@ -143,7 +143,7 @@ export default function ReactionPicker({
             <Button
               variant="outline"
               size="sm"
-              className="bg-white px-4 py-2 rounded-full border-gray-200 text-gray-700 hover:text-gray-900 flex items-center gap-2"
+              className="bg-white px-4 py-2 rounded-full border-chart-4 text-gray-700 hover:text-gray-900 flex items-center gap-2"
               disabled={!userIsAuthenticated}
               title={
                 userIsAuthenticated ? "Réagir" : "Connectez-vous pour réagir"

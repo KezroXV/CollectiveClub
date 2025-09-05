@@ -8,7 +8,7 @@ export default function HeroBanner() {
 
   return (
     <div className="container mx-auto px-6 ">
-      <div className="relative h-56 md:h-48 lg:h-56 overflow-hidden rounded-b-[22px] border border-gray-200 shadow-sm">
+      <div className="relative h-56 md:h-48 lg:h-56 overflow-hidden rounded-b-[22px] border border-chart-4 hover:shadow-sm">
         {/* Image de bannière */}
         <div className="absolute inset-0">
           <Image

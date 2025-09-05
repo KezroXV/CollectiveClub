@@ -389,7 +389,7 @@ export default function RolesMembersModal({
                 <div
                   key={member.id}
                   className={`py-4 ${
-                    index !== 0 ? "border-t border-gray-200" : ""
+                    index !== 0 ? "border-t border-chart-4" : ""
                   }`}
                 >
                   <div className="flex items-center justify-between gap-3">

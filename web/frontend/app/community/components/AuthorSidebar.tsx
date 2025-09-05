@@ -254,7 +254,7 @@ const AuthorSidebar = ({
                 authorBadges.map((badge) => (
                   <div key={badge.id} className="text-center">
                     <div
-                      className="relative mx-auto mb-1.5 drop-shadow-sm"
+                      className="relative mx-auto mb-1.5 drop-hover:shadow-sm"
                       style={{ width: 48, height: 48 }}
                     >
                       <Image
@@ -264,7 +264,7 @@ const AuthorSidebar = ({
                         height={48}
                         className="rounded-full"
                       />
-                      <span className="absolute -top-1.5 -right-1.5 text-[8px] px-1 py-0.5 rounded bg-white shadow border border-gray-200">
+                      <span className="absolute -top-1.5 -right-1.5 text-[8px] px-1 py-0.5 rounded bg-white shadow border border-chart-4">
                         {badge.requiredPoints}
                       </span>
                     </div>

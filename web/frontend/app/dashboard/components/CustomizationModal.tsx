@@ -240,7 +240,7 @@ export default function CustomizationModal({
                       className={`px-3 py-0.5 rounded-4xl border text-center transition-all ${
                         selectedFont === font.name
                           ? "border-blue-500 bg-blue-50"
-                          : "border-gray-200 hover:border-gray-300"
+                          : "border-chart-4 hover:border-gray-300"
                       }`}
                       style={{ fontFamily: font.name }}
                     >
@@ -273,7 +273,7 @@ export default function CustomizationModal({
                     alt="Bannière"
                     width={400}
                     height={100}
-                    className="w-full h-24 object-cover rounded-lg border border-gray-200"
+                    className="w-full h-24 object-cover rounded-lg border border-chart-4"
                   />
                 </div>
 
@@ -301,7 +301,7 @@ export default function CustomizationModal({
                       {badges.map((badge) => (
                         <div key={badge.id} className="text-center">
                           <div
-                            className="relative mx-auto mb-1.5 drop-shadow-sm"
+                            className="relative mx-auto mb-1.5 drop-hover:shadow-sm"
                             style={{ width: 56, height: 56 }}
                           >
                             <Image

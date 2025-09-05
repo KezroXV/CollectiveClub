@@ -62,7 +62,7 @@ function StatCard({
 
   if (isLoading) {
     return (
-      <Card className="shadow-sm border-gray-200 animate-pulse">
+      <Card className="hover:shadow-sm border-chart-4 animate-pulse">
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-1">
             <div className="h-4 w-16 bg-gray-200 rounded"></div>
@@ -83,7 +83,7 @@ function StatCard({
   const valueColor = title === "Posts" ? "text-blue-600" : "text-gray-900";
 
   return (
-    <Card className="shadow-sm border-chart-4 hover:shadow-md transition-all pt-0 h-32 duration-300 hover:-translate-y-1">
+    <Card className="hover:shadow-sm border-chart-4 hover:shadow-md transition-all pt-0 h-32 duration-300 hover:-translate-y-1">
       <CardContent className="p-6">
         <div className="flex items-center justify-between mb-1">
           <p className="text-lg text-black text-semibold">{title}</p>
@@ -171,7 +171,7 @@ export default function StatsCards({ shopId }: StatsCardsProps) {
   if (error) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="shadow-sm border-red-200">
+        <Card className="hover:shadow-sm border-red-200">
           <CardContent className="p-6 text-center">
             <p className="text-sm text-red-600">{error}</p>
           </CardContent>

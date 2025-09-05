@@ -144,7 +144,7 @@ export default function ColorPicker({ color, onChange, borderColor = "#E5E7EB" }
                 className={`w-8 h-8 rounded-full border-2 ${
                   color === presetColor
                     ? "border-gray-900 scale-110"
-                    : "border-gray-200"
+                    : "border-chart-4"
                 } transition-all`}
                 style={{ backgroundColor: presetColor }}
               />
@@ -180,7 +180,7 @@ export default function ColorPicker({ color, onChange, borderColor = "#E5E7EB" }
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         />
         <div
-          className="absolute w-4 h-4 bg-white border-2 border-gray-300 rounded-full -mt-0.5 shadow-sm pointer-events-none"
+          className="absolute w-4 h-4 bg-white border-2 border-gray-300 rounded-full -mt-0.5 hover:shadow-sm pointer-events-none"
           style={{
             left: `${(hsl.h / 360) * 100}%`,
             transform: "translateX(-50%)",
@@ -210,7 +210,7 @@ export default function ColorPicker({ color, onChange, borderColor = "#E5E7EB" }
         </div>
         <button
           onClick={handleCopyHex}
-          className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50"
+          className="inline-flex items-center justify-center h-8 w-8 rounded-md border border-chart-4 text-gray-600 hover:bg-gray-50"
           title="Copier"
         >
           <Copy className="h-4 w-4" />

@@ -73,7 +73,7 @@ const CommentsSection = ({
         <div className="mb-8">
           <form
             onSubmit={onSubmitComment}
-            className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4"
+            className="bg-white rounded-2xl border border-gray-100 hover:shadow-sm p-4"
           >
             <div className="flex gap-3">
               <Avatar className="h-10 w-10">
@@ -94,7 +94,7 @@ const CommentsSection = ({
                     value={newComment}
                     onChange={(e) => onNewCommentChange(e.target.value)}
                     disabled={submittingComment}
-                    className="border-gray-200 rounded-xl bg-gray-50 focus:bg-white transition-colors"
+                    className="border-chart-4 rounded-xl bg-gray-50 focus:bg-white transition-colors"
                   />
                   <Button
                     type="submit"
@@ -117,7 +117,7 @@ const CommentsSection = ({
           comments.map((comment) => (
             <div
               key={comment.id}
-              className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow duration-200"
+              className="bg-white rounded-2xl border border-gray-100 hover:shadow-sm p-5 hover:shadow-md transition-shadow duration-200"
             >
               <CommentItem
                 comment={comment}
@@ -131,7 +131,7 @@ const CommentsSection = ({
           ))
         ) : (
           <div className="text-center py-12">
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
+            <div className="bg-white rounded-2xl border border-gray-100 hover:shadow-sm p-8">
               <p className="text-gray-500 text-sm">
                 Aucun commentaire pour l&apos;instant. Soyez le premier à
                 commenter !

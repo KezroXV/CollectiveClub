@@ -25,7 +25,7 @@ export default function EmptyState({ hasFilters, currentUser }: EmptyStateProps)
       </p>
       {currentUser && (
         <Link href="/community">
-          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 text-lg rounded-lg shadow-sm">
+          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 text-lg rounded-lg hover:shadow-sm">
             Créer le premier post
           </Button>
         </Link>

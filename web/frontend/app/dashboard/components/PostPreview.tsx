@@ -26,7 +26,7 @@ export default function PostPreview({ colors, selectedFont, coverImage }: PostPr
       <h4 className="font-semibold text-gray-900 mb-4">Aperçu</h4>
 
       <div
-        className="rounded-2xl p-5 mb-6 shadow-sm"
+        className="rounded-2xl p-5 mb-6 hover:shadow-sm"
         style={{
           backgroundColor: colors.Fond,
           border: `1px solid ${colors.Bordures}`,
@@ -146,7 +146,7 @@ export default function PostPreview({ colors, selectedFont, coverImage }: PostPr
       </div>
 
       {coverImage && (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-xl border border-chart-4 overflow-hidden">
           <Image
             src={coverImage}
             alt="Preview"

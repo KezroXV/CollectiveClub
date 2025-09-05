@@ -6,7 +6,8 @@
       "Bash(npm run seed:*)",
       "Bash(npm run lint)",
       "Bash(npm run lint:*)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

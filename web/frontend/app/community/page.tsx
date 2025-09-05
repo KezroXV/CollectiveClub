@@ -225,7 +225,7 @@ export default function CommunityPage() {
 
         {/* User Info */}
         {currentUser && (
-          <Card className="mb-6 shadow-sm border-0 bg-gradient-to-r from-primary/5 to-secondary/5">
+          <Card className="mb-6 hover:shadow-sm border-0 bg-gradient-to-r from-primary/5 to-secondary/5">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -252,7 +252,7 @@ export default function CommunityPage() {
 
         {/* Create Post Form */}
         {showCreateForm && (
-          <Card className="mb-8 shadow-sm border-0">
+          <Card className="mb-8 hover:shadow-sm border-0">
             <CardHeader className="border-b bg-muted/30">
               <CardTitle className="flex items-center gap-2">
                 <Plus className="h-5 w-5" />
@@ -307,7 +307,7 @@ export default function CommunityPage() {
                 placeholder="Rechercher des posts..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 border-muted-foreground/20 focus:border-primary shadow-sm" 
+                className="pl-10 border-muted-foreground/20 focus:border-primary hover:shadow-sm" 
               />
             </div>
             <div className="flex gap-2">
@@ -357,7 +357,7 @@ export default function CommunityPage() {
         {/* Posts List */}
         <div className="space-y-6">
           {posts.length === 0 ? (
-            <Card className="shadow-sm border-0">
+            <Card className="hover:shadow-sm border-0">
               <CardContent className="text-center py-16">
                 <div className="flex flex-col items-center gap-4">
                   <div className="p-4 rounded-full bg-muted/50">
@@ -384,7 +384,7 @@ export default function CommunityPage() {
               </CardContent>
             </Card>
           ) : filteredAndSortedPosts.length === 0 && searchQuery ? (
-            <Card className="shadow-sm border-0">
+            <Card className="hover:shadow-sm border-0">
               <CardContent className="text-center py-16">
                 <div className="flex flex-col items-center gap-4">
                   <div className="p-4 rounded-full bg-muted/50">
@@ -410,7 +410,7 @@ export default function CommunityPage() {
             </Card>
           ) : (
             filteredAndSortedPosts.map((post) => (
-              <Card key={post.id} className="shadow-sm border-0 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
+              <Card key={post.id} className="hover:shadow-sm border-0 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
                 <CardHeader className="pb-4">
                   <div className="flex justify-between items-start">
                     <div className="flex items-start gap-3 flex-1">

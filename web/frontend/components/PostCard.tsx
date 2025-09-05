@@ -78,7 +78,7 @@ export default function PostCard({
       {/* Post Image */}
       {post.imageUrl && (
         <div className="mb-8 pl-16">
-          <div className="rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+          <div className="rounded-2xl overflow-hidden hover:shadow-sm border border-gray-100">
             <Image
               src={post.imageUrl}
               alt={post.title}
@@ -105,7 +105,7 @@ export default function PostCard({
       <div className="flex items-center gap-6 pl-16">
         <Button
           variant="outline"
-          className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border-gray-200 hover:bg-gray-100 text-gray-600"
+          className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border-chart-4 hover:bg-gray-100 text-gray-600"
         >
           <Heart className="h-4 w-4" />
           <Badge className="rounded-full bg-white text-gray-600  px-2 py-0 text-xs font-medium">
@@ -119,10 +119,10 @@ export default function PostCard({
         >
           <Button
             variant="outline"
-            className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border-gray-200 group-hover:bg-primary/10 group-hover:border-primary/30 text-gray-600"
+            className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border-chart-4 group-hover:bg-primary/10 group-hover:border-primary/30 text-gray-600"
           >
             <MessageSquare className="h-4 w-4" />
-            <Badge className="rounded-full bg-white text-gray-600 border border-gray-200 px-2 py-0 text-xs font-medium">
+            <Badge className="rounded-full bg-white text-gray-600 border border-chart-4 px-2 py-0 text-xs font-medium">
               {post._count.comments}
             </Badge>
           </Button>
@@ -130,7 +130,7 @@ export default function PostCard({
 
         <Button
           variant="outline"
-          className="ml-auto flex items-center gap-2 bg-white px-4 py-2 rounded-full border-gray-200 hover:bg-gray-100 text-gray-600"
+          className="ml-auto flex items-center gap-2 bg-white px-4 py-2 rounded-full border-chart-4 hover:bg-gray-100 text-gray-600"
           onClick={handleShare}
         >
           <Share2 className="h-4 w-4" />

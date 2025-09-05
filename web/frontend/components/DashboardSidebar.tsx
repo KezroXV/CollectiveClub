@@ -50,7 +50,7 @@ export default function DashboardSidebar() {
         {" "}
         {/* pt-20 pour laisser place au header */}
         {/* Métriques rapides */}
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="px-6 py-4 border-b border-chart-4">
           <div className="space-y-3">
             <div>
               <div className="flex items-center justify-between">
@@ -105,7 +105,7 @@ export default function DashboardSidebar() {
           </div>
         </div>
         {/* Retour au forum */}
-        <div className="mt-auto px-6 py-4 border-t border-gray-200">
+        <div className="mt-auto px-6 py-4 border-t border-chart-4">
           <Link
             href="/community"
             className="flex items-center px-3 py-2 text-sm text-blue-600 rounded-lg hover:bg-blue-50"

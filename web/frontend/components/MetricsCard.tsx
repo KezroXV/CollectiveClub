@@ -19,7 +19,7 @@ export default function MetricsCard({
   icon: Icon,
 }: MetricsCardProps) {
   return (
-    <Card className="border-gray-200">
+    <Card className="border-chart-4">
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
           <div>

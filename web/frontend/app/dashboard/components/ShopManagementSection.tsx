@@ -16,7 +16,7 @@ export default function ShopManagementSection({
 }: ShopManagementSectionProps) {
   return (
     <div className="col-span-4">
-      <Card className="shadow-sm border-gray-200">
+      <Card className="hover:shadow-sm border-chart-4">
         <CardContent className="p-6">
           <h3 className="text-[18px] font-semibold text-gray-900 mb-6">
             Gestion de la boutique
@@ -33,13 +33,13 @@ export default function ShopManagementSection({
               />
             </div>
 
-            <div className="border-t border-gray-200"></div>
+            <div className="border-t border-chart-4"></div>
 
             <div className="space-y-3">
               <CategoriesSection variant="inline" />
             </div>
 
-            <div className="border-t border-gray-200"></div>
+            <div className="border-t border-chart-4"></div>
 
             <div className="space-y-3">
               <h4 className="text-[18px] font-medium text-gray-800">

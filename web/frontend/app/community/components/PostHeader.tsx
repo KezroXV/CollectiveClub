@@ -291,7 +291,7 @@ const PostHeader = ({
       {/* Categories badges - Style CategoriesSection */}
       <div className="flex gap-2">
         {category && (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-gray-200">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-chart-4">
             <span className={`w-2.5 h-2.5 rounded-full ${category.color}`} />
             <span className="text-[12px] font-medium text-gray-900">
               {category.name}

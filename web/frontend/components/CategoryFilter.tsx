@@ -214,7 +214,7 @@ export default function CategoryFilter({
 
           <Button
             onClick={onCreatePost}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground gap-3 px-8 py-4 h-auto rounded-2xl shadow-sm font-medium text-base"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground gap-3 px-8 py-4 h-auto rounded-2xl hover:shadow-sm font-medium text-base"
           >
             Créer un post
             <div className="bg-white rounded-full p-1">

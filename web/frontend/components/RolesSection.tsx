@@ -89,7 +89,7 @@ export default function RolesSection() {
   );
 
   return (
-    <Card className="border-gray-200">
+    <Card className="border-chart-4">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-semibold">Rôles</CardTitle>

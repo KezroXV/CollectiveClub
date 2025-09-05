@@ -18,7 +18,7 @@ function Card({
 }: CardProps) {
   const elevationClasses = {
     none: "shadow-none",
-    sm: "shadow-sm",
+    sm: "hover:shadow-sm",
     md: "shadow-md",
     lg: "shadow-lg hover:shadow-xl",
     xl: "shadow-xl hover:shadow-2xl",

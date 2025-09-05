@@ -175,7 +175,7 @@ export default function BadgeGrid({
                     ? 'bg-gradient-to-r from-yellow-100 to-orange-100 border-2 border-yellow-300' 
                     : badge.canUnlock
                     ? 'bg-blue-50 border-2 border-blue-200 hover:border-blue-300 cursor-pointer'
-                    : 'bg-gray-50 border border-gray-200'
+                    : 'bg-gray-50 border border-chart-4'
                   }
                 `}>
                   

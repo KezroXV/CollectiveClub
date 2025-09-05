@@ -267,7 +267,7 @@ export default function EditBadgeModal({
               value={badgeName}
               onChange={(e) => setBadgeName(e.target.value)}
               placeholder="Nom..."
-              className="text-center border-0 border-b border-gray-200 rounded-none focus:border-gray-400 text-sm text-gray-400 bg-transparent p-1"
+              className="text-center border-0 border-b border-chart-4 rounded-none focus:border-gray-400 text-sm text-gray-400 bg-transparent p-1"
             />
           </div>
 
