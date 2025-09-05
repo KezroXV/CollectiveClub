@@ -1,8 +1,30 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ChevronLeft, ChevronRight, Search, Plus, MoreHorizontal, Edit } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  Plus,
+  MoreVertical,
+  MoreHorizontal,
+  Edit,
+  Trash2,
+} from "lucide-react";
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 
 interface ShopManagementSectionProps {
   userId?: string;
@@ -37,6 +59,26 @@ export default function ShopManagementSection({
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [loadingCategories, setLoadingCategories] = useState(true);
 
+  // États pour le modal d'ajout de catégorie
+  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [selectedColor, setSelectedColor] = useState("#3B82F6");
+  const [loadingAddCategory, setLoadingAddCategory] = useState(false);
+
+  // États pour le modal d'édition de catégorie
+  const [showEditCategoryModal, setShowEditCategoryModal] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [editCategoryName, setEditCategoryName] = useState("");
+  const [editCategoryColor, setEditCategoryColor] = useState("#3B82F6");
+  const [loadingEditCategory, setLoadingEditCategory] = useState(false);
+
+  // États pour le modal de suppression de catégorie
+  const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState(false);
+  const [deletingCategory, setDeletingCategory] = useState<Category | null>(
+    null
+  );
+  const [loadingDeleteCategory, setLoadingDeleteCategory] = useState(false);
+
   // Fonction pour récupérer les utilisateurs (admins et modérateurs)
   const fetchUsers = async () => {
     try {
@@ -46,12 +88,13 @@ export default function ShopManagementSection({
         credentials: "include",
       });
 
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
 
       const data = await response.json();
       // Filtrer pour ne garder que les admins et modérateurs
-      const filteredUsers = data.members.filter((user: any) => 
-        user.role === 'ADMIN' || user.role === 'MODERATOR'
+      const filteredUsers = data.members.filter(
+        (user: any) => user.role === "ADMIN" || user.role === "MODERATOR"
       );
       setUsers(filteredUsers);
     } catch (error) {
@@ -71,7 +114,8 @@ export default function ShopManagementSection({
         credentials: "include",
       });
 
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
 
       const data = await response.json();
       setCategories(data);
@@ -90,24 +134,150 @@ export default function ShopManagementSection({
     }
   }, [shopId, userId]);
 
+  // Fonction pour ajouter une catégorie
+  const handleAddCategory = async () => {
+    if (!newCategoryName.trim()) return;
+
+    setLoadingAddCategory(true);
+    try {
+      const response = await fetch("/api/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newCategoryName.trim(),
+          color: selectedColor,
+          order: categories.length,
+        }),
+      });
+
+      if (response.ok) {
+        const newCategory = await response.json();
+        setCategories((prev) => [
+          ...prev,
+          { ...newCategory, _count: { posts: 0 } },
+        ]);
+        setNewCategoryName("");
+        setSelectedColor("#3B82F6");
+        setShowAddCategoryModal(false);
+        toast.success("Catégorie créée avec succès");
+      } else {
+        const error = await response.json();
+        toast.error(error.error || "Erreur lors de la création");
+      }
+    } catch (error) {
+      console.error("Error creating category:", error);
+      toast.error("Erreur lors de la création");
+    } finally {
+      setLoadingAddCategory(false);
+    }
+  };
+
+  // Fonction pour éditer une catégorie
+  const handleEditCategory = async () => {
+    if (!editingCategory || !editCategoryName.trim()) return;
+
+    setLoadingEditCategory(true);
+    try {
+      const response = await fetch(`/api/categories/${editingCategory.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editCategoryName.trim(),
+          color: editCategoryColor,
+        }),
+      });
+
+      if (response.ok) {
+        const updatedCategory = await response.json();
+        setCategories((prev) =>
+          prev.map((cat) =>
+            cat.id === editingCategory.id
+              ? {
+                  ...cat,
+                  name: updatedCategory.name,
+                  color: updatedCategory.color,
+                }
+              : cat
+          )
+        );
+        setShowEditCategoryModal(false);
+        setEditingCategory(null);
+        setEditCategoryName("");
+        setEditCategoryColor("#3B82F6");
+        toast.success("Catégorie modifiée avec succès");
+      } else {
+        const error = await response.json();
+        toast.error(error.error || "Erreur lors de la modification");
+      }
+    } catch (error) {
+      console.error("Error editing category:", error);
+      toast.error("Erreur lors de la modification");
+    } finally {
+      setLoadingEditCategory(false);
+    }
+  };
+
+  // Fonction pour supprimer une catégorie
+  const handleDeleteCategory = async () => {
+    if (!deletingCategory) return;
+
+    setLoadingDeleteCategory(true);
+    try {
+      const response = await fetch(`/api/categories/${deletingCategory.id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        setCategories((prev) =>
+          prev.filter((cat) => cat.id !== deletingCategory.id)
+        );
+        setShowDeleteCategoryModal(false);
+        setDeletingCategory(null);
+        toast.success("Catégorie supprimée avec succès");
+      } else {
+        const error = await response.json();
+        toast.error(error.error || "Erreur lors de la suppression");
+      }
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      toast.error("Erreur lors de la suppression");
+    } finally {
+      setLoadingDeleteCategory(false);
+    }
+  };
+
+  // Couleurs disponibles
+  const COLOR_OPTIONS = [
+    { name: "Bleu", value: "#3B82F6" },
+    { name: "Orange", value: "#F97316" },
+    { name: "Vert", value: "#10B981" },
+    { name: "Rouge", value: "#EF4444" },
+    { name: "Violet", value: "#8B5CF6" },
+    { name: "Jaune", value: "#F59E0B" },
+    { name: "Rose", value: "#EC4899" },
+    { name: "Cyan", value: "#06B6D4" },
+  ];
+
   // Fonctions helper
   const getInitials = (name: string) => {
     return name
-      .split(' ')
-      .map(word => word[0])
-      .join('')
+      .split(" ")
+      .map((word) => word[0])
+      .join("")
       .toUpperCase()
       .slice(0, 2);
   };
 
   const getRoleDisplay = (role: string, isOwner?: boolean) => {
     if (isOwner) return "Proprio.";
-    return role === 'ADMIN' ? 'admin' : 'Modérateur';
+    return role === "ADMIN" ? "admin" : "Modérateur";
   };
 
   const getRoleColor = (role: string, isOwner?: boolean) => {
     if (isOwner) return "bg-red-100 text-red-800";
-    return role === 'ADMIN' ? "bg-orange-100 text-orange-800" : "bg-blue-100 text-blue-800";
+    return role === "ADMIN"
+      ? "bg-orange-100 text-orange-800"
+      : "bg-blue-100 text-blue-800";
   };
 
   return (
@@ -120,9 +290,9 @@ export default function ShopManagementSection({
             <div className="flex items-center gap-2">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input 
-                  placeholder="Rechercher..." 
-                  className="pl-10 w-48 h-8 text-sm"
+                <Input
+                  placeholder="Rechercher..."
+                  className="pl-10 w-32 h-8 text-sm"
                 />
               </div>
               <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -138,7 +308,10 @@ export default function ShopManagementSection({
             {loadingUsers ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex items-center justify-between animate-pulse">
+                  <div
+                    key={i}
+                    className="flex items-center justify-between animate-pulse"
+                  >
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-gray-200"></div>
                       <div>
@@ -151,21 +324,33 @@ export default function ShopManagementSection({
                 ))}
               </div>
             ) : users.length === 0 ? (
-              <p className="text-sm text-gray-500">Aucun administrateur ou modérateur trouvé</p>
+              <p className="text-sm text-gray-500">
+                Aucun administrateur ou modérateur trouvé
+              </p>
             ) : (
               users.map((user) => (
-                <div key={user.id} className="flex items-center justify-between">
+                <div
+                  key={user.id}
+                  className="flex items-center justify-between"
+                >
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 text-sm font-medium">
                       {getInitials(user.name)}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                      <p className="text-sm font-medium text-gray-900">
+                        {user.name}
+                      </p>
                       <p className="text-xs text-gray-500">{user.email}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`px-2 py-1 text-xs rounded-full ${getRoleColor(user.role, user.isOwner)}`}>
+                    <span
+                      className={`px-2 py-1 text-xs rounded-full ${getRoleColor(
+                        user.role,
+                        user.isOwner
+                      )}`}
+                    >
                       {getRoleDisplay(user.role, user.isOwner)}
                     </span>
                     <Button variant="ghost" size="icon" className="h-6 w-6">
@@ -176,22 +361,28 @@ export default function ShopManagementSection({
               ))
             )}
           </div>
-
-          <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 mb-6">
-            <Plus className="h-4 w-4" />
-          </Button>
-
+          <div className="flex justify-end">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 mb-6"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
           <hr className="border-chart-4 border-[1px] mb-6" />
 
           {/* Section Catégories */}
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Mes Catégories</h3>
+            <h3 className="text-lg font-semibold text-gray-900">
+              Mes Catégories
+            </h3>
             <div className="flex items-center gap-2">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input 
-                  placeholder="Rechercher..." 
-                  className="pl-10 w-48 h-8 text-sm"
+                <Input
+                  placeholder="Rechercher..."
+                  className="pl-10 w-32 h-8 text-sm"
                 />
               </div>
               <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -203,50 +394,96 @@ export default function ShopManagementSection({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 mb-4">
+          <div className="grid grid-cols-3 gap-3 mb-4">
             {loadingCategories ? (
               <>
                 {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                  <div key={i} className="flex items-center justify-between p-2 rounded-lg animate-pulse">
+                  <div
+                    key={i}
+                    className="flex items-center justify-between  rounded-full border animate-pulse bg-gray-50"
+                  >
                     <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-gray-200"></div>
-                      <div className="h-3 w-16 bg-gray-200 rounded"></div>
+                      <div className="w-4 h-4 rounded-full bg-gray-200"></div>
+                      <div className="h-2 w-12 bg-gray-200 rounded"></div>
                     </div>
                     <div className="h-3 w-3 bg-gray-200 rounded"></div>
                   </div>
                 ))}
               </>
             ) : categories.length === 0 ? (
-              <p className="text-sm text-gray-500 col-span-2">Aucune catégorie trouvée</p>
+              <p className="text-sm text-gray-500 col-span-3">
+                Aucune catégorie trouvée
+              </p>
             ) : (
               categories.map((category) => (
-                <div key={category.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50">
+                <div
+                  key={category.id}
+                  className="flex items-center justify-between rounded-full border border-gray-200 hover:bg-gray-50 transition-colors"
+                >
                   <div className="flex items-center gap-2">
-                    <div 
-                      className="w-3 h-3 rounded-full" 
+                    <div
+                      className="w-4 h-4 rounded-full"
                       style={{ backgroundColor: category.color }}
                     ></div>
-                    <span className="text-sm text-gray-700">{category.name}</span>
+                    <span className="text-[10px] font-medium text-gray-900">
+                      {category.name}
+                    </span>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-5 w-5">
-                    <MoreHorizontal className="h-3 w-3" />
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5 rounded-full"
+                      >
+                        <MoreVertical className="h-3 w-3 text-gray-400" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setEditingCategory(category);
+                          setEditCategoryName(category.name);
+                          setEditCategoryColor(category.color);
+                          setShowEditCategoryModal(true);
+                        }}
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Modifier
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-red-600"
+                        onClick={() => {
+                          setDeletingCategory(category);
+                          setShowDeleteCategoryModal(true);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Supprimer
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               ))
             )}
           </div>
-
-          <Button variant="ghost" size="icon" className="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 mb-6">
-            <Plus className="h-4 w-4" />
-          </Button>
-
+          <div className="flex justify-end">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="ml-auto w-8 h-8 rounded-full border-2 border-dashed border-gray-300 mb-6"
+              onClick={() => setShowAddCategoryModal(true)}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
           <hr className="border-chart-4 border-[1px] mb-6" />
 
           {/* Section Personnalisation */}
           <h3 className="text-lg font-semibold text-gray-900 mb-6">
             Personnalisation du forum
           </h3>
-          
+
           <Button
             variant="ghost"
             onClick={onThemeClick}
@@ -257,6 +494,203 @@ export default function ShopManagementSection({
           </Button>
         </CardContent>
       </Card>
+
+      {/* Modal d'ajout de catégorie */}
+      <Dialog
+        open={showAddCategoryModal}
+        onOpenChange={setShowAddCategoryModal}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Ajouter une catégorie</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">
+                Nom de la catégorie
+              </label>
+              <Input
+                placeholder="Ex: Mode, Tech, Lifestyle..."
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">
+                Couleur
+              </label>
+              <div className="grid grid-cols-4 gap-2">
+                {COLOR_OPTIONS.map((color) => (
+                  <button
+                    key={color.value}
+                    onClick={() => setSelectedColor(color.value)}
+                    className={`w-12 h-8 rounded-md relative ${
+                      selectedColor === color.value
+                        ? "ring-2 ring-gray-900 ring-offset-2"
+                        : ""
+                    }`}
+                    style={{ backgroundColor: color.value }}
+                  >
+                    {selectedColor === color.value && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowAddCategoryModal(false);
+                  setNewCategoryName("");
+                  setSelectedColor("#3B82F6");
+                }}
+                disabled={loadingAddCategory}
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleAddCategory}
+                disabled={!newCategoryName.trim() || loadingAddCategory}
+              >
+                {loadingAddCategory ? "Création..." : "Créer"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal d'édition de catégorie */}
+      <Dialog
+        open={showEditCategoryModal}
+        onOpenChange={setShowEditCategoryModal}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Modifier la catégorie</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">
+                Nom de la catégorie
+              </label>
+              <Input
+                placeholder="Ex: Mode, Tech, Lifestyle..."
+                value={editCategoryName}
+                onChange={(e) => setEditCategoryName(e.target.value)}
+                autoFocus
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">
+                Couleur
+              </label>
+              <div className="grid grid-cols-4 gap-2">
+                {COLOR_OPTIONS.map((color) => (
+                  <button
+                    key={color.value}
+                    onClick={() => setEditCategoryColor(color.value)}
+                    className={`w-12 h-8 rounded-md relative ${
+                      editCategoryColor === color.value
+                        ? "ring-2 ring-gray-900 ring-offset-2"
+                        : ""
+                    }`}
+                    style={{ backgroundColor: color.value }}
+                  >
+                    {editCategoryColor === color.value && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowEditCategoryModal(false);
+                  setEditingCategory(null);
+                  setEditCategoryName("");
+                  setEditCategoryColor("#3B82F6");
+                }}
+                disabled={loadingEditCategory}
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={handleEditCategory}
+                disabled={!editCategoryName.trim() || loadingEditCategory}
+              >
+                {loadingEditCategory ? "Modification..." : "Modifier"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de suppression de catégorie */}
+      <Dialog
+        open={showDeleteCategoryModal}
+        onOpenChange={setShowDeleteCategoryModal}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Supprimer la catégorie</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 p-4 bg-red-50 rounded-lg border border-red-200">
+              <div className="flex-shrink-0">
+                <Trash2 className="h-5 w-5 text-red-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-red-800">Attention</h3>
+                <p className="text-sm text-red-700 mt-1">
+                  Êtes-vous sûr de vouloir supprimer la catégorie "
+                  {deletingCategory?.name}" ? Cette action est irréversible.
+                </p>
+                {deletingCategory && deletingCategory._count.posts > 0 && (
+                  <p className="text-xs text-red-600 mt-2 font-medium">
+                    ⚠️ Cette catégorie contient {deletingCategory._count.posts}{" "}
+                    post(s)
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowDeleteCategoryModal(false);
+                  setDeletingCategory(null);
+                }}
+                disabled={loadingDeleteCategory}
+              >
+                Annuler
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteCategory}
+                disabled={loadingDeleteCategory}
+              >
+                {loadingDeleteCategory ? "Suppression..." : "Supprimer"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
