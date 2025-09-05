@@ -90,6 +90,7 @@ export default function DashboardPage() {
             onClientsClick={handleClientsClick}
             onPostsClick={handlePostsClick}
             onThemeClick={handleThemeClick}
+            shopId={shopId}
           />
 
           <ShopManagementSection

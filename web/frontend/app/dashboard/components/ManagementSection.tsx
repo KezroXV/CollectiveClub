@@ -2,17 +2,20 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { FileText, Users, Home, Palette } from "lucide-react";
+import PopularPosts from "./PopularPosts";
 
 interface ManagementSectionProps {
   onClientsClick: () => void;
   onPostsClick: () => void;
   onThemeClick: () => void;
+  shopId: string;
 }
 
 export default function ManagementSection({
   onClientsClick,
   onPostsClick,
   onThemeClick,
+  shopId,
 }: ManagementSectionProps) {
   return (
     <div className="col-span-8 space-y-6">
@@ -47,6 +50,8 @@ export default function ManagementSection({
           </nav>
         </CardContent>
       </Card>
+
+      <PopularPosts shopId={shopId} />
     </div>
   );
 }
