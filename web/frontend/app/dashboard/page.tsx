@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ThemeWrapper from "@/components/ThemeWrapper";
 import { useRouter } from "next/navigation";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
@@ -40,9 +40,11 @@ export default function DashboardPage() {
   }
 
   // Charger le thème utilisateur
-  if (currentUser?.id && hasAccess) {
-    loadUserTheme(currentUser.id);
-  }
+  useEffect(() => {
+    if (currentUser?.id && hasAccess) {
+      loadUserTheme(currentUser.id);
+    }
+  }, [currentUser?.id, hasAccess, loadUserTheme]);
 
   // Afficher un loader pendant la vérification
   if (loading) {

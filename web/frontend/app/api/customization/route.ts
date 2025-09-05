@@ -39,7 +39,12 @@ export async function GET(request: NextRequest) {
 
     // Récupérer ou créer les paramètres par défaut
     let settings = await prisma.customizationSettings.findUnique({
-      where: { userId }, // Utiliser directement userId
+      where: { 
+        userId_shopId: {
+          userId,
+          shopId
+        }
+      },
     });
 
     // Si pas de paramètres existants, créer avec les valeurs par défaut
@@ -47,6 +52,7 @@ export async function GET(request: NextRequest) {
       settings = await prisma.customizationSettings.create({
         data: {
           userId,
+          shopId,
           colorPosts: "#3B82F6",
           colorBorders: "#E5E7EB", 
           colorBg: "#F9FAFB",

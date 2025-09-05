@@ -445,7 +445,7 @@ export default function ShopManagementSection({
             </div>
           </div>
 
-          <div className="space-y-3 mb-6">
+          <div className="space-y-3">
             {loadingUsers ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
@@ -491,7 +491,7 @@ export default function ShopManagementSection({
                       </div>
                     )}
                     <div>
-                      <p className="text-sm font-medium text-gray-900">
+                      <p className="text-[13px] font-medium text-gray-900">
                         {user.name}
                       </p>
                       <p className="text-xs text-gray-500">{user.email}</p>
@@ -538,12 +538,6 @@ export default function ShopManagementSection({
                             Changer en Modérateur
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem
-                          onClick={() => setShowClientsModal(true)}
-                        >
-                          <Users className="h-4 w-4 mr-2" />
-                          Gérer tous les utilisateurs
-                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -551,11 +545,11 @@ export default function ShopManagementSection({
               ))
             )}
           </div>
-          <div className="flex justify-end">
+          <div className="flex justify-end mb-4">
             <Button
               variant="ghost"
               size="icon"
-              className="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 mb-6"
+              className="w-8 h-8 rounded-full border-2 border-dashed border-gray-300"
               onClick={() => setShowClientsModal(true)}
             >
               <Plus className="h-4 w-4" />
@@ -597,7 +591,7 @@ export default function ShopManagementSection({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3 mb-4">
+          <div className="grid grid-cols-3 gap-3 mb-3">
             {loadingCategories ? (
               <>
                 {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
@@ -685,7 +679,7 @@ export default function ShopManagementSection({
           <hr className="border-chart-4 border-[1px] mb-6" />
 
           {/* Section Personnalisation */}
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
             Personnalisation du forum
           </h3>
 
