@@ -28,7 +28,7 @@ interface PostHeaderProps {
     id: string;
     name: string;
     email: string;
-    avatar?: string;
+    image?: string;
     role: string;
   };
   createdAt: string;
@@ -209,7 +209,7 @@ const PostHeader = ({
       <div className="flex items-start justify-between ">
         <div className="flex items-start gap-3">
           <Avatar className="h-10 w-10">
-            <AvatarImage src={author.avatar} />
+            <AvatarImage src={author.image} />
             <AvatarFallback className="bg-blue-500 text-white font-semibold text-sm">
               {getInitials(author.name)}
             </AvatarFallback>

@@ -18,7 +18,7 @@ interface Comment {
     id: string;
     name: string;
     email: string;
-    avatar?: string;
+    image?: string;
   };
   createdAt: string;
   reactions?: ReactionData[];

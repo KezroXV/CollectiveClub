@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useRouter, notFound } from "next/navigation";
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
@@ -41,7 +42,7 @@ interface Post {
     id: string;
     name: string;
     email: string;
-    avatar?: string;
+    image?: string;
     createdAt: string;
     role: string;
   };
@@ -64,7 +65,7 @@ interface Comment {
     id: string;
     name: string;
     email: string;
-    avatar?: string;
+    image?: string;
   };
   createdAt: string;
   reactions?: ReactionData[];
@@ -146,31 +147,15 @@ const getRoleLabel = (role: string) => {
 const PostClient = () => {
   const params = useParams();
   const router = useRouter();
+  const { currentUser, loading: userLoading } = useCurrentUser();
   const [data, setData] = useState<PostDetailData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<{
-    id: string;
-    name: string;
-    shopId: string;
-    role?: string;
-  } | null>(null);
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
   const [showReactionDropdown, setShowReactionDropdown] = useState(false);
 
-  // Fetch current user
-  useEffect(() => {
-    const storedUser = localStorage.getItem("currentUser");
-    if (storedUser) {
-      try {
-        const user = JSON.parse(storedUser);
-        setCurrentUser(user);
-      } catch (error) {
-        console.error("Error parsing stored user:", error);
-      }
-    }
-  }, []);
+  // Les données utilisateur sont maintenant gérées par le hook useCurrentUser
 
   const fetchPostData = useCallback(async () => {
     if (!params.slug) return;
@@ -348,7 +333,7 @@ const PostClient = () => {
     [newComment, currentUser, data]
   );
 
-  if (loading) {
+  if (loading || userLoading) {
     return (
       <ThemeWrapper applyBackgroundColor={true} className="min-h-screen">
         <div className="container mx-auto px-6 py-8">

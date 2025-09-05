@@ -51,7 +51,7 @@ interface AuthorSidebarProps {
     id: string;
     name: string;
     email: string;
-    avatar?: string;
+    image?: string;
     createdAt: string;
   };
   authorRecentPosts: AuthorPost[];
@@ -178,7 +178,7 @@ const AuthorSidebar = ({
         <div className="p-6 flex   gap-4">
           <div className="flex items-center gap-3 mb-4">
             <Avatar className="h-16 w-16">
-              <AvatarImage src={author.avatar} />
+              <AvatarImage src={author.image} />
               <AvatarFallback className="bg-blue-500 text-white font-semibold text-lg">
                 {getInitials(author.name)}
               </AvatarFallback>

@@ -197,15 +197,30 @@ export default function RolesMembersModal({
       const params = new URLSearchParams();
       if (userId) params.append("userId", userId);
 
+      const requestBody = { 
+        userId: userId,
+        userRole: currentUserRole,
+        newRole: newRole,
+        reason 
+      };
+      
+      console.log('Frontend sending role change request:', {
+        memberId,
+        requestBody,
+        userId,
+        currentUserRole,
+        newRole
+      });
+
       const response = await fetch(
-        `/api/users/${memberId}/role?${params.toString()}`,
+        `/api/users/${memberId}?${params.toString()}`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
           credentials: "include",
-          body: JSON.stringify({ role: newRole, reason }),
+          body: JSON.stringify(requestBody),
         }
       );
 

@@ -98,7 +98,7 @@ export const authOptions: NextAuthOptions = {
         // Connexions suivantes, récupérer depuis DB avec token.sub
         const dbUser = await prisma.user.findUnique({
           where: { id: token.sub },
-          select: { role: true, isShopOwner: true, shopId: true, email: true }
+          select: { role: true, isShopOwner: true, shopId: true, email: true, name: true, image: true }
         });
         
         
@@ -106,6 +106,8 @@ export const authOptions: NextAuthOptions = {
           token.role = dbUser.role;
           token.isShopOwner = dbUser.isShopOwner;
           token.shopId = dbUser.shopId;
+          token.name = dbUser.name;
+          token.picture = dbUser.image;
         } else {
           // Utilisateur n'existe plus en DB
           token.role = "MEMBER";
