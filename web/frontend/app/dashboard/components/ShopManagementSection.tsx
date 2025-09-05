@@ -22,9 +22,12 @@ import {
   MoreHorizontal,
   Edit,
   Trash2,
+  Users,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import ClientsModal from "./ClientsModal";
+import Image from "next/image";
 
 interface ShopManagementSectionProps {
   userId?: string;
@@ -38,6 +41,7 @@ interface User {
   email: string;
   role: string;
   isOwner?: boolean;
+  image?: string;
 }
 
 interface Category {
@@ -58,6 +62,17 @@ export default function ShopManagementSection({
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [loadingCategories, setLoadingCategories] = useState(true);
+
+  // États pour les modals
+  const [showClientsModal, setShowClientsModal] = useState(false);
+
+  // États pour la recherche
+  const [userSearchQuery, setUserSearchQuery] = useState("");
+
+  // États pour le changement de rôle
+  const [loadingRoleChange, setLoadingRoleChange] = useState<string | null>(
+    null
+  );
 
   // États pour le modal d'ajout de catégorie
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
@@ -83,7 +98,7 @@ export default function ShopManagementSection({
   const fetchUsers = async () => {
     try {
       setLoadingUsers(true);
-      const response = await fetch(`/api/members?userId=${userId}`, {
+      const response = await fetch(`/api/members?userId=${userId}&limit=100`, {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
       });
@@ -92,10 +107,17 @@ export default function ShopManagementSection({
         throw new Error(`HTTP error! status: ${response.status}`);
 
       const data = await response.json();
+
       // Filtrer pour ne garder que les admins et modérateurs
-      const filteredUsers = data.members.filter(
-        (user: any) => user.role === "ADMIN" || user.role === "MODERATOR"
-      );
+      const filteredUsers = data.members
+        .filter(
+          (user: any) => user.role === "ADMIN" || user.role === "MODERATOR"
+        )
+        .map((user: any) => ({
+          ...user,
+          image: user.image || null,
+        }));
+
       setUsers(filteredUsers);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -246,6 +268,48 @@ export default function ShopManagementSection({
     }
   };
 
+  // Fonction pour changer le rôle d'un utilisateur
+  const handleRoleChange = async (
+    targetUserId: string,
+    newRole: "ADMIN" | "MODERATOR"
+  ) => {
+    setLoadingRoleChange(targetUserId);
+    try {
+      const response = await fetch(
+        `/api/users/${targetUserId}/role?userId=${userId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            role: newRole,
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setUsers((prev) =>
+          prev.map((user) =>
+            user.id === targetUserId ? { ...user, role: data.user.role } : user
+          )
+        );
+        toast.success(
+          `Rôle changé en ${
+            newRole === "ADMIN" ? "Admin" : "Modérateur"
+          } avec succès`
+        );
+      } else {
+        const error = await response.json();
+        toast.error(error.error || "Erreur lors du changement de rôle");
+      }
+    } catch (error) {
+      console.error("Error changing role:", error);
+      toast.error("Erreur lors du changement de rôle");
+    } finally {
+      setLoadingRoleChange(null);
+    }
+  };
+
   // Couleurs disponibles
   const COLOR_OPTIONS = [
     { name: "Bleu", value: "#3B82F6" },
@@ -280,6 +344,13 @@ export default function ShopManagementSection({
       : "bg-blue-100 text-blue-800";
   };
 
+  // Filtrer les utilisateurs selon la recherche
+  const filteredUsers = users.filter(
+    (user) =>
+      user.name.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+      user.email.toLowerCase().includes(userSearchQuery.toLowerCase())
+  );
+
   return (
     <div className="col-span-4">
       <Card className="hover:shadow-sm border-chart-4">
@@ -292,6 +363,8 @@ export default function ShopManagementSection({
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   placeholder="Rechercher..."
+                  value={userSearchQuery}
+                  onChange={(e) => setUserSearchQuery(e.target.value)}
                   className="pl-10 w-32 h-8 text-sm"
                 />
               </div>
@@ -323,20 +396,32 @@ export default function ShopManagementSection({
                   </div>
                 ))}
               </div>
-            ) : users.length === 0 ? (
+            ) : filteredUsers.length === 0 ? (
               <p className="text-sm text-gray-500">
-                Aucun administrateur ou modérateur trouvé
+                {userSearchQuery
+                  ? "Aucun utilisateur trouvé"
+                  : "Aucun administrateur ou modérateur trouvé"}
               </p>
             ) : (
-              users.map((user) => (
+              filteredUsers.map((user) => (
                 <div
                   key={user.id}
                   className="flex items-center justify-between"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 text-sm font-medium">
-                      {getInitials(user.name)}
-                    </div>
+                    {user.image ? (
+                      <Image
+                        src={user.image}
+                        alt={user.name}
+                        width={32}
+                        height={32}
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 text-sm font-medium">
+                        {getInitials(user.name)}
+                      </div>
+                    )}
                     <div>
                       <p className="text-sm font-medium text-gray-900">
                         {user.name}
@@ -353,9 +438,46 @@ export default function ShopManagementSection({
                     >
                       {getRoleDisplay(user.role, user.isOwner)}
                     </span>
-                    <Button variant="ghost" size="icon" className="h-6 w-6">
-                      <MoreHorizontal className="h-3 w-3" />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          disabled={loadingRoleChange === user.id}
+                        >
+                          <MoreVertical className="h-3 w-3 text-gray-400" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {user.role === "MODERATOR" && !user.isOwner && (
+                          <DropdownMenuItem
+                            onClick={() => handleRoleChange(user.id, "ADMIN")}
+                            disabled={loadingRoleChange === user.id}
+                          >
+                            <Edit className="h-4 w-4 mr-2" />
+                            Changer en Admin
+                          </DropdownMenuItem>
+                        )}
+                        {user.role === "ADMIN" && !user.isOwner && (
+                          <DropdownMenuItem
+                            onClick={() =>
+                              handleRoleChange(user.id, "MODERATOR")
+                            }
+                            disabled={loadingRoleChange === user.id}
+                          >
+                            <Edit className="h-4 w-4 mr-2" />
+                            Changer en Modérateur
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem
+                          onClick={() => setShowClientsModal(true)}
+                        >
+                          <Users className="h-4 w-4 mr-2" />
+                          Gérer tous les utilisateurs
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               ))
@@ -366,6 +488,7 @@ export default function ShopManagementSection({
               variant="ghost"
               size="icon"
               className="w-8 h-8 rounded-full border-2 border-dashed border-gray-300 mb-6"
+              onClick={() => setShowClientsModal(true)}
             >
               <Plus className="h-4 w-4" />
             </Button>
@@ -418,11 +541,11 @@ export default function ShopManagementSection({
               categories.map((category) => (
                 <div
                   key={category.id}
-                  className="flex items-center justify-between rounded-full border border-gray-200 hover:bg-gray-50 transition-colors"
+                  className="flex items-center h-6 px-2 py-2 justify-between rounded-full border border-gray-200 hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-center gap-2">
                     <div
-                      className="w-4 h-4 rounded-full"
+                      className="w-2.5 h-2.5 rounded-full"
                       style={{ backgroundColor: category.color }}
                     ></div>
                     <span className="text-[10px] font-medium text-gray-900">
@@ -691,6 +814,15 @@ export default function ShopManagementSection({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* ClientsModal */}
+      <ClientsModal
+        isOpen={showClientsModal}
+        onClose={() => setShowClientsModal(false)}
+        userId={userId}
+        shopId={shopId}
+        userRole="ADMIN"
+      />
     </div>
   );
 }
