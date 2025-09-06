@@ -31,14 +31,14 @@ export default function Header() {
 
   return (
     <header className="bg-white hover:shadow-sm border-b">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center h-16">
+      <div className="container mx-auto px-4 sm:px-6">
+        <div className="flex justify-between items-center h-14 sm:h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-sm">C</span>
+          <Link href="/" className="flex items-center gap-2 sm:gap-3">
+            <div className="w-7 sm:w-8 h-7 sm:h-8 bg-black rounded-full flex items-center justify-center">
+              <span className="text-white font-bold text-xs sm:text-sm">C</span>
             </div>
-            <span className="font-semibold text-lg">Collective Club</span>
+            <span className="font-semibold text-base sm:text-lg">Collective Club</span>
           </Link>
 
           {/* Navigation Desktop */}
@@ -47,7 +47,7 @@ export default function Header() {
               <Link key={item.name} href={item.href}>
                 <Button
                   variant={item.current ? "default" : "ghost"}
-                  className={`px-4 py-2 rounded-full ${
+                  className={`px-3 sm:px-4 py-2 rounded-full text-sm ${
                     item.current
                       ? "bg-primary/10 text-primary hover:bg-primary/20"
                       : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
@@ -80,7 +80,7 @@ export default function Header() {
                   onClick={() => setShowMenu(!showMenu)}
                   className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100"
                 >
-                  <Avatar className="h-8 w-8">
+                  <Avatar className="h-7 sm:h-8 w-7 sm:w-8">
                     <AvatarFallback className="bg-gray-500 text-white text-sm">
                       {currentUser.name?.charAt(0) || "?"}
                     </AvatarFallback>

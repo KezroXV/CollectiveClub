@@ -133,15 +133,15 @@ export default function PostCard({
   };
 
   return (
-    <div className={`pb-8 ${!isLast ? "border-b border-gray-100" : ""}`}>
+    <div className={`pb-4 sm:pb-8 ${!isLast ? "border-b border-gray-100" : ""}`}>
       {/* Post Title and Content */}
-      <div className="mb-6 pt-7  relative">
+      <div className="mb-4 sm:mb-6 pt-4 sm:pt-7 relative">
         <Link href={`/community/posts/${post.slug || post.id}`}>
-          <h2 className="text-[10px] md:text-[13px] font-semibold text-gray-900 mb-2 leading-tight line-clamp-1 cursor-pointer hover:text-primary transition-colors duration-200">
+          <h2 className="text-sm sm:text-[13px] md:text-[15px] font-semibold text-gray-900 mb-2 leading-tight line-clamp-2 sm:line-clamp-1 cursor-pointer hover:text-primary transition-colors duration-200">
             {post.title}
           </h2>
         </Link>
-        <p className="text-gray-700 text-[13px] leading-6 line-clamp-2">
+        <p className="text-gray-700 text-xs sm:text-[13px] leading-5 sm:leading-6 line-clamp-3 sm:line-clamp-2">
           {post.content}
         </p>
       </div>
@@ -173,12 +173,12 @@ export default function PostCard({
       )}
 
       {/* Post Actions */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
         {/* Reactions with dropdown */}
         <div className="relative">
           <Button
             variant="outline"
-            className={`flex items-center gap-3 bg-gray-50 px-6 py-3 rounded-full border-2 border-gray-200 hover:bg-gray-100 transition-colors ${
+            className={`flex items-center gap-2 sm:gap-3 bg-gray-50 px-3 sm:px-6 py-2 sm:py-3 rounded-full border-2 border-gray-200 hover:bg-gray-100 transition-colors ${
               post.userReaction
                 ? "text-red-600 border-red-300 bg-red-50"
                 : "text-gray-700"
@@ -186,8 +186,8 @@ export default function PostCard({
             onClick={() => setShowReactionDropdown(!showReactionDropdown)}
             disabled={!currentUser}
           >
-            <Heart className={`h-5 w-5 stroke-2 ${post.userReaction ? "fill-current" : ""}`} />
-            <span className="text-base font-medium">
+            <Heart className={`h-4 sm:h-5 w-4 sm:w-5 stroke-2 ${post.userReaction ? "fill-current" : ""}`} />
+            <span className="text-sm sm:text-base font-medium">
               {post._count.reactions}
             </span>
           </Button>
@@ -237,10 +237,10 @@ export default function PostCard({
         >
           <Button
             variant="outline"
-            className="flex items-center gap-3 bg-gray-50 px-6 py-3 rounded-full border-2 border-gray-200 group-hover:bg-gray-100 text-gray-700"
+            className="flex items-center gap-2 sm:gap-3 bg-gray-50 px-3 sm:px-6 py-2 sm:py-3 rounded-full border-2 border-gray-200 group-hover:bg-gray-100 text-gray-700"
           >
-            <MessageSquare className="h-5 w-5 stroke-2" />
-            <span className="text-base font-medium">
+            <MessageSquare className="h-4 sm:h-5 w-4 sm:w-5 stroke-2" />
+            <span className="text-sm sm:text-base font-medium">
               {post._count.comments}
             </span>
           </Button>
@@ -248,11 +248,11 @@ export default function PostCard({
 
         <Button
           variant="outline"
-          className="ml-auto flex items-center gap-2 bg-white px-4 py-2 rounded-full border-chart-4 hover:bg-gray-100 text-gray-600"
+          className="ml-auto flex items-center gap-1 sm:gap-2 bg-white px-2 sm:px-4 py-2 rounded-full border-chart-4 hover:bg-gray-100 text-gray-600"
           onClick={handleShare}
         >
-          <Share2 className="h-4 w-4" />
-          Partager
+          <Share2 className="h-3 sm:h-4 w-3 sm:w-4" />
+          <span className="text-xs sm:text-sm">Partager</span>
         </Button>
       </div>
     </div>

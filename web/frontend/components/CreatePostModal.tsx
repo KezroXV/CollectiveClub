@@ -178,7 +178,7 @@ export default function CreatePostModal({
   }, [isOpen]);
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-full max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto mx-4 sm:mx-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">
             Créer un post
@@ -196,7 +196,7 @@ export default function CreatePostModal({
               placeholder="J'ai une idée de boutique mais je ne sais pas comment choisir, comment vous avez eu votre idée vous ?"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="h-12 text-base"
+              className="h-10 sm:h-12 text-sm sm:text-base"
             />
           </div>
 
@@ -210,7 +210,7 @@ export default function CreatePostModal({
               placeholder="Salut, je ne sais pas comment choisir entre quelques idées de..."
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="min-h-[120px] text-base resize-none"
+              className="min-h-[100px] sm:min-h-[120px] text-sm sm:text-base resize-none"
             />
           </div>
 
@@ -236,7 +236,7 @@ export default function CreatePostModal({
               </div>
             ) : (
               <div
-                className={`w-[230px] h-[60px] border-2 border-dashed rounded-lg cursor-pointer transition-all duration-200 flex items-center justify-center ${
+                className={`w-full max-w-[230px] h-[60px] border-2 border-dashed rounded-lg cursor-pointer transition-all duration-200 flex items-center justify-center ${
                   isDragOver
                     ? "border-primary bg-primary/10"
                     : "border-gray-300 hover:border-gray-400 hover:bg-gray-50"
@@ -270,7 +270,7 @@ export default function CreatePostModal({
         {/* Catégories */}
         <div className="space-y-3">
           <Label className="text-sm font-medium">Ajouter une catégorie</Label>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1 sm:gap-2">
             {categories.map((category) => (
               <Button
                 key={category.id}
@@ -283,7 +283,7 @@ export default function CreatePostModal({
                     selectedCategory === category.name ? "" : category.name
                   )
                 }
-                className="gap-2 rounded-full transition-all"
+                className="gap-1 sm:gap-2 rounded-full transition-all text-xs sm:text-sm px-2 sm:px-3"
               >
                 <div className={`w-3 h-3 rounded-full ${category.color}`}></div>
                 {category.name}

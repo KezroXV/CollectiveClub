@@ -138,7 +138,7 @@ export default function CategoryFilter({
     <div className="bg-white">
       <div className="container mx-auto px-6">
         {/* Top Row: Filter + Search + Create Button */}
-        <div className="flex items-center gap-6 py-6">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-6 py-4 sm:py-6">
           {/* Bouton Filtrer avec dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -177,19 +177,19 @@ export default function CategoryFilter({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <div className="relative flex-1 max-w-2xl">
-            <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+          <div className="relative flex-1 w-full sm:max-w-2xl">
+            <Search className="absolute left-3 sm:left-5 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 sm:h-5 w-4 sm:w-5" />
             <Input
               placeholder="Rechercher par nom ou par post..."
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
-              className="pl-14 h-14 border border-gray-300 focus:border-primary focus:ring-primary rounded-2xl text-base bg-white"
+              className="pl-10 sm:pl-14 h-12 sm:h-14 border border-gray-300 focus:border-primary focus:ring-primary rounded-xl sm:rounded-2xl text-sm sm:text-base bg-white"
             />
           </div>
 
           <Button
             onClick={onCreatePost}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground gap-3 px-8 py-4 h-auto rounded-2xl hover:shadow-sm font-medium text-base"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 sm:gap-3 px-4 sm:px-8 py-3 sm:py-4 h-auto rounded-xl sm:rounded-2xl hover:shadow-sm font-medium text-sm sm:text-base"
           >
             Créer un post
             <div className="bg-white rounded-full p-1">
@@ -199,7 +199,7 @@ export default function CategoryFilter({
         </div>
 
         {/* Categories Row */}
-        <div className="flex items-center gap-3 pb-4 flex-nowrap">
+        <div className="flex items-center gap-2 sm:gap-3 pb-4 flex-wrap sm:flex-nowrap">
           {visibleCategories.map((category) => (
             <button
               key={category.id}

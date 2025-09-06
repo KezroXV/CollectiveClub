@@ -148,9 +148,9 @@ export default function HomePage() {
       <HeroBanner />
       {/* Section unifiée: Filtres + Posts */}
       <div className="bg-white min-h-screen">
-        <div className="container mx-auto px-6 py-8">
-          <div className="max-w-4xl mx-auto rounded-[22px] border border-primary/20 bg-white hover:shadow-sm overflow-hidden">
-            <div className="p-6">
+        <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-8">
+          <div className="max-w-4xl mx-auto rounded-[16px] sm:rounded-[22px] border border-primary/20 bg-white hover:shadow-sm overflow-hidden">
+            <div className="p-4 sm:p-6">
               <CategoryFilter
                 selectedCategory={selectedCategory}
                 onCategoryChange={setSelectedCategory}
