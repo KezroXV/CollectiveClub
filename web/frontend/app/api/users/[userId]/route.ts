@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getShopId, ensureShopIsolation } from "@/lib/shopIsolation";
+import { logger } from "@/lib/logger";
 
 const prisma = new PrismaClient();
 
@@ -10,18 +11,18 @@ export async function DELETE(
   { params }: { params: { userId: string } }
 ) {
   try {
-    console.log('DELETE USER API: Starting request');
+    logger.api('/api/users/[userId]', 'DELETE request');
     
     // 🏪 ISOLATION MULTI-TENANT
     const shopId = await getShopId(request);
     ensureShopIsolation(shopId);
-    console.log('DELETE USER API: ShopId obtained', { shopId });
+    logger.debug('ShopId obtained', { shopId });
 
     const { userId: targetUserId } = await params;
     const body = await request.json();
     const { userId: currentUserId, userRole } = body;
     
-    console.log('DELETE USER API: Request data', { targetUserId, currentUserId, userRole });
+    logger.debug('Request data', { targetUserId, currentUserId, userRole });
 
     if (!currentUserId || !userRole) {
       return NextResponse.json(
@@ -32,14 +33,14 @@ export async function DELETE(
 
     // Vérifier les permissions - seulement les ADMIN peuvent supprimer
     if (userRole !== 'ADMIN') {
-      console.log('DELETE USER API: Permission denied', { userRole });
+      logger.debug('Permission denied', { userRole });
       return NextResponse.json(
         { error: "Seuls les administrateurs peuvent supprimer des utilisateurs" },
         { status: 403 }
       );
     }
 
-    console.log('DELETE USER API: Permissions OK');
+    logger.debug('Permissions OK');
 
     // Vérifier que l'utilisateur cible existe et appartient à la bonne boutique
     const targetUser = await prisma.user.findFirst({
@@ -49,10 +50,10 @@ export async function DELETE(
       }
     });
 
-    console.log('DELETE USER API: Target user query result', { found: !!targetUser, targetUserId, shopId });
+    logger.debug('Target user query result', { found: !!targetUser, targetUserId, shopId });
 
     if (!targetUser) {
-      console.log('DELETE USER API: Target user not found');
+      logger.debug('Target user not found');
       return NextResponse.json(
         { error: "Utilisateur non trouvé dans cette boutique" },
         { status: 404 }
@@ -75,7 +76,7 @@ export async function DELETE(
       );
     }
 
-    console.log('DELETE USER API: User found, proceeding with deletion');
+    logger.debug('User found, proceeding with deletion');
 
     // Supprimer l'utilisateur (cascade supprimera automatiquement posts, comments, etc.)
     await prisma.user.delete({
@@ -102,18 +103,18 @@ export async function PUT(
   { params }: { params: { userId: string } }
 ) {
   try {
-    console.log('UPDATE USER ROLE API: Starting request');
+    logger.api('/api/users/[userId]', 'PUT request');
     
     // 🏪 ISOLATION MULTI-TENANT
     const shopId = await getShopId(request);
     ensureShopIsolation(shopId);
-    console.log('UPDATE USER ROLE API: ShopId obtained', { shopId });
+    logger.debug('ShopId obtained', { shopId });
 
     const { userId: targetUserId } = await params;
     const body = await request.json();
     const { userId: currentUserId, userRole, newRole } = body;
     
-    console.log('UPDATE USER ROLE API: Request data', { targetUserId, currentUserId, userRole, newRole });
+    logger.debug('Request data', { targetUserId, currentUserId, userRole, newRole });
 
     if (!currentUserId || !userRole || !newRole) {
       return NextResponse.json(
@@ -124,7 +125,7 @@ export async function PUT(
 
     // Vérifier les permissions - seulement les ADMIN peuvent modifier les rôles
     if (userRole !== 'ADMIN') {
-      console.log('UPDATE USER ROLE API: Permission denied', { userRole });
+      logger.debug('Permission denied', { userRole });
       return NextResponse.json(
         { error: "Seuls les administrateurs peuvent modifier les rôles" },
         { status: 403 }
@@ -163,7 +164,7 @@ export async function PUT(
       );
     }
 
-    console.log('UPDATE USER ROLE API: Updating user role');
+    logger.debug('Updating user role');
 
     // Mettre à jour le rôle de l'utilisateur
     const updatedUser = await prisma.user.update({

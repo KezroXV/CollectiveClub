@@ -2,6 +2,25 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+// Fonction utilitaire pour anonymiser les emails dans les logs
+function anonymizeEmail(email: string): string {
+  if (!email || email.length < 3) return "***@***.***";
+  
+  const [localPart, domain] = email.split('@');
+  if (!domain) return "***@***.***";
+  
+  const anonymizedLocal = localPart.length <= 2 
+    ? "**" 
+    : localPart[0] + "***" + localPart[localPart.length - 1];
+  
+  const domainParts = domain.split('.');
+  const anonymizedDomain = domainParts.length >= 2
+    ? "***." + domainParts[domainParts.length - 1]
+    : "***";
+    
+  return `${anonymizedLocal}@${anonymizedDomain}`;
+}
+
 interface AdminCheckResult {
   shopId: string;
   shopName: string;
@@ -63,7 +82,7 @@ async function analyzeAdminStatus(): Promise<AdminCheckResult[]> {
     if (!hasAdmin) {
       const moderators = shop.users.filter(u => u.role === 'MODERATOR');
       if (moderators.length > 0) {
-        actions.push(`PROMOTE_MODERATOR: ${moderators[0].email}`);
+        actions.push(`PROMOTE_MODERATOR: ${anonymizeEmail(moderators[0].email)}`);
       } else {
         actions.push('CREATE_EMERGENCY_ADMIN');
       }
@@ -102,7 +121,7 @@ async function analyzeAdminStatus(): Promise<AdminCheckResult[]> {
       console.log(`   👥 Utilisateurs avec privilèges:`);
       shop.users.forEach(user => {
         const roleIcon = user.role === 'ADMIN' ? '👑' : '🛡️';
-        console.log(`     ${roleIcon} ${user.email} (${user.role})`);
+        console.log(`     ${roleIcon} ${anonymizeEmail(user.email)} (${user.role})`);
       });
     }
     
@@ -354,7 +373,7 @@ async function autoRepairOrphanedShops(): Promise<void> {
     if (moderator) {
       const result = await promoteToAdmin(moderator.id);
       if (result.success) {
-        console.log(`✅ Modérateur ${moderator.email} promu administrateur`);
+        console.log(`✅ Modérateur ${anonymizeEmail(moderator.email)} promu administrateur`);
         continue;
       }
     }
@@ -362,7 +381,7 @@ async function autoRepairOrphanedShops(): Promise<void> {
     // Créer un admin d'urgence
     const result = await createEmergencyAdmin(shop.shopId);
     if (result.success) {
-      console.log(`✅ Administrateur d'urgence créé: ${result.admin?.email}`);
+      console.log(`✅ Administrateur d'urgence créé: ${anonymizeEmail(result.admin?.email || '')}`);
     } else {
       console.log(`❌ Échec de la création d'admin pour ${shop.shopName}: ${result.error}`);
     }
@@ -439,7 +458,7 @@ async function main() {
 
         const result = await createEmergencyAdmin(shopId, email, name);
         if (result.success) {
-          console.log(`✅ Admin créé:`, result.admin);
+          console.log(`✅ Admin créé:`, { ...result.admin, email: anonymizeEmail(result.admin?.email || '') });
         } else {
           console.log(`❌ Erreur:`, result.error);
           process.exit(1);

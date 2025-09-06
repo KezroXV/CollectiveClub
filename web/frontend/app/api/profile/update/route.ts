@@ -4,18 +4,19 @@ import { getShopId, ensureShopIsolation } from "@/lib/shopIsolation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import bcrypt from "bcrypt";
+import { logger } from "@/lib/logger";
 
 const prisma = new PrismaClient();
 
 // PUT /api/profile/update - Mettre à jour le profil utilisateur
 export async function PUT(request: NextRequest) {
   try {
-    console.log('UPDATE PROFILE API: Starting request');
+    logger.api('/api/profile/update', 'Starting request');
     
     // 🏪 ISOLATION MULTI-TENANT
     const shopId = await getShopId(request);
     ensureShopIsolation(shopId);
-    console.log('UPDATE PROFILE API: ShopId obtained', { shopId });
+    logger.debug('ShopId obtained', { shopId });
 
     // Vérifier l'authentification
     const session = await getServerSession(authOptions);
@@ -29,7 +30,7 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { name, email, image, password } = body;
     
-    console.log('UPDATE PROFILE API: Request data', { name, email, hasImage: !!image, hasPassword: !!password });
+    logger.debug('Profile update requested', { hasName: !!name, hasImage: !!image });
 
     // Trouver l'utilisateur actuel
     const currentUser = await prisma.user.findFirst({
@@ -76,7 +77,7 @@ export async function PUT(request: NextRequest) {
       updateData.password = hashedPassword;
     }
 
-    console.log('UPDATE PROFILE API: Update data prepared', { updateData: Object.keys(updateData) });
+    logger.debug('Update data prepared', { fields: Object.keys(updateData) });
 
     // Effectuer la mise à jour
     if (Object.keys(updateData).length > 0) {
@@ -93,7 +94,7 @@ export async function PUT(request: NextRequest) {
         }
       });
 
-      console.log('UPDATE PROFILE API: User updated successfully');
+      logger.debug('User updated successfully');
 
       return NextResponse.json({ 
         success: true, 
@@ -101,7 +102,7 @@ export async function PUT(request: NextRequest) {
         user: updatedUser
       });
     } else {
-      console.log('UPDATE PROFILE API: No changes detected');
+      logger.debug('No changes detected');
       return NextResponse.json({ 
         success: true, 
         message: "Aucune modification détectée"

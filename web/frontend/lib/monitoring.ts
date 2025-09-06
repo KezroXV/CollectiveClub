@@ -123,8 +123,8 @@ class MonitoringService {
       console.error(`🚨 SECURITY ALERT [${alert.severity}]:`, {
         type: alert.type,
         shopId: alert.shopId,
-        userId: alert.userId,
-        details: alert.details
+        userId: alert.userId ? alert.userId.substring(0, 8) + '...' : 'N/A',
+        detailsAvailable: !!alert.details
       });
     }
 

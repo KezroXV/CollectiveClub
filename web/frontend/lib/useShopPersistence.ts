@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { logger } from '@/lib/logger';
 
 export function useShopPersistence() {
   const searchParams = useSearchParams();
@@ -15,13 +16,13 @@ export function useShopPersistence() {
       // Sauvegarder dans localStorage
       localStorage.setItem('shopDomain', shopFromUrl);
       setCurrentShop(shopFromUrl);
-      console.log('💾 ShopDomain sauvegardé:', shopFromUrl);
+      logger.debug('ShopDomain sauvegardé:', { shop: shopFromUrl.substring(0, 10) + '...' });
     } else {
       // Récupérer depuis localStorage
       const shopFromStorage = localStorage.getItem('shopDomain');
       if (shopFromStorage) {
         setCurrentShop(shopFromStorage);
-        console.log('📱 ShopDomain récupéré du localStorage:', shopFromStorage);
+        logger.debug('ShopDomain récupéré du localStorage:', { shop: shopFromStorage.substring(0, 10) + '...' });
       }
     }
   }, [searchParams]);

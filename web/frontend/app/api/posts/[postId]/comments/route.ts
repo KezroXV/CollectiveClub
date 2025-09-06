@@ -159,7 +159,7 @@ export async function POST(
     // 🔐 AUTHENTICATION: Vérifier que l'utilisateur est connecté
     const { user, shopId } = await getAuthContext();
     
-    console.log("💬 Creating comment:", { userId: user.id, email: user.email, role: user.role, shopId });
+    console.log("💬 Creating comment:", { userId: user.id, role: user.role, shopId });
 
     const { postId } = await params;
     const body = await request.json();

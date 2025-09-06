@@ -2,6 +2,25 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+// Fonction utilitaire pour anonymiser les emails dans les logs
+function anonymizeEmail(email: string): string {
+  if (!email || email.length < 3) return "***@***.***";
+  
+  const [localPart, domain] = email.split('@');
+  if (!domain) return "***@***.***";
+  
+  const anonymizedLocal = localPart.length <= 2 
+    ? "**" 
+    : localPart[0] + "***" + localPart[localPart.length - 1];
+  
+  const domainParts = domain.split('.');
+  const anonymizedDomain = domainParts.length >= 2
+    ? "***." + domainParts[domainParts.length - 1]
+    : "***";
+    
+  return `${anonymizedLocal}@${anonymizedDomain}`;
+}
+
 async function createDevShop() {
   const shopId = "cmeqzo59z0017u3pgqc4ej9q0";
   
@@ -43,7 +62,7 @@ async function createDevShop() {
       }
     });
 
-    console.log("✅ Utilisateur admin créé:", adminUser.email, "ID:", adminUser.id);
+    console.log("✅ Utilisateur admin créé:", anonymizeEmail(adminUser.email), "ID:", adminUser.id);
 
     // Créer des catégories par défaut
     const categories = [

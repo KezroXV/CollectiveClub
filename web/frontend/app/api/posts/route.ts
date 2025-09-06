@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
     // 🔐 AUTHENTICATION: Vérifier que l'utilisateur est connecté
     const { user, shopId } = await getAuthContext();
     
-    console.log("📝 Creating post:", { userId: user.id, email: user.email, role: user.role, shopId });
+    console.log("📝 Creating post:", { userId: user.id, role: user.role, shopId });
 
     const body = await request.json();
     const { title, content, imageUrl, category, poll } = body;

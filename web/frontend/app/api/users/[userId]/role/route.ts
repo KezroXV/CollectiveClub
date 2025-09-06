@@ -7,6 +7,7 @@ import {
   canChangeRole, 
   RoleChangeContext
 } from "@/lib/permissions";
+import { logger } from "@/lib/logger";
 
 const prisma = new PrismaClient();
 
@@ -138,13 +139,13 @@ export async function PUT(
       // 2. Logger le changement de rôle pour audit (si le modèle existe)
       try {
         // Note: Nécessite l'ajout du modèle RoleChange au schéma Prisma
-        console.log('RoleChange logged:', {
+        logger.info('Role change logged:', {
           shopId,
-          adminId: actor.id,
-          targetId: target.id,
+          adminId: actor.id.substring(0, 8) + '...',
+          targetId: target.id.substring(0, 8) + '...',
           fromRole: target.role,
           toRole: body.role,
-          reason: body.reason,
+          hasReason: !!body.reason
         });
       } catch (error) {
         // Log silencieux si le modèle n'existe pas encore
