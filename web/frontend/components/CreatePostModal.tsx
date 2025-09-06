@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
@@ -185,7 +185,7 @@ export default function CreatePostModal({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="space-y-6 pt-4">
           {/* Titre */}
           <div className="space-y-2">
             <Label htmlFor="title" className="text-sm font-medium">
@@ -214,34 +214,29 @@ export default function CreatePostModal({
             />
           </div>
 
-          {/* Upload d'image - CUSTOM */}
-          <div className="space-y-3">
+          {/* Upload d'image */}
+          <div className="space-y-3 mb-0">
             <Label className="text-sm font-medium">Ajouter une image</Label>
 
             {imageUrl ? (
-              <Card className="relative overflow-hidden group">
-                <CardContent className="p-0">
-                  <img
-                    src={imageUrl}
-                    alt="Uploaded"
-                    className="w-full h-48 object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      className="bg-red-500 hover:bg-red-600"
-                      onClick={() => setImageUrl("")}
-                    >
-                      <X className="h-4 w-4 mr-2" />
-                      Supprimer
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="relative">
+                <img
+                  src={imageUrl}
+                  alt="Uploaded"
+                  className="w-full max-w-[230px] h-auto rounded-lg border"
+                />
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setImageUrl("")}
+                  className="absolute top-2 right-2"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             ) : (
-              <Card
-                className={`border-2 border-dashed cursor-pointer transition-all duration-200 ${
+              <div
+                className={`w-[230px] h-[60px] border-2 border-dashed rounded-lg cursor-pointer transition-all duration-200 flex items-center justify-center ${
                   isDragOver
                     ? "border-primary bg-primary/10"
                     : "border-gray-300 hover:border-gray-400 hover:bg-gray-50"
@@ -251,87 +246,52 @@ export default function CreatePostModal({
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
               >
-                <CardContent className="flex flex-col items-center justify-center py-16">
-                  <div
-                    className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 transition-colors ${
-                      isDragOver ? "bg-primary/20" : "bg-gray-100"
-                    }`}
-                  >
-                    <ImageIcon
-                      className={`h-8 w-8 ${
-                        isDragOver ? "text-primary" : "text-gray-400"
-                      }`}
-                    />
-                  </div>
-
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                <div className="flex items-center gap-2 text-gray-500">
+                  <ImageIcon className="h-5 w-5" />
+                  <span className="text-sm">
                     {isDragOver
                       ? "Déposez votre image ici"
-                      : "Ajouter une image"}
-                  </h3>
-
-                  <p className="text-sm text-gray-600 text-center mb-4">
-                    Glissez-déposez une image ou cliquez pour parcourir
-                  </p>
-
-                  <div className="flex items-center gap-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="gap-2"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        fileInputRef.current?.click();
-                      }}
-                    >
-                      <Upload className="h-4 w-4" />
-                      Parcourir
-                    </Button>
-                  </div>
-
-                  <p className="text-xs text-gray-400 mt-3">
-                    PNG, JPG, GIF jusqu&apos;à 10MB
-                  </p>
-                </CardContent>
-              </Card>
+                      : "Cliquez pour ajouter"}
+                  </span>
+                </div>
+              </div>
             )}
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileInputChange}
-              className="hidden"
-            />
           </div>
 
-          {/* Catégories */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">Ajouter une catégorie</Label>
-            <div className="flex flex-wrap gap-2">
-              {categories.map((category) => (
-                <Button
-                  key={category.id}
-                  variant={
-                    selectedCategory === category.name ? "default" : "outline"
-                  }
-                  size="sm"
-                  onClick={() =>
-                    setSelectedCategory(
-                      selectedCategory === category.name ? "" : category.name
-                    )
-                  }
-                  className="gap-2 rounded-full transition-all"
-                >
-                  <div
-                    className={`w-3 h-3 rounded-full ${category.color}`}
-                  ></div>
-                  {category.name}
-                </Button>
-              ))}
-            </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileInputChange}
+            className="hidden"
+          />
+        </div>
+
+        {/* Catégories */}
+        <div className="space-y-3">
+          <Label className="text-sm font-medium">Ajouter une catégorie</Label>
+          <div className="flex flex-wrap gap-2">
+            {categories.map((category) => (
+              <Button
+                key={category.id}
+                variant={
+                  selectedCategory === category.name ? "default" : "outline"
+                }
+                size="sm"
+                onClick={() =>
+                  setSelectedCategory(
+                    selectedCategory === category.name ? "" : category.name
+                  )
+                }
+                className="gap-2 rounded-full transition-all"
+              >
+                <div className={`w-3 h-3 rounded-full ${category.color}`}></div>
+                {category.name}
+              </Button>
+            ))}
           </div>
         </div>
+
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <Label className="text-sm font-medium">Ajouter un sondage</Label>
