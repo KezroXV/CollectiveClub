@@ -105,7 +105,10 @@ export default function ShopManagementSection({
   const fetchUsers = async () => {
     try {
       setLoadingUsers(true);
-      const response = await fetch(`/api/members?userId=${userId}&limit=100`, {
+      const url = userId ? `/api/members?userId=${userId}&limit=100` : `/api/members?limit=100`;
+      console.log('🔍 Fetching users from:', url);
+      
+      const response = await fetch(url, {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
       });
@@ -114,6 +117,7 @@ export default function ShopManagementSection({
         throw new Error(`HTTP error! status: ${response.status}`);
 
       const data = await response.json();
+      console.log('👥 Raw users data:', data);
 
       // Filtrer pour ne garder que les admins et modérateurs
       const filteredUsers = data.members
@@ -125,6 +129,8 @@ export default function ShopManagementSection({
           image: user.image || null,
         }));
 
+      console.log('👑 Filtered admin/mod users:', filteredUsers);
+      console.log('📊 Setting users state with:', filteredUsers.length, 'users');
       setUsers(filteredUsers);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -138,6 +144,8 @@ export default function ShopManagementSection({
   const fetchCategories = async () => {
     try {
       setLoadingCategories(true);
+      console.log('🔍 Fetching categories from: /api/categories');
+      
       const response = await fetch("/api/categories", {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -147,6 +155,8 @@ export default function ShopManagementSection({
         throw new Error(`HTTP error! status: ${response.status}`);
 
       const data = await response.json();
+      console.log('📁 Categories data received:', data);
+      console.log('📊 Setting categories state with:', data.length, 'categories');
       setCategories(data);
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -157,11 +167,11 @@ export default function ShopManagementSection({
   };
 
   useEffect(() => {
-    if (shopId && userId) {
+    if (shopId) {
       fetchUsers();
       fetchCategories();
     }
-  }, [shopId, userId]);
+  }, [shopId]);
 
   // Fonction pour ajouter une catégorie
   const handleAddCategory = async () => {
@@ -181,10 +191,8 @@ export default function ShopManagementSection({
 
       if (response.ok) {
         const newCategory = await response.json();
-        setCategories((prev) => [
-          ...prev,
-          { ...newCategory, _count: { posts: 0 } },
-        ]);
+        // Recharger les catégories pour être sûr
+        await fetchCategories();
         setNewCategoryName("");
         setSelectedColor("bg-blue-500");
         setShowAddCategoryModal(false);
@@ -397,6 +405,18 @@ export default function ShopManagementSection({
       Math.min(totalCategoryPages - 1, prev + 1)
     );
   };
+
+  // DEBUG: Log des états avant le rendu
+  console.log('🔍 RENDER DEBUG:', {
+    shopId,
+    userId,
+    users: users.length,
+    categories: categories.length,
+    loadingUsers,
+    loadingCategories,
+    filteredUsers: filteredUsers.length,
+    filteredCategories: filteredCategories.length
+  });
 
   // Reset pagination when search changes
   useEffect(() => {

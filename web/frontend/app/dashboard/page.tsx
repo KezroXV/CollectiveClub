@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import ThemeWrapper from "@/components/ThemeWrapper";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Button } from "@/components/ui/button";
@@ -18,12 +18,54 @@ export default function DashboardPage() {
   const [showPostsModal, setShowPostsModal] = useState(false);
   const [showClientsModal, setShowClientsModal] = useState(false);
   const [showThemeModal, setShowThemeModal] = useState(false);
+  const [actualShopId, setActualShopId] = useState<string>('');
   const { loadUserTheme } = useTheme();
   const router = useRouter();
+  const searchParams = useSearchParams();
   
   // Vérifier si l'utilisateur a accès au dashboard
   const hasAccess = isAdmin || isModerator;
-  const shopId = currentUser?.shopId || '';
+  
+  // Récupérer le shopId depuis URL ou cookies
+  useEffect(() => {
+    const shopFromUrl = searchParams.get('shop');
+    if (shopFromUrl === 'collective-club.myshopify.com') {
+      // Utiliser le shopId connu pour collective-club
+      setActualShopId('cmf57twjy0000u34sla2lhgl9');
+    } else if (shopFromUrl) {
+      // Pour d'autres shops, récupérer dynamiquement
+      const fetchShopId = async () => {
+        try {
+          const response = await fetch(`/api/categories?shop=${shopFromUrl}`);
+          if (response.ok) {
+            const categories = await response.json();
+            if (categories && categories.length > 0) {
+              // Extraire le shopId depuis la première catégorie
+              setActualShopId(categories[0].shopId);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching shop:', error);
+        }
+      };
+      fetchShopId();
+    } else {
+      // Fallback vers currentUser.shopId
+      if (currentUser?.shopId) {
+        setActualShopId(currentUser.shopId);
+      }
+    }
+  }, [searchParams, currentUser?.shopId]);
+
+  const shopId = actualShopId || currentUser?.shopId || '';
+  
+  // DEBUG: Vérifier le currentUser et shopId
+  console.log('🏪 DashboardPage DEBUG:', {
+    currentUser,
+    shopId,
+    hasCurrentUser: !!currentUser,
+    hasShopId: !!currentUser?.shopId
+  });
 
   const handleClientsClick = () => setShowClientsModal(true);
   const handlePostsClick = () => setShowPostsModal(true);

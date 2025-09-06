@@ -79,7 +79,7 @@ export default function CategoryFilter({
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const MAX_VISIBLE = 6; // Réduire pour laisser place à "Tout"
+  const MAX_VISIBLE = 3; // Réduire pour tester le "Voir plus"
 
   // Fetch categories
   useEffect(() => {
@@ -256,20 +256,28 @@ export default function CategoryFilter({
           )}
 
           {/* Bouton de filtre pour les posts épinglés */}
-          <button
-            onClick={() => onPinnedFilterChange?.(!showPinnedOnly)}
-            className={`flex items-center gap-2.5 px-2 py-2 rounded-2xl whitespace-nowrap transition-all text-xs font-medium border ${
-              showPinnedOnly
-                ? "bg-blue-50 text-blue-700 border-blue-200"
-                : "bg-white text-gray-900 border-gray-300 hover:bg-gray-50"
-            }`}
-          >
-            <Pin
-              className={`h-3 w-3 ${
-                showPinnedOnly ? "text-blue-600" : "text-gray-500"
+          {onPinnedFilterChange && (
+            <button
+              onClick={() => onPinnedFilterChange?.(!showPinnedOnly)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg whitespace-nowrap transition-all text-xs font-medium border ${
+                showPinnedOnly
+                  ? "bg-blue-50 text-blue-700 border-blue-200"
+                  : "bg-white text-gray-900 border-gray-300 hover:bg-gray-50"
               }`}
-            />
-          </button>
+            >
+              <Pin
+                className={`h-3 w-3 ${
+                  showPinnedOnly ? "text-blue-600" : "text-gray-500"
+                }`}
+              />
+              <span>Épinglés</span>
+              {pinnedCount > 0 && (
+                <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
+                  {pinnedCount}
+                </span>
+              )}
+            </button>
+          )}
         </div>
       </div>
     </div>
