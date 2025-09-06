@@ -10,6 +10,7 @@ import PollDisplay from "@/components/PollDisplay";
 import { toast } from "sonner";
 
 interface Post {
+  slug: string;
   id: string;
   title: string;
   content: string;
@@ -66,7 +67,7 @@ export default function PostCard({
   return (
     <div className={`pb-8 ${!isLast ? "border-b border-gray-100" : ""}`}>
       {/* Post Title and Content */}
-      <div className="mb-6 pt-7 pl-16 relative">
+      <div className="mb-6 pt-7  relative">
         <h2 className="text-[10px] md:text-[13px] font-semibold text-gray-900 mb-2 leading-tight line-clamp-1">
           {post.title}
         </h2>
@@ -77,7 +78,7 @@ export default function PostCard({
 
       {/* Post Image */}
       {post.imageUrl && (
-        <div className="mb-8 pl-16">
+        <div className="mb-8 ">
           <div className="rounded-2xl overflow-hidden hover:shadow-sm border border-gray-100">
             <Image
               src={post.imageUrl}
@@ -92,7 +93,7 @@ export default function PostCard({
 
       {/* Poll */}
       {post.poll && (
-        <div className="mb-8 pl-16">
+        <div className="mb-8 ">
           <PollDisplay
             poll={post.poll}
             currentUser={currentUser}
@@ -102,15 +103,15 @@ export default function PostCard({
       )}
 
       {/* Post Actions */}
-      <div className="flex items-center gap-6 pl-16">
+      <div className="flex items-center gap-4">
         <Button
           variant="outline"
-          className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border-chart-4 hover:bg-gray-100 text-gray-600"
+          className="flex items-center gap-3 bg-gray-50 px-6 py-3 rounded-full border-2 border-gray-200 hover:bg-gray-100 text-gray-700"
         >
-          <Heart className="h-4 w-4" />
-          <Badge className="rounded-full bg-white text-gray-600  px-2 py-0 text-xs font-medium">
+          <Heart className="h-5 w-5 stroke-2" />
+          <span className="text-base font-medium">
             {post._count.reactions}
-          </Badge>
+          </span>
         </Button>
 
         <Link
@@ -119,12 +120,12 @@ export default function PostCard({
         >
           <Button
             variant="outline"
-            className="flex items-center gap-2 bg-white px-4 py-2 rounded-full border-chart-4 group-hover:bg-primary/10 group-hover:border-primary/30 text-gray-600"
+            className="flex items-center gap-3 bg-gray-50 px-6 py-3 rounded-full border-2 border-gray-200 group-hover:bg-gray-100 text-gray-700"
           >
-            <MessageSquare className="h-4 w-4" />
-            <Badge className="rounded-full bg-white text-gray-600 border border-chart-4 px-2 py-0 text-xs font-medium">
+            <MessageSquare className="h-5 w-5 stroke-2" />
+            <span className="text-base font-medium">
               {post._count.comments}
-            </Badge>
+            </span>
           </Button>
         </Link>
 

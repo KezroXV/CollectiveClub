@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import PostCard from "@/components/PostCard";
@@ -45,22 +46,17 @@ interface PostsListProps {
   selectedCategory: string;
 }
 
-export default function PostsList({ 
-  posts, 
-  currentUser, 
-  onVote, 
-  searchQuery, 
-  selectedCategory 
+export default function PostsList({
+  posts,
+  currentUser,
+  onVote,
+  searchQuery,
+  selectedCategory,
 }: PostsListProps) {
   const hasFilters = searchQuery || selectedCategory !== "all";
 
   if (posts.length === 0) {
-    return (
-      <EmptyState 
-        hasFilters={hasFilters} 
-        currentUser={currentUser} 
-      />
-    );
+    return <EmptyState hasFilters={hasFilters} currentUser={currentUser} />;
   }
 
   return (
