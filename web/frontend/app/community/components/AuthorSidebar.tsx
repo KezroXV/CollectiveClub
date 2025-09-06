@@ -26,6 +26,7 @@ interface UserPointsInfo {
 interface AuthorPost {
   id: string;
   title: string;
+  slug?: string;
   createdAt: string;
   _count: {
     comments: number;
@@ -40,6 +41,7 @@ interface AuthorComment {
   post: {
     id: string;
     title: string;
+    slug?: string;
   };
   _count: {
     reactions: number;

@@ -27,7 +27,8 @@ export async function GET(
     }
 
     // Récupérer le post avec toutes ses relations
-    const post = await prisma.post.findFirst({
+    // Essayer d'abord par slug, puis par ID si pas trouvé
+    let post = await prisma.post.findFirst({
       where: {
         slug,
         shopId, // ✅ ISOLATION: Seulement les posts de cette boutique
@@ -110,6 +111,93 @@ export async function GET(
         },
       },
     });
+
+    // Si pas trouvé par slug, essayer par ID
+    if (!post) {
+      post = await prisma.post.findFirst({
+        where: {
+          id: slug, // Utiliser slug comme ID
+          shopId, // ✅ ISOLATION: Seulement les posts de cette boutique
+          status: 'PUBLISHED'
+        },
+        include: {
+          author: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+              createdAt: true,
+              role: true,
+            },
+          },
+          category: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
+            },
+          },
+          shop: {
+            select: {
+              id: true,
+              shopName: true,
+              shopDomain: true,
+            },
+          },
+          comments: {
+            include: {
+              author: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  image: true,
+                },
+              },
+              replies: {
+                include: {
+                  author: {
+                    select: {
+                      id: true,
+                      name: true,
+                      email: true,
+                      image: true,
+                    },
+                  },
+                  _count: {
+                    select: { reactions: true },
+                  },
+                },
+              },
+              _count: {
+                select: { reactions: true, replies: true },
+              },
+            },
+            orderBy: { createdAt: 'desc' },
+          },
+          reactions: true,
+          poll: {
+            include: {
+              options: {
+                include: {
+                  _count: {
+                    select: { votes: true },
+                  },
+                },
+                orderBy: { order: "asc" },
+              },
+              _count: {
+                select: { votes: true },
+              },
+            },
+          },
+          _count: {
+            select: { comments: true, reactions: true },
+          },
+        },
+      });
+    }
 
     if (!post) {
       return NextResponse.json(

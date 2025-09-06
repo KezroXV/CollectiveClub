@@ -59,7 +59,7 @@ export default function PostCard({
   isLast = false,
 }: PostCardProps) {
   const handleShare = () => {
-    const url = `${window.location.origin}/community/${post.id}`;
+    const url = `${window.location.origin}/community/posts/${post.slug || post.id}`;
     navigator.clipboard.writeText(url);
     toast.success("Lien copié dans le presse-papiers !");
   };
@@ -68,7 +68,7 @@ export default function PostCard({
     <div className={`pb-8 ${!isLast ? "border-b border-gray-100" : ""}`}>
       {/* Post Title and Content */}
       <div className="mb-6 pt-7  relative">
-        <Link href={`/community/${post.id}`}>
+        <Link href={`/community/posts/${post.slug || post.id}`}>
           <h2 className="text-[10px] md:text-[13px] font-semibold text-gray-900 mb-2 leading-tight line-clamp-1 cursor-pointer hover:text-primary transition-colors duration-200">
             {post.title}
           </h2>
@@ -117,7 +117,7 @@ export default function PostCard({
         </Button>
 
         <Link
-          href={`/community/${post.id}`}
+          href={`/community/posts/${post.slug || post.id}`}
           className="flex items-center gap-2 text-gray-500 hover:text-primary transition-colors group"
         >
           <Button
