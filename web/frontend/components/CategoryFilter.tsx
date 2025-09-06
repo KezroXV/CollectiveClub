@@ -204,7 +204,7 @@ export default function CategoryFilter({
             <button
               key={category.id}
               onClick={() => onCategoryChange(category.id)}
-              className={`flex items-center gap-2.5 px-2.5 py-1 rounded-2xl whitespace-nowrap transition-all text-xs font-medium border ${
+              className={`flex items-center gap-2.5 px-2.5 py-1 rounded-lg whitespace-nowrap transition-all text-xs font-medium border ${
                 selectedCategory === category.id
                   ? "bg-white text-gray-900 border-gray-300 ring-2 ring-blue-300"
                   : "bg-white text-gray-900 border-gray-300 hover:bg-gray-50"
@@ -224,7 +224,7 @@ export default function CategoryFilter({
           {overflowCategories.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2.5 px-2.5 py-1 rounded-2xl whitespace-nowrap transition-all text-xs font-medium border bg-white text-gray-900 border-gray-300 hover:bg-gray-50">
+                <button className="flex items-center gap-2.5 px-2.5 py-1 rounded-lg whitespace-nowrap transition-all text-xs font-medium border bg-white text-gray-900 border-gray-300 hover:bg-gray-50">
                   <span>Voir plus</span>
                   <ChevronDown className="h-3 w-3" />
                 </button>
@@ -258,7 +258,7 @@ export default function CategoryFilter({
           {/* Bouton de filtre pour les posts épinglés */}
           <button
             onClick={() => onPinnedFilterChange?.(!showPinnedOnly)}
-            className={`flex items-center gap-2.5 px-2.5 py-2.5 rounded-2xl whitespace-nowrap transition-all text-xs font-medium border ${
+            className={`flex items-center gap-2.5 px-2 py-2 rounded-2xl whitespace-nowrap transition-all text-xs font-medium border ${
               showPinnedOnly
                 ? "bg-blue-50 text-blue-700 border-blue-200"
                 : "bg-white text-gray-900 border-gray-300 hover:bg-gray-50"

@@ -15,6 +15,7 @@ import { useShopPersistence } from "@/lib/useShopPersistence";
 
 interface Post {
   id: string;
+  slug?: string;
   title: string;
   content: string;
   imageUrl?: string;
@@ -70,6 +71,9 @@ export default function HomePage() {
       if (showPinnedOnly) {
         params.append('pinnedOnly', 'true');
       }
+      if (currentUser?.id) {
+        params.append('userId', currentUser.id);
+      }
       
       const response = await fetch(`/api/posts?${params}`);
       const data = await response.json();
@@ -85,7 +89,7 @@ export default function HomePage() {
 
   useEffect(() => {
     fetchPosts();
-  }, [showPinnedOnly]);
+  }, [showPinnedOnly, currentUser?.id]);
 
 
   // Filter posts

@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get('sortBy') || 'newest';
     const categoryId = searchParams.get('categoryId');
     const search = searchParams.get('search');
+    const userId = searchParams.get('userId'); // Pour récupérer les réactions utilisateur
 
     // Construction de la clause where
     const whereClause: any = { shopId };
@@ -101,13 +102,51 @@ export async function GET(request: NextRequest) {
       orderBy,
     });
 
+    // Traiter les réactions pour chaque post si un userId est fourni
+    const processedPosts = await Promise.all(
+      posts.map(async (post) => {
+        // Agréger les réactions par type
+        const reactionsMap = post.reactions.reduce((acc, reaction) => {
+          if (!acc[reaction.type]) {
+            acc[reaction.type] = 0;
+          }
+          acc[reaction.type]++;
+          return acc;
+        }, {} as Record<string, number>);
+
+        const reactionsData = Object.entries(reactionsMap).map(([type, count]) => ({
+          type,
+          count,
+        }));
+
+        // Récupérer la réaction de l'utilisateur actuel si connecté
+        let userReaction = null;
+        if (userId) {
+          const reaction = await prisma.reaction.findFirst({
+            where: {
+              postId: post.id,
+              userId,
+              shopId,
+            },
+          });
+          userReaction = reaction?.type || null;
+        }
+
+        return {
+          ...post,
+          reactions: reactionsData,
+          userReaction,
+        };
+      })
+    );
+
     // Compter les posts épinglés pour le badge
     const pinnedCount = await prisma.post.count({
       where: { shopId, isPinned: true }
     });
 
     return NextResponse.json({
-      posts,
+      posts: processedPosts,
       pinnedCount
     });
   } catch (error) {

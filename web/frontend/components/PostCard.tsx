@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MessageSquare, Share2, Heart, Pin } from "lucide-react";
@@ -8,6 +9,21 @@ import Link from "next/link";
 import Image from "next/image";
 import PollDisplay from "@/components/PollDisplay";
 import { toast } from "sonner";
+
+type ReactionType = "LIKE" | "LOVE" | "LAUGH" | "WOW" | "APPLAUSE";
+
+interface ReactionData {
+  type: ReactionType;
+  count: number;
+}
+
+const REACTION_EMOJIS: Record<ReactionType, string> = {
+  LIKE: "👍",
+  LOVE: "❤️",
+  LAUGH: "😂",
+  WOW: "😮",
+  APPLAUSE: "👏",
+};
 
 interface Post {
   slug: string;
@@ -42,6 +58,8 @@ interface Post {
     comments: number;
     reactions: number;
   };
+  reactions?: ReactionData[];
+  userReaction?: ReactionType | null;
   createdAt: string;
 }
 
@@ -58,10 +76,60 @@ export default function PostCard({
   onVote,
   isLast = false,
 }: PostCardProps) {
+  const [showReactionDropdown, setShowReactionDropdown] = useState(false);
+
+  // Gérer le clic à l'extérieur pour fermer le dropdown
+  const handleClickOutside = useCallback((event: MouseEvent) => {
+    const target = event.target as Element;
+    if (target?.closest(".reaction-dropdown")) {
+      return;
+    }
+    setShowReactionDropdown(false);
+  }, []);
+
+  useEffect(() => {
+    if (showReactionDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showReactionDropdown, handleClickOutside]);
   const handleShare = () => {
     const url = `${window.location.origin}/community/posts/${post.slug || post.id}`;
     navigator.clipboard.writeText(url);
     toast.success("Lien copié dans le presse-papiers !");
+  };
+
+  const handleReaction = async (type: ReactionType) => {
+    if (!currentUser) {
+      toast.error("Vous devez être connecté pour réagir");
+      return;
+    }
+
+    setShowReactionDropdown(false);
+
+    try {
+      const response = await fetch(`/api/posts/${post.id}/reactions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type,
+          userId: currentUser.id,
+          shopId: currentUser.shopId,
+        }),
+      });
+
+      if (response.ok) {
+        toast.success("Réaction ajoutée !");
+        if (onVote) {
+          onVote(); // Rafraîchir la liste des posts
+        }
+      } else {
+        toast.error("Erreur lors de l'ajout de la réaction");
+      }
+    } catch (error) {
+      console.error("Error adding reaction:", error);
+      toast.error("Erreur lors de l'ajout de la réaction");
+    }
   };
 
   return (
@@ -106,15 +174,62 @@ export default function PostCard({
 
       {/* Post Actions */}
       <div className="flex items-center gap-4">
-        <Button
-          variant="outline"
-          className="flex items-center gap-3 bg-gray-50 px-6 py-3 rounded-full border-2 border-gray-200 hover:bg-gray-100 text-gray-700"
-        >
-          <Heart className="h-5 w-5 stroke-2" />
-          <span className="text-base font-medium">
-            {post._count.reactions}
-          </span>
-        </Button>
+        {/* Reactions with dropdown */}
+        <div className="relative">
+          <Button
+            variant="outline"
+            className={`flex items-center gap-3 bg-gray-50 px-6 py-3 rounded-full border-2 border-gray-200 hover:bg-gray-100 transition-colors ${
+              post.userReaction
+                ? "text-red-600 border-red-300 bg-red-50"
+                : "text-gray-700"
+            }`}
+            onClick={() => setShowReactionDropdown(!showReactionDropdown)}
+            disabled={!currentUser}
+          >
+            <Heart className={`h-5 w-5 stroke-2 ${post.userReaction ? "fill-current" : ""}`} />
+            <span className="text-base font-medium">
+              {post._count.reactions}
+            </span>
+          </Button>
+
+          {/* Dropdown des réactions */}
+          {showReactionDropdown && currentUser && (
+            <div className="reaction-dropdown absolute bottom-full left-0 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-10">
+              <div className="flex gap-1 mb-2">
+                {Object.entries(REACTION_EMOJIS).map(([type, emoji]) => {
+                  const isSelected = post.userReaction === type;
+                  const reactionCount = post.reactions?.find((r) => r.type === type)?.count || 0;
+                  return (
+                    <div key={type} className="flex flex-col items-center">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleReaction(type as ReactionType);
+                        }}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                        }}
+                        className={`p-2 rounded transition-colors text-lg relative ${
+                          isSelected
+                            ? "bg-blue-100 border-2 border-blue-300"
+                            : "hover:bg-gray-100"
+                        }`}
+                        title={type}
+                      >
+                        {emoji}
+                        {isSelected && (
+                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border border-white" />
+                        )}
+                      </button>
+                      <span className="text-xs text-gray-500 mt-1">{reactionCount}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
 
         <Link
           href={`/community/posts/${post.slug || post.id}`}
