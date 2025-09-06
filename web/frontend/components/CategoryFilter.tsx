@@ -173,32 +173,7 @@ export default function CategoryFilter({
                 </DropdownMenuItem>
               ))}
 
-              {overflowCategories.length > 0 && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuLabel className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                    Plus de catégories
-                  </DropdownMenuLabel>
-                  {overflowCategories.map((category) => (
-                    <DropdownMenuItem
-                      key={category.id}
-                      onClick={() => onCategoryChange(category.id)}
-                      className="flex items-center gap-3 py-2"
-                    >
-                      <span
-                        className={`w-3 h-3 rounded-full ${category.color}`}
-                      ></span>
-                      <span className="flex-1">{category.name}</span>
-                      <span className="text-xs text-gray-400">
-                        {category._count.posts}
-                      </span>
-                      {selectedCategory === category.id && (
-                        <Check className="h-4 w-4 text-primary" />
-                      )}
-                    </DropdownMenuItem>
-                  ))}
-                </>
-              )}
+              {overflowCategories.length > 0 && <></>}
             </DropdownMenuContent>
           </DropdownMenu>
 
