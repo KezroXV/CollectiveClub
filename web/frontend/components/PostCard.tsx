@@ -68,9 +68,11 @@ export default function PostCard({
     <div className={`pb-8 ${!isLast ? "border-b border-gray-100" : ""}`}>
       {/* Post Title and Content */}
       <div className="mb-6 pt-7  relative">
-        <h2 className="text-[10px] md:text-[13px] font-semibold text-gray-900 mb-2 leading-tight line-clamp-1">
-          {post.title}
-        </h2>
+        <Link href={`/community/${post.id}`}>
+          <h2 className="text-[10px] md:text-[13px] font-semibold text-gray-900 mb-2 leading-tight line-clamp-1 cursor-pointer hover:text-primary transition-colors duration-200">
+            {post.title}
+          </h2>
+        </Link>
         <p className="text-gray-700 text-[13px] leading-6 line-clamp-2">
           {post.content}
         </p>
@@ -115,7 +117,7 @@ export default function PostCard({
         </Button>
 
         <Link
-          href={`/community/posts/${post.slug || post.id}`}
+          href={`/community/${post.id}`}
           className="flex items-center gap-2 text-gray-500 hover:text-primary transition-colors group"
         >
           <Button
