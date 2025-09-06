@@ -84,14 +84,14 @@ export default function ShopManagementSection({
   // États pour le modal d'ajout de catégorie
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
-  const [selectedColor, setSelectedColor] = useState("#3B82F6");
+  const [selectedColor, setSelectedColor] = useState("bg-blue-500");
   const [loadingAddCategory, setLoadingAddCategory] = useState(false);
 
   // États pour le modal d'édition de catégorie
   const [showEditCategoryModal, setShowEditCategoryModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [editCategoryName, setEditCategoryName] = useState("");
-  const [editCategoryColor, setEditCategoryColor] = useState("#3B82F6");
+  const [editCategoryColor, setEditCategoryColor] = useState("bg-blue-500");
   const [loadingEditCategory, setLoadingEditCategory] = useState(false);
 
   // États pour le modal de suppression de catégorie
@@ -186,7 +186,7 @@ export default function ShopManagementSection({
           { ...newCategory, _count: { posts: 0 } },
         ]);
         setNewCategoryName("");
-        setSelectedColor("#3B82F6");
+        setSelectedColor("bg-blue-500");
         setShowAddCategoryModal(false);
         toast.success("Catégorie créée avec succès");
       } else {
@@ -232,7 +232,7 @@ export default function ShopManagementSection({
         setShowEditCategoryModal(false);
         setEditingCategory(null);
         setEditCategoryName("");
-        setEditCategoryColor("#3B82F6");
+        setEditCategoryColor("bg-blue-500");
         toast.success("Catégorie modifiée avec succès");
       } else {
         const error = await response.json();
@@ -319,14 +319,14 @@ export default function ShopManagementSection({
 
   // Couleurs disponibles
   const COLOR_OPTIONS = [
-    { name: "Bleu", value: "#3B82F6" },
-    { name: "Orange", value: "#F97316" },
-    { name: "Vert", value: "#10B981" },
-    { name: "Rouge", value: "#EF4444" },
-    { name: "Violet", value: "#8B5CF6" },
-    { name: "Jaune", value: "#F59E0B" },
-    { name: "Rose", value: "#EC4899" },
-    { name: "Cyan", value: "#06B6D4" },
+    { name: "Bleu", value: "bg-blue-500" },
+    { name: "Orange", value: "bg-orange-500" },
+    { name: "Vert", value: "bg-emerald-500" },
+    { name: "Rouge", value: "bg-red-500" },
+    { name: "Violet", value: "bg-violet-500" },
+    { name: "Jaune", value: "bg-amber-500" },
+    { name: "Rose", value: "bg-pink-500" },
+    { name: "Cyan", value: "bg-cyan-500" },
   ];
 
   // Fonctions helper
@@ -621,8 +621,7 @@ export default function ShopManagementSection({
                 >
                   <div className="flex items-center gap-2">
                     <div
-                      className="w-2.5 h-2.5 rounded-full"
-                      style={{ backgroundColor: category.color }}
+                      className={`w-2.5 h-2.5 rounded-full ${category.color}`}
                     ></div>
                     <span className="text-[10px] font-medium text-gray-900">
                       {category.name}
@@ -725,12 +724,11 @@ export default function ShopManagementSection({
                   <button
                     key={color.value}
                     onClick={() => setSelectedColor(color.value)}
-                    className={`w-12 h-8 rounded-md relative ${
+                    className={`w-12 h-8 rounded-md relative ${color.value} ${
                       selectedColor === color.value
                         ? "ring-2 ring-gray-900 ring-offset-2"
                         : ""
                     }`}
-                    style={{ backgroundColor: color.value }}
                   >
                     {selectedColor === color.value && (
                       <div className="absolute inset-0 flex items-center justify-center">
@@ -748,7 +746,7 @@ export default function ShopManagementSection({
                 onClick={() => {
                   setShowAddCategoryModal(false);
                   setNewCategoryName("");
-                  setSelectedColor("#3B82F6");
+                  setSelectedColor("bg-blue-500");
                 }}
                 disabled={loadingAddCategory}
               >
@@ -797,12 +795,11 @@ export default function ShopManagementSection({
                   <button
                     key={color.value}
                     onClick={() => setEditCategoryColor(color.value)}
-                    className={`w-12 h-8 rounded-md relative ${
+                    className={`w-12 h-8 rounded-md relative ${color.value} ${
                       editCategoryColor === color.value
                         ? "ring-2 ring-gray-900 ring-offset-2"
                         : ""
                     }`}
-                    style={{ backgroundColor: color.value }}
                   >
                     {editCategoryColor === color.value && (
                       <div className="absolute inset-0 flex items-center justify-center">
@@ -821,7 +818,7 @@ export default function ShopManagementSection({
                   setShowEditCategoryModal(false);
                   setEditingCategory(null);
                   setEditCategoryName("");
-                  setEditCategoryColor("#3B82F6");
+                  setEditCategoryColor("bg-blue-500");
                 }}
                 disabled={loadingEditCategory}
               >
