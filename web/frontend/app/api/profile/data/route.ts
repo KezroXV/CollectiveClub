@@ -9,12 +9,9 @@ const prisma = new PrismaClient();
 // GET /api/profile/data - Récupérer les données du profil (posts récents, commentaires, badges)
 export async function GET(request: NextRequest) {
   try {
-    console.log('PROFILE DATA API: Starting request');
-    
     // 🏪 ISOLATION MULTI-TENANT
     const shopId = await getShopId(request);
     ensureShopIsolation(shopId);
-    console.log('PROFILE DATA API: ShopId obtained', { shopId });
 
     // Vérifier l'authentification
     const session = await getServerSession(authOptions);
@@ -40,7 +37,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log('PROFILE DATA API: User found', { userId: currentUser.id });
 
     // Récupérer les posts récents de l'utilisateur
     const authorRecentPosts = await prisma.post.findMany({
@@ -122,13 +118,6 @@ export async function GET(request: NextRequest) {
       .filter(badge => badge.unlocked) // Ne garder que les badges débloqués
       .sort((a, b) => a.requiredPoints - b.requiredPoints); // Trier par points croissants
 
-    console.log('PROFILE DATA API: Data retrieved successfully', {
-      postsCount: authorRecentPosts.length,
-      commentsCount: authorRecentComments.length,
-      badgesCount: badges.length,
-      points: userPoints?.points || 0,
-      badges: badges.map(b => ({ name: b.name, requiredPoints: b.requiredPoints, unlocked: b.unlocked }))
-    });
 
     return NextResponse.json({ 
       success: true,
@@ -141,7 +130,6 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error("Error fetching profile data:", error);
     return NextResponse.json(
       { error: "Failed to fetch profile data" },
       { status: 500 }
