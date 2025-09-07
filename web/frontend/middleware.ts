@@ -130,12 +130,14 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - api (API routes) 
+     * - api (API routes sauf auth) 
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - sitemap.xml, robots.txt (SEO files)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
+    '/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
+    // Inclure spécifiquement les routes d'auth pour capturer le shop param
+    '/api/auth/(.*)',
   ],
 };

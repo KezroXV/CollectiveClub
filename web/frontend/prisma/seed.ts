@@ -156,6 +156,7 @@ async function main() {
         role: userData.role as any,
         shopId: defaultShop.id,
         shopDomain: "collective-club-dev.myshopify.com",
+        isShopOwner: userData.role === "ADMIN", // ✅ AJOUTER isShopOwner
       },
     });
 

@@ -6,12 +6,14 @@ declare module "next-auth" {
       id: string
       role: "ADMIN" | "MODERATOR" | "MEMBER"
       isShopOwner: boolean
+      shopId: string // ✅ OBLIGATOIRE
     } & DefaultSession["user"]
   }
 
   interface User {
     role: "ADMIN" | "MODERATOR" | "MEMBER"
     isShopOwner: boolean
+    shopId: string // ✅ OBLIGATOIRE
   }
 }
 
@@ -19,5 +21,6 @@ declare module "next-auth/jwt" {
   interface JWT {
     role: "ADMIN" | "MODERATOR" | "MEMBER"
     isShopOwner: boolean
+    shopId: string // ✅ OBLIGATOIRE
   }
 }

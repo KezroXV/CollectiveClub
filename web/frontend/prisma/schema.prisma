@@ -27,10 +27,13 @@ model Account {
   scope             String?
   id_token          String? @db.Text
   session_state     String?
+  shopId            String  // ✅ OBLIGATOIRE pour multi-tenant
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@index([shopId]) // Index pour performance multi-tenant
   @@map("accounts")
 }
 
@@ -39,7 +42,10 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
+  shopId       String   // ✅ OBLIGATOIRE pour multi-tenant
+  
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shop         Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
 }
@@ -64,6 +70,9 @@ model Shop {
   updatedAt   DateTime @updatedAt
   
   // Relations
+  users       User[]   // ✅ AJOUTER relation avec les utilisateurs
+  accounts    Account[] // ✅ AJOUTER relation avec les comptes NextAuth
+  sessions    Session[] // ✅ AJOUTER relation avec les sessions NextAuth
   posts       Post[]
   categories  Category[]
   badges      Badge[]
@@ -79,13 +88,13 @@ model Shop {
 
 model User {
   id            String   @id @default(cuid())
-  email         String   @unique // Global unique pour tous
+  email         String   // ✅ SUPPRIMER @unique - unicité seulement par shop
   name          String?
   image         String?  // Avatar NextAuth
   emailVerified DateTime? // Requis NextAuth
-  role          Role     @default(MEMBER) // Rôle global
+  role          Role     @default(MEMBER) // Rôle par boutique
   isShopOwner   Boolean  @default(false) // Marqueur propriétaire boutique
-  shopId        String?  // ID de la boutique - optionnel pour multi-tenant
+  shopId        String   // ✅ OBLIGATOIRE - ID de la boutique
   shopDomain    String?  // Domain de la boutique pour référence
   isBanned      Boolean  @default(false)
   bannedAt      DateTime?
@@ -111,7 +120,10 @@ model User {
   pointTransactions PointTransaction[]
   userBadges UserBadge[]
 
-  @@unique([shopId, email], name: "shopId_email")
+  // Relations avec Shop
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, email], name: "shopId_email") // ✅ SEULE contrainte d'unicité
   @@map("users")
 }
 model Category {

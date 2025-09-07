@@ -10,11 +10,14 @@ export async function getAuthContext() {
     throw new Error('Not authenticated');
   }
 
-  const shopId = await getCurrentShopId();
+  // ✅ shopId est maintenant OBLIGATOIRE dans la session
+  if (!session.user.shopId) {
+    throw new Error('User has no shopId - invalid session');
+  }
   
   return {
     user: session.user as AuthUser,
-    shopId: shopId || "default"
+    shopId: session.user.shopId
   };
 }
 
@@ -36,6 +39,8 @@ export interface AuthUser {
   name?: string;
   image?: string;
   role: 'ADMIN' | 'MODERATOR' | 'MEMBER';
+  shopId: string; // ✅ OBLIGATOIRE
+  isShopOwner: boolean;
 }
 
 export interface AuthContext {

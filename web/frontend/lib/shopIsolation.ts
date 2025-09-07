@@ -147,8 +147,7 @@ export async function getShopContext(request: NextRequest): Promise<ShopContext>
           }
         });
 
-        // Créer automatiquement un admin, des catégories et des badges par défaut
-        await createDefaultAdminForShop(shop.id, shop.shopDomain);
+        // Créer automatiquement des catégories et des badges par défaut (SANS admin automatique)
         await createDefaultCategoriesForShop(shop.id);
         await createDefaultBadgesForShop(shop.id);
         
@@ -437,6 +436,7 @@ export async function createDefaultAdminForShop(shopId: string, shopDomain: stri
       role: "ADMIN",
       shopId,
       shopDomain,
+      isShopOwner: true, // ✅ AJOUTER le champ obligatoire
     },
   });
 
