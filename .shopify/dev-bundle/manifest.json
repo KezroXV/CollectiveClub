@@ -1,0 +1,61 @@
+{
+  "name": "collective-club-shopify-app",
+  "handle": "",
+  "modules": [
+    {
+      "type": "app_access",
+      "handle": "app_access",
+      "uid": "app_access",
+      "assets": "app_access",
+      "target": "",
+      "config": {
+        "scopes": "read_content,read_customers,write_content,write_customers",
+        "redirect_url_allowlist": [
+          "http://localhost:3000/api/auth/callback"
+        ]
+      }
+    },
+    {
+      "type": "webhooks",
+      "handle": "webhooks",
+      "uid": "webhooks",
+      "assets": "webhooks",
+      "target": "",
+      "config": {
+        "api_version": "2025-07"
+      }
+    },
+    {
+      "type": "point_of_sale",
+      "handle": "point_of_sale",
+      "uid": "point_of_sale",
+      "assets": "point_of_sale",
+      "target": "",
+      "config": {
+        "embedded": false
+      }
+    },
+    {
+      "type": "app_home",
+      "handle": "app_home",
+      "uid": "app_home",
+      "assets": "app_home",
+      "target": "",
+      "config": {
+        "app_url": "http://localhost:3000/",
+        "embedded": false
+      }
+    },
+    {
+      "type": "branding",
+      "handle": "branding",
+      "uid": "branding",
+      "assets": "branding",
+      "target": "",
+      "config": {
+        "name": "Collective Club",
+        "app_handle": "collective-club"
+      }
+    }
+  ]
+}
