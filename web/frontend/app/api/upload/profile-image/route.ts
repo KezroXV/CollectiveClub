@@ -1,14 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import { v2 as cloudinary } from 'cloudinary';
 
-cloudinary.config({
+// Vérification des variables d'environnement
+const cloudinaryConfig = {
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
+};
+
+console.log('Cloudinary config check:', {
+  cloud_name: cloudinaryConfig.cloud_name ? 'SET' : 'MISSING',
+  api_key: cloudinaryConfig.api_key ? 'SET' : 'MISSING',
+  api_secret: cloudinaryConfig.api_secret ? 'SET' : 'MISSING',
 });
+
+cloudinary.config(cloudinaryConfig);
 
 export async function POST(request: NextRequest) {
   try {
+    // Vérifier que toutes les variables d'environnement sont présentes
+    if (!cloudinaryConfig.cloud_name || !cloudinaryConfig.api_key || !cloudinaryConfig.api_secret) {
+      console.error('Missing Cloudinary environment variables');
+      return NextResponse.json(
+        {
+          error: "Configuration Cloudinary manquante. Veuillez vérifier vos variables d'environnement."
+        },
+        { status: 500 }
+      );
+    }
+
     const formData = await request.formData();
     const file = formData.get('image') as File;
 

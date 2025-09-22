@@ -10,6 +10,43 @@ import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import ProfilePhotoUpload from "./ProfilePhotoUpload";
 
+// Fonction pour compresser les images
+const compressImage = (file: File, maxWidth: number, maxHeight: number, quality: number): Promise<File> => {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d')!;
+    const img = new Image();
+
+    img.onload = () => {
+      // Calculer les nouvelles dimensions en gardant le ratio
+      let { width, height } = img;
+      const ratio = Math.min(maxWidth / width, maxHeight / height);
+
+      if (ratio < 1) {
+        width *= ratio;
+        height *= ratio;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+
+      // Dessiner l'image redimensionnée
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // Convertir en blob avec compression
+      canvas.toBlob((blob) => {
+        const compressedFile = new File([blob!], file.name, {
+          type: 'image/jpeg',
+          lastModified: Date.now(),
+        });
+        resolve(compressedFile);
+      }, 'image/jpeg', quality);
+    };
+
+    img.src = URL.createObjectURL(file);
+  });
+};
+
 interface User {
   id: string;
   name?: string | null;
@@ -59,17 +96,23 @@ export default function ProfileEditForm({
       }
 
       if (selectedImage) {
-        const formData = new FormData();
-        formData.append('image', selectedImage);
-        
-        const imageResponse = await fetch('/api/upload/profile-image', {
-          method: 'POST',
-          body: formData,
-        });
-        
-        if (imageResponse.ok) {
-          const imageData = await imageResponse.json();
-          updateData.image = imageData.url;
+        try {
+          // Compresser l'image avant conversion
+          const compressedImage = await compressImage(selectedImage, 400, 400, 0.8);
+
+          const reader = new FileReader();
+          const imageDataUrl = await new Promise<string>((resolve, reject) => {
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(compressedImage);
+          });
+
+          updateData.image = imageDataUrl;
+        } catch (error) {
+          console.error('Erreur lecture image:', error);
+          toast.error("Erreur lors de la lecture de l'image");
+          setIsSaving(false);
+          return;
         }
       }
 
