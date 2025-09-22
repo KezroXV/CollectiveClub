@@ -206,7 +206,7 @@ const CommentItem = ({
   };
 
   return (
-    <div className={`${isReply ? "ml-8 border-l-2 border-gray-100 pl-4" : ""}`}>
+    <div className={`${isReply ? "ml-4 border-l-2 border-gray-200 pl-4" : ""}`}>
       <div className="flex gap-4">
         <Avatar className="h-10 w-10 flex-shrink-0">
           <AvatarImage src={comment.author.avatar} />
@@ -298,22 +298,22 @@ const CommentItem = ({
               )}
             </div>
 
-            {/* Bouton Commenter (seulement pour les commentaires principaux) */}
-            {!isReply && (
-              <button
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-                onClick={() => {
-                  if (repliesCount > 0) {
-                    setShowReplies(!showReplies);
-                  } else if (currentUser) {
-                    setShowReplyForm(!showReplyForm);
-                  }
-                }}
-              >
-                <MessageCircle className="h-4 w-4" />
-                <span className="text-xs font-medium">{repliesCount > 0 ? repliesCount : "Commenter"}</span>
-              </button>
-            )}
+            {/* Bouton Commenter pour tous les niveaux */}
+            <button
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+              onClick={() => {
+                if (repliesCount > 0 && !isReply) {
+                  setShowReplies(!showReplies);
+                } else if (currentUser) {
+                  setShowReplyForm(!showReplyForm);
+                }
+              }}
+            >
+              <MessageCircle className="h-4 w-4" />
+              <span className="text-xs font-medium">
+                {!isReply && repliesCount > 0 ? repliesCount : "Répondre"}
+              </span>
+            </button>
 
 
             {/* Bouton répondre séparé quand les réponses sont visibles */}
@@ -412,9 +412,9 @@ const CommentItem = ({
             </div>
           )}
 
-          {/* Replies */}
-          {comment.replies && comment.replies.length > 0 && showReplies && (
-            <div className="mt-6 space-y-4">
+          {/* Replies - Affichage récursif */}
+          {comment.replies && comment.replies.length > 0 && (isReply || showReplies) && (
+            <div className="mt-4 space-y-3">
               {comment.replies.map((reply) => (
                 <CommentItem
                   key={reply.id}

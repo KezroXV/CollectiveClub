@@ -79,45 +79,27 @@ export async function GET(
       orderBy: { createdAt: "asc" },
     });
 
-    // Organiser les réponses par parentId
-    const repliesByParent = new Map();
-    for (const reply of replies) {
-      const parentId = (reply as any).parentId;
-      if (!repliesByParent.has(parentId)) {
-        repliesByParent.set(parentId, []);
-      }
-      repliesByParent.get(parentId).push(reply);
-    }
+    // Fonction récursive pour construire l'arbre de commentaires
+    const buildCommentTree = (comments: any[], parentId: string | null = null): any[] => {
+      return comments
+        .filter(comment => comment.parentId === parentId)
+        .map(comment => ({
+          ...comment,
+          replies: buildCommentTree(comments, comment.id)
+        }));
+    };
 
-    // Ajouter les réponses aux commentaires principaux
-    const comments = topLevelComments.map(comment => ({
-      ...comment,
-      replies: repliesByParent.get(comment.id) || [],
-      _count: {
-        ...comment._count,
-        replies: (repliesByParent.get(comment.id) || []).length
-      }
-    }));
+    // Combiner tous les commentaires (principaux + réponses)
+    const allComments = [...topLevelComments, ...replies];
 
-    // Traiter les réactions pour chaque commentaire
-    const commentsWithReactions = comments.map((comment: any) => {
-      const commentReactionsGrouped = comment.reactions.reduce((acc: any, reaction: any) => {
-        const existingType = acc.find((r: any) => r.type === reaction.type);
-        if (existingType) {
-          existingType.count += 1;
-        } else {
-          acc.push({ type: reaction.type, count: 1 });
-        }
-        return acc;
-      }, []);
+    // Construire l'arbre complet avec récursion infinie
+    const comments = buildCommentTree(allComments, null);
 
-      const commentUserReaction = userId 
-        ? comment.reactions.find((r: any) => r.userId === userId)?.type 
-        : null;
-
-      // Traiter les réactions pour chaque réponse
-      const repliesWithReactions = comment.replies.map((reply: any) => {
-        const replyReactionsGrouped = reply.reactions.reduce((acc: any, reaction: any) => {
+    // Fonction récursive pour traiter les réactions de tous les niveaux
+    const processCommentsReactions = (comments: any[]): any[] => {
+      return comments.map((comment: any) => {
+        // Grouper les réactions du commentaire
+        const commentReactionsGrouped = comment.reactions?.reduce((acc: any, reaction: any) => {
           const existingType = acc.find((r: any) => r.type === reaction.type);
           if (existingType) {
             existingType.count += 1;
@@ -125,26 +107,26 @@ export async function GET(
             acc.push({ type: reaction.type, count: 1 });
           }
           return acc;
-        }, []);
+        }, []) || [];
 
-        const replyUserReaction = userId 
-          ? reply.reactions.find((r: any) => r.userId === userId)?.type 
+        // Trouver la réaction de l'utilisateur pour ce commentaire
+        const commentUserReaction = userId
+          ? comment.reactions?.find((r: any) => r.userId === userId)?.type
           : null;
 
+        // Traiter récursivement toutes les réponses
+        const processedReplies = comment.replies ? processCommentsReactions(comment.replies) : [];
+
         return {
-          ...reply,
-          reactions: replyReactionsGrouped,
-          userReaction: replyUserReaction
+          ...comment,
+          reactions: commentReactionsGrouped,
+          userReaction: commentUserReaction,
+          replies: processedReplies
         };
       });
+    };
 
-      return {
-        ...comment,
-        reactions: commentReactionsGrouped,
-        userReaction: commentUserReaction,
-        replies: repliesWithReactions
-      };
-    });
+    const commentsWithReactions = processCommentsReactions(comments);
 
     return NextResponse.json(commentsWithReactions);
   } catch (error) {

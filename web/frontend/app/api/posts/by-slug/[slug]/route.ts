@@ -100,6 +100,102 @@ export async function GET(
                     userId: true
                   }
                 },
+                replies: {
+                  include: {
+                    author: {
+                      select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        image: true,
+                      },
+                    },
+                    reactions: {
+                      where: {
+                        postId: null
+                      },
+                      select: {
+                        type: true,
+                        userId: true
+                      }
+                    },
+                    replies: {
+                      include: {
+                        author: {
+                          select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                            image: true,
+                          },
+                        },
+                        reactions: {
+                          where: {
+                            postId: null
+                          },
+                          select: {
+                            type: true,
+                            userId: true
+                          }
+                        },
+                        replies: {
+                          include: {
+                            author: {
+                              select: {
+                                id: true,
+                                name: true,
+                                email: true,
+                                image: true,
+                              },
+                            },
+                            reactions: {
+                              where: {
+                                postId: null
+                              },
+                              select: {
+                                type: true,
+                                userId: true
+                              }
+                            },
+                            replies: {
+                              include: {
+                                author: {
+                                  select: {
+                                    id: true,
+                                    name: true,
+                                    email: true,
+                                    image: true,
+                                  },
+                                },
+                                reactions: {
+                                  where: {
+                                    postId: null
+                                  },
+                                  select: {
+                                    type: true,
+                                    userId: true
+                                  }
+                                },
+                                _count: {
+                                  select: { reactions: true },
+                                },
+                              }
+                            },
+                            _count: {
+                              select: { reactions: true },
+                            },
+                          }
+                        },
+                        _count: {
+                          select: { reactions: true },
+                        },
+                      }
+                    },
+                    _count: {
+                      select: { reactions: true },
+                    },
+                  }
+                },
                 _count: {
                   select: { reactions: true },
                 },
@@ -205,6 +301,102 @@ export async function GET(
                     select: {
                       type: true,
                       userId: true
+                    }
+                  },
+                  replies: {
+                    include: {
+                      author: {
+                        select: {
+                          id: true,
+                          name: true,
+                          email: true,
+                          image: true,
+                        },
+                      },
+                      reactions: {
+                        where: {
+                          postId: null
+                        },
+                        select: {
+                          type: true,
+                          userId: true
+                        }
+                      },
+                      replies: {
+                        include: {
+                          author: {
+                            select: {
+                              id: true,
+                              name: true,
+                              email: true,
+                              image: true,
+                            },
+                          },
+                          reactions: {
+                            where: {
+                              postId: null
+                            },
+                            select: {
+                              type: true,
+                              userId: true
+                            }
+                          },
+                          replies: {
+                            include: {
+                              author: {
+                                select: {
+                                  id: true,
+                                  name: true,
+                                  email: true,
+                                  image: true,
+                                },
+                              },
+                              reactions: {
+                                where: {
+                                  postId: null
+                                },
+                                select: {
+                                  type: true,
+                                  userId: true
+                                }
+                              },
+                              replies: {
+                                include: {
+                                  author: {
+                                    select: {
+                                      id: true,
+                                      name: true,
+                                      email: true,
+                                      image: true,
+                                    },
+                                  },
+                                  reactions: {
+                                    where: {
+                                      postId: null
+                                    },
+                                    select: {
+                                      type: true,
+                                      userId: true
+                                    }
+                                  },
+                                  _count: {
+                                    select: { reactions: true },
+                                  },
+                                }
+                              },
+                              _count: {
+                                select: { reactions: true },
+                              },
+                            }
+                          },
+                          _count: {
+                            select: { reactions: true },
+                          },
+                        }
+                      },
+                      _count: {
+                        select: { reactions: true },
+                      },
                     }
                   },
                   _count: {
@@ -324,10 +516,10 @@ export async function GET(
       count,
     }));
 
-    // Traiter les réactions des commentaires
-    const processCommentsReactions = (comments: any[]) => {
+    // Traiter les réactions des commentaires de manière récursive
+    const processCommentsReactions = (comments: any[]): any[] => {
       return comments.map((comment: any) => {
-        // Grouper les réactions du commentaire principal
+        // Grouper les réactions du commentaire
         const commentReactionsGrouped = comment.reactions?.reduce((acc: any, reaction: any) => {
           const existingType = acc.find((r: any) => r.type === reaction.type);
           if (existingType) {
@@ -343,28 +535,8 @@ export async function GET(
           ? comment.reactions?.find((r: any) => r.userId === userId)?.type
           : null;
 
-        // Traiter les réponses
-        const processedReplies = comment.replies?.map((reply: any) => {
-          const replyReactionsGrouped = reply.reactions?.reduce((acc: any, reaction: any) => {
-            const existingType = acc.find((r: any) => r.type === reaction.type);
-            if (existingType) {
-              existingType.count += 1;
-            } else {
-              acc.push({ type: reaction.type, count: 1 });
-            }
-            return acc;
-          }, []) || [];
-
-          const replyUserReaction = userId
-            ? reply.reactions?.find((r: any) => r.userId === userId)?.type
-            : null;
-
-          return {
-            ...reply,
-            reactions: replyReactionsGrouped,
-            userReaction: replyUserReaction
-          };
-        }) || [];
+        // Traiter récursivement toutes les réponses
+        const processedReplies = comment.replies ? processCommentsReactions(comment.replies) : [];
 
         return {
           ...comment,
