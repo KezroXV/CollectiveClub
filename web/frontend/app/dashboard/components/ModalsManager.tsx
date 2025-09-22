@@ -13,6 +13,7 @@ interface ModalsManagerProps {
   onClosePostsModal: () => void;
   onCloseClientsModal: () => void;
   onCloseCustomizationModal: () => void;
+  onPostDeleted?: () => void;
 }
 
 export default function ModalsManager({
@@ -26,6 +27,7 @@ export default function ModalsManager({
   onClosePostsModal,
   onCloseClientsModal,
   onCloseCustomizationModal,
+  onPostDeleted,
 }: ModalsManagerProps) {
   return (
     <>
@@ -35,6 +37,7 @@ export default function ModalsManager({
         userId={userId}
         shopId={shopId}
         userRole={userRole}
+        onPostDeleted={onPostDeleted}
       />
 
       <ClientsModal

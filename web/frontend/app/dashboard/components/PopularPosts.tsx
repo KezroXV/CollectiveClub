@@ -12,9 +12,10 @@ interface Post {
 
 interface PopularPostsProps {
   shopId: string;
+  refreshTrigger?: number; // Trigger pour forcer le refresh
 }
 
-export default function PopularPosts({ shopId }: PopularPostsProps) {
+export default function PopularPosts({ shopId, refreshTrigger }: PopularPostsProps) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +57,7 @@ export default function PopularPosts({ shopId }: PopularPostsProps) {
 
   useEffect(() => {
     fetchPopularPosts();
-  }, [shopId]);
+  }, [shopId, refreshTrigger]);
 
   if (isLoading) {
     return (

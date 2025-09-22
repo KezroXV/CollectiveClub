@@ -19,6 +19,7 @@ export default function DashboardPage() {
   const [showClientsModal, setShowClientsModal] = useState(false);
   const [showThemeModal, setShowThemeModal] = useState(false);
   const [actualShopId, setActualShopId] = useState<string>('');
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { loadUserTheme } = useTheme();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -73,6 +74,11 @@ export default function DashboardPage() {
   const handleCloseCustomizationModal = () => {
     setShowCustomization(false);
     setShowThemeModal(false);
+  };
+
+  const handlePostDeleted = () => {
+    // Incrémenter le trigger pour forcer le refresh de PopularPosts
+    setRefreshTrigger(prev => prev + 1);
   };
 
   // Rediriger si pas d'accès
@@ -135,6 +141,7 @@ export default function DashboardPage() {
             onPostsClick={handlePostsClick}
             onThemeClick={handleThemeClick}
             shopId={shopId}
+            refreshTrigger={refreshTrigger}
           />
 
           <ShopManagementSection
@@ -155,6 +162,7 @@ export default function DashboardPage() {
           onClosePostsModal={() => setShowPostsModal(false)}
           onCloseClientsModal={() => setShowClientsModal(false)}
           onCloseCustomizationModal={handleCloseCustomizationModal}
+          onPostDeleted={handlePostDeleted}
         />
       </div>
     </ThemeWrapper>

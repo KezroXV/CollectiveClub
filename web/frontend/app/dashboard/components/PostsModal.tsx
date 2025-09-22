@@ -51,6 +51,7 @@ interface PostsModalProps {
   userId?: string;
   shopId?: string;
   userRole?: string;
+  onPostDeleted?: () => void;
 }
 
 export default function PostsModal({
@@ -58,6 +59,7 @@ export default function PostsModal({
   onClose,
   userId,
   userRole,
+  onPostDeleted,
 }: PostsModalProps) {
   const [posts, setPosts] = useState<PostData[]>([]);
   const [filteredPosts, setFilteredPosts] = useState<PostData[]>([]);
@@ -135,6 +137,11 @@ export default function PostsModal({
       setPosts((prev) => prev.filter((p) => p.id !== postId));
       setFilteredPosts((prev) => prev.filter((p) => p.id !== postId));
       setDeleteConfirm(null);
+
+      // Notifier le parent qu'un post a été supprimé
+      if (onPostDeleted) {
+        onPostDeleted();
+      }
     } catch (error) {
       console.error("Error deleting post:", error);
     } finally {

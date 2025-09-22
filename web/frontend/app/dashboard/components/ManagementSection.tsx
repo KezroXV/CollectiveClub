@@ -9,6 +9,7 @@ interface ManagementSectionProps {
   onPostsClick: () => void;
   onThemeClick: () => void;
   shopId: string;
+  refreshTrigger?: number;
 }
 
 export default function ManagementSection({
@@ -16,6 +17,7 @@ export default function ManagementSection({
   onPostsClick,
   onThemeClick,
   shopId,
+  refreshTrigger,
 }: ManagementSectionProps) {
   return (
     <div className="col-span-8 space-y-6">
@@ -51,7 +53,7 @@ export default function ManagementSection({
         </CardContent>
       </Card>
 
-      <PopularPosts shopId={shopId} />
+      <PopularPosts shopId={shopId} refreshTrigger={refreshTrigger} />
     </div>
   );
 }
