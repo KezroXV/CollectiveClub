@@ -58,21 +58,23 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Supprimer l'ancienne réaction si elle existe
+    // Supprimer l'ancienne réaction à ce commentaire spécifique si elle existe
     await prisma.reaction.deleteMany({
       where: {
         userId,
         commentId,
-        shopId
+        shopId,
+        postId: null // S'assurer qu'on ne supprime que les réactions de commentaires
       }
     });
 
-    // Créer la nouvelle réaction
+    // Créer la nouvelle réaction pour le commentaire
     const reaction = await prisma.reaction.create({
       data: {
         type: type as ReactionType,
         userId,
         commentId,
+        postId: null, // Explicitement null pour les réactions de commentaires
         shopId
       }
     });
@@ -82,9 +84,34 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       await awardPoints(comment.author.id, shopId, PointAction.REACTION_RECEIVED);
     }
 
+    // Récupérer toutes les réactions du commentaire après l'ajout
+    const allReactions = await prisma.reaction.findMany({
+      where: {
+        commentId,
+        shopId,
+        postId: null // Seulement les réactions de commentaires
+      }
+    });
+
+    // Grouper les réactions par type
+    const reactionsGrouped = allReactions.reduce((acc: any, reaction: any) => {
+      const existingType = acc.find((r: any) => r.type === reaction.type);
+      if (existingType) {
+        existingType.count += 1;
+      } else {
+        acc.push({ type: reaction.type, count: 1 });
+      }
+      return acc;
+    }, []);
+
+    // Trouver la réaction de l'utilisateur actuel
+    const userReaction = allReactions.find(r => r.userId === userId)?.type || null;
+
     return NextResponse.json({
       success: true,
-      reaction
+      reactions: reactionsGrouped,
+      userReaction,
+      totalCount: allReactions.length
     });
   } catch (error) {
     console.error('Error in POST /api/comments/[commentId]/reactions:', error);
@@ -115,12 +142,13 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Supprimer la réaction
+    // Supprimer la réaction du commentaire spécifique
     const deletedReactions = await prisma.reaction.deleteMany({
       where: {
         userId,
         commentId,
-        shopId
+        shopId,
+        postId: null // Seulement les réactions de commentaires
       }
     });
 
@@ -154,7 +182,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const reactions = await prisma.reaction.findMany({
       where: {
         commentId,
-        shopId
+        shopId,
+        postId: null // Seulement les réactions de commentaires
       }
     });
 

@@ -20,9 +20,10 @@ export async function GET(
     const { postId } = await params;
 
     const reactions = await prisma.reaction.findMany({
-      where: { 
+      where: {
         postId,
-        shopId // ✅ FILTRER PAR BOUTIQUE
+        shopId, // ✅ FILTRER PAR BOUTIQUE
+        commentId: null // Seulement les réactions de posts
       },
       include: {
         user: {
@@ -71,12 +72,13 @@ export async function POST(
       );
     }
 
-    // Vérifier si l'user a déjà réagi (dans cette boutique)
+    // Vérifier si l'user a déjà réagi à ce post (dans cette boutique)
     const existingReaction = await prisma.reaction.findFirst({
       where: {
         postId,
         userId,
         shopId, // ✅ VÉRIFIER DANS LA BOUTIQUE
+        commentId: null // Seulement les réactions de posts
       },
     });
 
@@ -105,6 +107,7 @@ export async function POST(
           type,
           userId,
           postId,
+          commentId: null, // Explicitement null pour les réactions de posts
           shopId, // ✅ ASSOCIER À LA BOUTIQUE
         },
       });

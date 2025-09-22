@@ -1,9 +1,9 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 import { PostStructuredData } from "@/components/seo/StructuredData";
-import PostClient from './PostClient';
+import PostClient from "../../components/PostClient";
 
 // Import des métadonnées SEO
-export { generateMetadata } from './metadata';
+export { generateMetadata } from "./metadata";
 
 const prisma = new PrismaClient();
 
@@ -17,14 +17,14 @@ interface PageProps {
  */
 export default async function PostBySlugPage({ params }: PageProps) {
   const { slug } = await params;
-  
+
   // Récupération des données côté serveur pour le SEO
   let post = null;
   try {
     post = await prisma.post.findFirst({
       where: {
         slug,
-        status: 'PUBLISHED',
+        status: "PUBLISHED",
       },
       include: {
         author: {
@@ -60,14 +60,14 @@ export default async function PostBySlugPage({ params }: PageProps) {
       },
     });
   } catch (error) {
-    console.error('Error fetching post for SSR:', error);
+    console.error("Error fetching post for SSR:", error);
   }
 
   return (
     <>
       {/* Données structurées SEO - côté serveur */}
       {post && <PostStructuredData post={post} />}
-      
+
       {/* Composant client pour l'interactivité */}
       <PostClient />
     </>

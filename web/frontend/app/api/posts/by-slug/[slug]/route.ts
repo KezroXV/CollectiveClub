@@ -69,6 +69,15 @@ export async function GET(
                 image: true,
               },
             },
+            reactions: {
+              where: {
+                postId: null // Seulement les réactions de commentaires
+              },
+              select: {
+                type: true,
+                userId: true
+              }
+            },
             replies: {
               include: {
                 author: {
@@ -78,6 +87,15 @@ export async function GET(
                     email: true,
                     image: true,
                   },
+                },
+                reactions: {
+                  where: {
+                    postId: null // Seulement les réactions de commentaires
+                  },
+                  select: {
+                    type: true,
+                    userId: true
+                  }
                 },
                 _count: {
                   select: { reactions: true },
@@ -155,6 +173,15 @@ export async function GET(
                   image: true,
                 },
               },
+              reactions: {
+                where: {
+                  postId: null // Seulement les réactions de commentaires
+                },
+                select: {
+                  type: true,
+                  userId: true
+                }
+              },
               replies: {
                 include: {
                   author: {
@@ -164,6 +191,15 @@ export async function GET(
                       email: true,
                       image: true,
                     },
+                  },
+                  reactions: {
+                    where: {
+                      postId: null // Seulement les réactions de commentaires
+                    },
+                    select: {
+                      type: true,
+                      userId: true
+                    }
                   },
                   _count: {
                     select: { reactions: true },
@@ -282,11 +318,63 @@ export async function GET(
       count,
     }));
 
+    // Traiter les réactions des commentaires
+    const processCommentsReactions = (comments: any[]) => {
+      return comments.map((comment: any) => {
+        // Grouper les réactions du commentaire principal
+        const commentReactionsGrouped = comment.reactions?.reduce((acc: any, reaction: any) => {
+          const existingType = acc.find((r: any) => r.type === reaction.type);
+          if (existingType) {
+            existingType.count += 1;
+          } else {
+            acc.push({ type: reaction.type, count: 1 });
+          }
+          return acc;
+        }, []) || [];
+
+        // Trouver la réaction de l'utilisateur pour ce commentaire
+        const commentUserReaction = userId
+          ? comment.reactions?.find((r: any) => r.userId === userId)?.type
+          : null;
+
+        // Traiter les réponses
+        const processedReplies = comment.replies?.map((reply: any) => {
+          const replyReactionsGrouped = reply.reactions?.reduce((acc: any, reaction: any) => {
+            const existingType = acc.find((r: any) => r.type === reaction.type);
+            if (existingType) {
+              existingType.count += 1;
+            } else {
+              acc.push({ type: reaction.type, count: 1 });
+            }
+            return acc;
+          }, []) || [];
+
+          const replyUserReaction = userId
+            ? reply.reactions?.find((r: any) => r.userId === userId)?.type
+            : null;
+
+          return {
+            ...reply,
+            reactions: replyReactionsGrouped,
+            userReaction: replyUserReaction
+          };
+        }) || [];
+
+        return {
+          ...comment,
+          reactions: commentReactionsGrouped,
+          userReaction: commentUserReaction,
+          replies: processedReplies
+        };
+      });
+    };
+
     const responseData = {
       post: {
         ...post,
         reactions: reactionsData,
         userReaction,
+        comments: processCommentsReactions(post.comments || [])
       },
       authorRecentPosts,
       authorRecentComments,

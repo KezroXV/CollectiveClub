@@ -54,6 +54,8 @@ interface CommentItemProps {
   getInitials: (name: string) => string;
   formatRelativeDate: (dateString: string) => string;
   onCommentAdded: () => void;
+  onCommentDeleted: (commentId: string) => void;
+  onReactionUpdated: (commentId: string, reactions: ReactionData[], userReaction: ReactionType | null) => void;
   isReply?: boolean;
 }
 
@@ -72,6 +74,8 @@ const CommentItem = ({
   getInitials,
   formatRelativeDate,
   onCommentAdded,
+  onCommentDeleted,
+  onReactionUpdated,
   isReply = false,
 }: CommentItemProps) => {
   const [showReplyForm, setShowReplyForm] = useState(false);
@@ -128,7 +132,8 @@ const CommentItem = ({
       });
 
       if (response.ok) {
-        onCommentAdded();
+        const result = await response.json();
+        onReactionUpdated(comment.id, result.reactions, result.userReaction);
         toast.success("Réaction ajoutée !");
       } else {
         toast.error("Erreur lors de l'ajout de la réaction");
@@ -186,7 +191,7 @@ const CommentItem = ({
 
       if (response.ok) {
         setShowDeleteDialog(false);
-        onCommentAdded(); // Actualiser la liste des commentaires
+        onCommentDeleted(comment.id); // Supprimer le commentaire de l'état local
         toast.success("Commentaire supprimé !");
       } else {
         const errorData = await response.json();
@@ -229,30 +234,29 @@ const CommentItem = ({
             </p>
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-6">
-            {/* Reactions */}
+          {/* Actions - Style similaire à PostActions */}
+          <div className="flex items-center gap-6 pt-2">
+            {/* Reactions avec dropdown - même style que PostActions */}
             <div className="relative">
               <button
-                className={`flex items-center gap-2 text-xs font-medium px-3 py-2 rounded-full transition-all duration-200 ${
+                className={`flex items-center gap-2 transition-colors ${
                   comment.userReaction
-                    ? "text-red-600 bg-red-50 hover:bg-red-100"
-                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                    ? "text-red-600 hover:text-red-700"
+                    : "text-gray-600 hover:text-gray-900"
                 }`}
                 onClick={() => setShowReactionDropdown(!showReactionDropdown)}
+                disabled={!currentUser}
               >
                 <Heart
-                  className={`h-4 w-4 ${
-                    comment.userReaction ? "fill-current" : ""
-                  }`}
+                  className={`h-4 w-4 ${comment.userReaction ? "fill-current" : ""}`}
                 />
-                <span>{totalReactions > 0 ? totalReactions : "J'aime"}</span>
+                <span className="text-xs font-medium">{totalReactions}</span>
               </button>
 
               {/* Dropdown des réactions */}
               {showReactionDropdown && currentUser && (
                 <div className="reaction-dropdown absolute bottom-full left-0 mb-2 bg-white border border-chart-4 rounded-lg shadow-lg p-2 z-10">
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 mb-2">
                     {Object.entries(REACTION_EMOJIS).map(([type, emoji]) => {
                       const isSelected = comment.userReaction === type;
                       const reactionCount =
@@ -294,10 +298,10 @@ const CommentItem = ({
               )}
             </div>
 
-            {/* Voir les réponses / Commenter (seulement pour les commentaires principaux) */}
+            {/* Bouton Commenter (seulement pour les commentaires principaux) */}
             {!isReply && (
               <button
-                className="flex items-center gap-2 text-xs font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-full transition-all duration-200"
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
                 onClick={() => {
                   if (repliesCount > 0) {
                     setShowReplies(!showReplies);
@@ -307,9 +311,10 @@ const CommentItem = ({
                 }}
               >
                 <MessageCircle className="h-4 w-4" />
-                <span>{repliesCount > 0 ? repliesCount : "Commenter"}</span>
+                <span className="text-xs font-medium">{repliesCount > 0 ? repliesCount : "Commenter"}</span>
               </button>
             )}
+
 
             {/* Bouton répondre séparé quand les réponses sont visibles */}
             {!isReply && currentUser && showReplies && repliesCount > 0 && (
@@ -419,6 +424,8 @@ const CommentItem = ({
                   getInitials={getInitials}
                   formatRelativeDate={formatRelativeDate}
                   onCommentAdded={onCommentAdded}
+                  onCommentDeleted={onCommentDeleted}
+                  onReactionUpdated={onReactionUpdated}
                   isReply={true}
                 />
               ))}

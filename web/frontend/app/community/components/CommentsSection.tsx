@@ -45,6 +45,8 @@ interface CommentsSectionProps {
   onNewCommentChange: (value: string) => void;
   onSubmitComment: (e: React.FormEvent) => void;
   onCommentAdded: () => void;
+  onCommentDeleted: (commentId: string) => void;
+  onReactionUpdated: (commentId: string, reactions: ReactionData[], userReaction: ReactionType | null) => void;
   getInitials: (name: string) => string;
   formatRelativeDate: (dateString: string) => string;
 }
@@ -59,6 +61,8 @@ const CommentsSection = ({
   onNewCommentChange,
   onSubmitComment,
   onCommentAdded,
+  onCommentDeleted,
+  onReactionUpdated,
   getInitials,
   formatRelativeDate,
 }: CommentsSectionProps) => {
@@ -126,6 +130,8 @@ const CommentsSection = ({
                 getInitials={getInitials}
                 formatRelativeDate={formatRelativeDate}
                 onCommentAdded={onCommentAdded}
+                onCommentDeleted={onCommentDeleted}
+                onReactionUpdated={onReactionUpdated}
               />
             </div>
           ))

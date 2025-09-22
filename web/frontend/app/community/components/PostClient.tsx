@@ -11,11 +11,11 @@ import Link from "next/link";
 import ThemeWrapper from "@/components/ThemeWrapper";
 import Header from "@/components/Header";
 import { toast } from "sonner";
-import PostHeader from "../../components/PostHeader";
-import PostContent from "../../components/PostContent";
-import PostActions from "../../components/PostActions";
-import CommentsSection from "../../components/CommentsSection";
-import AuthorSidebar from "../../components/AuthorSidebar";
+import PostHeader from "./PostHeader";
+import PostContent from "./PostContent";
+import PostActions from "./PostActions";
+import CommentsSection from "./CommentsSection";
+import AuthorSidebar from "./AuthorSidebar";
 import { PostBreadcrumbs } from "@/components/seo/Breadcrumbs";
 
 type ReactionType = "LIKE" | "LOVE" | "LAUGH" | "WOW" | "APPLAUSE";
@@ -191,7 +191,7 @@ const PostClient = () => {
 
   const handleClickOutside = useCallback((event: MouseEvent) => {
     const target = event.target as Element;
-    if (target?.closest('.reaction-dropdown')) {
+    if (target?.closest(".reaction-dropdown")) {
       return;
     }
     setShowReactionDropdown(false);
@@ -333,6 +333,74 @@ const PostClient = () => {
     [newComment, currentUser, data]
   );
 
+  const handleCommentDeleted = useCallback((commentId: string) => {
+    setData((prev) => {
+      if (!prev) return null;
+
+      // Fonction récursive pour supprimer un commentaire ou une réponse
+      const removeCommentFromArray = (comments: Comment[]): Comment[] => {
+        return comments
+          .filter(comment => comment.id !== commentId)
+          .map(comment => ({
+            ...comment,
+            replies: comment.replies ? removeCommentFromArray(comment.replies) : undefined
+          }));
+      };
+
+      const updatedComments = removeCommentFromArray(prev.post.comments);
+      const commentCountDiff = prev.post.comments.length - updatedComments.length;
+
+      return {
+        ...prev,
+        post: {
+          ...prev.post,
+          comments: updatedComments,
+          _count: {
+            ...prev.post._count,
+            comments: prev.post._count.comments - commentCountDiff,
+          },
+        },
+      };
+    });
+  }, []);
+
+  const handleReactionUpdated = useCallback((commentId: string, reactions: ReactionData[], userReaction: ReactionType | null) => {
+    setData((prev) => {
+      if (!prev) return null;
+
+      // Fonction récursive pour mettre à jour les réactions d'un commentaire ou d'une réponse
+      const updateCommentReactions = (comments: Comment[]): Comment[] => {
+        return comments.map(comment => {
+          if (comment.id === commentId) {
+            return {
+              ...comment,
+              reactions,
+              userReaction,
+              _count: {
+                ...comment._count,
+                reactions: reactions ? reactions.reduce((sum, r) => sum + r.count, 0) : 0
+              }
+            };
+          }
+          return {
+            ...comment,
+            replies: comment.replies ? updateCommentReactions(comment.replies) : undefined
+          };
+        });
+      };
+
+      const updatedComments = updateCommentReactions(prev.post.comments);
+
+      return {
+        ...prev,
+        post: {
+          ...prev.post,
+          comments: updatedComments,
+        },
+      };
+    });
+  }, []);
+
   if (loading || userLoading) {
     return (
       <ThemeWrapper applyBackgroundColor={true} className="min-h-screen">
@@ -406,7 +474,7 @@ const PostClient = () => {
                     post={{
                       id: post.id,
                       isPinned: post.isPinned,
-                      authorId: post.author.id
+                      authorId: post.author.id,
                     }}
                     getInitials={getInitials}
                     formatDate={formatDate}
@@ -414,7 +482,7 @@ const PostClient = () => {
                     getRoleLabel={getRoleLabel}
                     currentUser={currentUser}
                     onPin={fetchPostData}
-                    onDelete={() => router.push('/community')}
+                    onDelete={() => router.push("/community")}
                   />
                 </CardHeader>
 
@@ -454,6 +522,8 @@ const PostClient = () => {
                       onNewCommentChange={setNewComment}
                       onSubmitComment={handleSubmitComment}
                       onCommentAdded={fetchPostData}
+                      onCommentDeleted={handleCommentDeleted}
+                      onReactionUpdated={handleReactionUpdated}
                       getInitials={getInitials}
                       formatRelativeDate={formatRelativeDate}
                     />
