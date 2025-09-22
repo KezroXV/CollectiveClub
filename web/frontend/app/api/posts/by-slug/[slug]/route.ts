@@ -60,6 +60,9 @@ export async function GET(
           },
         },
         comments: {
+          where: {
+            parentId: null // Seulement les commentaires principaux
+          },
           include: {
             author: {
               select: {
@@ -164,6 +167,9 @@ export async function GET(
             },
           },
           comments: {
+            where: {
+              parentId: null // Seulement les commentaires principaux
+            },
             include: {
               author: {
                 select: {
