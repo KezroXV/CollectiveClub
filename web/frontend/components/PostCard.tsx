@@ -134,43 +134,43 @@ export default function PostCard({
 
   return (
     <div className={`pb-4 sm:pb-8 ${!isLast ? "border-b border-gray-100" : ""}`}>
-      {/* Post Title and Content */}
-      <div className="mb-4 sm:mb-6 pt-4 sm:pt-7 relative">
-        <Link href={`/community/posts/${post.slug || post.id}`}>
-          <h2 className="text-sm sm:text-[13px] md:text-[15px] font-semibold text-gray-900 mb-2 leading-tight line-clamp-2 sm:line-clamp-1 cursor-pointer hover:text-primary transition-colors duration-200">
+      <Link href={`/community/posts/${post.slug || post.id}`} className="block cursor-pointer">
+        {/* Post Title and Content */}
+        <div className="mb-4 sm:mb-6 pt-4 sm:pt-7 relative">
+          <h2 className="text-sm sm:text-[13px] md:text-[15px] font-semibold text-gray-900 mb-2 leading-tight line-clamp-2 sm:line-clamp-1 hover:text-primary transition-colors duration-200">
             {post.title}
           </h2>
-        </Link>
-        <p className="text-gray-700 text-xs sm:text-[13px] leading-5 sm:leading-6 line-clamp-3 sm:line-clamp-2">
-          {post.content}
-        </p>
-      </div>
+          <p className="text-gray-700 text-xs sm:text-[13px] leading-5 sm:leading-6 line-clamp-3 sm:line-clamp-2">
+            {post.content}
+          </p>
+        </div>
 
-      {/* Post Image */}
-      {post.imageUrl && (
-        <div className="mb-8 ">
-          <div className="rounded-2xl overflow-hidden hover:shadow-sm border border-gray-100">
-            <Image
-              src={post.imageUrl}
-              alt={post.title}
-              width={702}
-              height={285}
-              className="w-full h-auto max-h-96 object-cover"
+        {/* Post Image */}
+        {post.imageUrl && (
+          <div className="mb-8 ">
+            <div className="rounded-2xl overflow-hidden hover:shadow-sm border border-gray-100">
+              <Image
+                src={post.imageUrl}
+                alt={post.title}
+                width={702}
+                height={285}
+                className="w-full h-auto max-h-96 object-cover"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Poll */}
+        {post.poll && (
+          <div className="mb-8 ">
+            <PollDisplay
+              poll={post.poll}
+              currentUser={currentUser}
+              onVote={onVote}
             />
           </div>
-        </div>
-      )}
-
-      {/* Poll */}
-      {post.poll && (
-        <div className="mb-8 ">
-          <PollDisplay
-            poll={post.poll}
-            currentUser={currentUser}
-            onVote={onVote}
-          />
-        </div>
-      )}
+        )}
+      </Link>
 
       {/* Post Actions */}
       <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
@@ -183,7 +183,11 @@ export default function PostCard({
                 ? "text-red-600 border-red-300 bg-red-50"
                 : "text-gray-700"
             }`}
-            onClick={() => setShowReactionDropdown(!showReactionDropdown)}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setShowReactionDropdown(!showReactionDropdown);
+            }}
             disabled={!currentUser}
           >
             <Heart className={`h-4 sm:h-5 w-4 sm:w-5 stroke-2 ${post.userReaction ? "fill-current" : ""}`} />
@@ -231,25 +235,29 @@ export default function PostCard({
           )}
         </div>
 
-        <Link
-          href={`/community/posts/${post.slug || post.id}`}
-          className="flex items-center gap-2 text-gray-500 hover:text-primary transition-colors group"
+        <Button
+          variant="outline"
+          className="flex items-center gap-2 sm:gap-3 bg-gray-50 px-3 sm:px-6 py-2 sm:py-3 rounded-full border-2 border-gray-200 hover:bg-gray-100 text-gray-700"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            window.location.href = `/community/posts/${post.slug || post.id}`;
+          }}
         >
-          <Button
-            variant="outline"
-            className="flex items-center gap-2 sm:gap-3 bg-gray-50 px-3 sm:px-6 py-2 sm:py-3 rounded-full border-2 border-gray-200 group-hover:bg-gray-100 text-gray-700"
-          >
-            <MessageSquare className="h-4 sm:h-5 w-4 sm:w-5 stroke-2" />
-            <span className="text-sm sm:text-base font-medium">
-              {post._count.comments}
-            </span>
-          </Button>
-        </Link>
+          <MessageSquare className="h-4 sm:h-5 w-4 sm:w-5 stroke-2" />
+          <span className="text-sm sm:text-base font-medium">
+            {post._count.comments}
+          </span>
+        </Button>
 
         <Button
           variant="outline"
           className="ml-auto flex items-center gap-1 sm:gap-2 bg-white px-2 sm:px-4 py-2 rounded-full border-chart-4 hover:bg-gray-100 text-gray-600"
-          onClick={handleShare}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleShare();
+          }}
         >
           <Share2 className="h-3 sm:h-4 w-3 sm:w-4" />
           <span className="text-xs sm:text-sm">Partager</span>
