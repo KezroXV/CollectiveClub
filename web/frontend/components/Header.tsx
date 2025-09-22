@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -81,6 +81,12 @@ export default function Header() {
                   className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100"
                 >
                   <Avatar className="h-7 sm:h-8 w-7 sm:w-8">
+                    {currentUser.image && (
+                      <AvatarImage
+                        src={currentUser.image}
+                        alt={currentUser.name || "Photo de profil"}
+                      />
+                    )}
                     <AvatarFallback className="bg-gray-500 text-white text-sm">
                       {currentUser.name?.charAt(0) || "?"}
                     </AvatarFallback>
