@@ -91,6 +91,14 @@ export const authOptions: NextAuthOptions = {
                 isShopOwner: isShopOwner
               }
             });
+
+            // ✅ Mettre à jour l'ownerId du shop si c'est le premier admin
+            if (role === 'ADMIN' && isShopOwner) {
+              await prisma.shop.update({
+                where: { id: shopId },
+                data: { ownerId: shopUser.id }
+              });
+            }
           }
 
           // Créer l'account si il n'existe pas
