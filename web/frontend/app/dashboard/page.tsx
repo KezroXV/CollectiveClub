@@ -18,6 +18,7 @@ export default function DashboardPage() {
   const [showPostsModal, setShowPostsModal] = useState(false);
   const [showClientsModal, setShowClientsModal] = useState(false);
   const [showThemeModal, setShowThemeModal] = useState(false);
+  const [showCategoriesModal, setShowCategoriesModal] = useState(false);
   const [actualShopId, setActualShopId] = useState<string>("");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { loadUserTheme, colors } = useTheme();
@@ -71,6 +72,7 @@ export default function DashboardPage() {
   const handleClientsClick = () => setShowClientsModal(true);
   const handlePostsClick = () => setShowPostsModal(true);
   const handleThemeClick = () => setShowThemeModal(true);
+  const handleCategoriesClick = () => setShowCategoriesModal(true);
   const handleCloseCustomizationModal = () => {
     setShowCustomization(false);
     setShowThemeModal(false);
@@ -78,6 +80,11 @@ export default function DashboardPage() {
 
   const handlePostDeleted = () => {
     // Incrémenter le trigger pour forcer le refresh de PopularPosts
+    setRefreshTrigger((prev) => prev + 1);
+  };
+
+  const handleCategoryCreated = () => {
+    // Incrémenter le trigger pour forcer le refresh
     setRefreshTrigger((prev) => prev + 1);
   };
 
@@ -139,6 +146,7 @@ export default function DashboardPage() {
           <ManagementSection
             onClientsClick={handleClientsClick}
             onPostsClick={handlePostsClick}
+            onCategoriesClick={handleCategoriesClick}
             onThemeClick={handleThemeClick}
             shopId={shopId}
             refreshTrigger={refreshTrigger}
@@ -158,13 +166,16 @@ export default function DashboardPage() {
           showClientsModal={showClientsModal}
           showCustomization={showCustomization}
           showThemeModal={showThemeModal}
+          showCategoriesModal={showCategoriesModal}
           userId={currentUser?.id}
           shopId={shopId}
           userRole={currentUser?.role}
           onClosePostsModal={() => setShowPostsModal(false)}
           onCloseClientsModal={() => setShowClientsModal(false)}
           onCloseCustomizationModal={handleCloseCustomizationModal}
+          onCloseCategoriesModal={() => setShowCategoriesModal(false)}
           onPostDeleted={handlePostDeleted}
+          onCategoryCreated={handleCategoryCreated}
         />
       </div>
     </ThemeWrapper>

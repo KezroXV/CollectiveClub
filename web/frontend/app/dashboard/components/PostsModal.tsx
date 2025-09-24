@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +22,7 @@ import {
   Loader2,
   Pin,
   PinOff,
+  Plus,
 } from "lucide-react";
 
 interface PostData {
@@ -71,8 +72,13 @@ export default function PostsModal({
   } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [pinningPostId, setPinningPostId] = useState<string | null>(null);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryColor, setNewCategoryColor] = useState("#3B82F6");
+  const [newCategoryDescription, setNewCategoryDescription] = useState("");
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
 
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     if (!isOpen) return;
 
     try {
@@ -100,7 +106,7 @@ export default function PostsModal({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isOpen, userId]);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -150,7 +156,7 @@ export default function PostsModal({
   };
 
   const handleTogglePin = async (postId: string, isPinned: boolean) => {
-    if (!userId || !["ADMIN", "MODERATOR"].includes(userRole || "")) return;
+    if (!userId || !userRole || userRole === "MEMBER") return;
 
     try {
       setPinningPostId(postId);
@@ -185,6 +191,48 @@ export default function PostsModal({
     }
   };
 
+  const handleCreateCategory = async () => {
+    if (!newCategoryName.trim()) return;
+    if (!userId || !userRole || userRole === "MEMBER") return;
+
+    try {
+      setIsCreatingCategory(true);
+      const response = await fetch("/api/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          userId,
+          name: newCategoryName.trim(),
+          color: newCategoryColor,
+          description: newCategoryDescription.trim() || null,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Erreur lors de la création");
+      }
+
+      const newCategory = await response.json();
+      console.log("Catégorie créée avec succès:", newCategory);
+
+      // Réinitialiser le formulaire
+      setNewCategoryName("");
+      setNewCategoryColor("#3B82F6");
+      setNewCategoryDescription("");
+      setShowCategoryModal(false);
+
+      // Optionnel: recharger les posts pour voir les nouvelles catégories
+      await fetchPosts();
+    } catch (error) {
+      console.error("Error creating category:", error);
+      alert("Erreur lors de la création de la catégorie");
+    } finally {
+      setIsCreatingCategory(false);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("fr-FR", {
@@ -205,7 +253,7 @@ export default function PostsModal({
     if (isOpen) {
       fetchPosts();
     }
-  }, [isOpen, userId]);
+  }, [isOpen, userId, fetchPosts]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -223,16 +271,30 @@ export default function PostsModal({
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Barre de recherche */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              type="text"
-              placeholder="Rechercher par titre, contenu ou auteur..."
-              value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="pl-10"
-            />
+          {/* Barre de recherche et bouton d'ajout de catégorie */}
+          <div className="flex gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                type="text"
+                placeholder="Rechercher par titre, contenu ou auteur..."
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
+            {/* Bouton pour créer une catégorie - visible seulement pour non-MEMBER */}
+            {userRole && userRole !== "MEMBER" && (
+              <Button
+                variant="outline"
+                onClick={() => setShowCategoryModal(true)}
+                className="shrink-0 flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Nouvelle catégorie
+              </Button>
+            )}
           </div>
 
           {/* Stats rapides */}
@@ -315,8 +377,8 @@ export default function PostsModal({
                       </div>
 
                       <div className="flex items-center gap-2 ml-4">
-                        {/* Bouton Pin/Unpin pour admin/mod */}
-                        {["ADMIN", "MODERATOR"].includes(userRole || "") && (
+                        {/* Bouton Pin/Unpin pour non-MEMBER */}
+                        {userRole && userRole !== "MEMBER" && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -395,6 +457,117 @@ export default function PostsModal({
                     </>
                   ) : (
                     "Supprimer"
+                  )}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {/* Modal de création de catégorie */}
+        {showCategoryModal && (
+          <Dialog open={true} onOpenChange={() => setShowCategoryModal(false)}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Plus className="h-5 w-5" />
+                  Créer une nouvelle catégorie
+                </DialogTitle>
+                <DialogDescription>
+                  Ajoutez une nouvelle catégorie pour organiser les posts de
+                  votre communauté.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4 mt-4">
+                {/* Nom de la catégorie */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Nom de la catégorie *
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="Ex: Produits, Support, Général..."
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    maxLength={50}
+                  />
+                </div>
+
+                {/* Couleur de la catégorie */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Couleur de la catégorie
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={newCategoryColor}
+                      onChange={(e) => setNewCategoryColor(e.target.value)}
+                      className="w-12 h-10 rounded border border-gray-300 cursor-pointer"
+                    />
+                    <Input
+                      type="text"
+                      value={newCategoryColor}
+                      onChange={(e) => setNewCategoryColor(e.target.value)}
+                      placeholder="#3B82F6"
+                      className="flex-1"
+                    />
+                  </div>
+                </div>
+
+                {/* Description (optionnelle) */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Description (optionnelle)
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="Description courte de la catégorie..."
+                    value={newCategoryDescription}
+                    onChange={(e) => setNewCategoryDescription(e.target.value)}
+                    maxLength={100}
+                  />
+                </div>
+
+                {/* Aperçu de la catégorie */}
+                {newCategoryName && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Aperçu
+                    </label>
+                    <Badge
+                      variant="secondary"
+                      style={{
+                        backgroundColor: `${newCategoryColor}20`,
+                        color: newCategoryColor,
+                      }}
+                    >
+                      {newCategoryName}
+                    </Badge>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2 mt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowCategoryModal(false)}
+                  disabled={isCreatingCategory}
+                >
+                  Annuler
+                </Button>
+                <Button
+                  onClick={handleCreateCategory}
+                  disabled={isCreatingCategory || !newCategoryName.trim()}
+                >
+                  {isCreatingCategory ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Création...
+                    </>
+                  ) : (
+                    "Créer la catégorie"
                   )}
                 </Button>
               </div>

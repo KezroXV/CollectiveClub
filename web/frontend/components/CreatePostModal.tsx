@@ -13,14 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  X,
-  Loader2,
-  Upload,
-  Image as ImageIcon,
-  BarChart3,
-} from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { X, Loader2, Image as ImageIcon, BarChart3, Plus } from "lucide-react";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import { useTheme } from "@/contexts/ThemeContext";
 
@@ -50,6 +44,10 @@ export default function CreatePostModal({
   const [categories, setCategories] = useState<
     Array<{ id: string; name: string; color: string }>
   >([]);
+  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [selectedColor, setSelectedColor] = useState("bg-blue-500");
+  const [loadingAddCategory, setLoadingAddCategory] = useState(false);
   const resetForm = () => {
     setTitle("");
     setContent("");
@@ -59,6 +57,70 @@ export default function CreatePostModal({
     setPollQuestion(""); // ✅ AJOUTER
     setPollOptions(["", "", "", ""]); // ✅ AJOUTER
   };
+
+  // Fonction pour ajouter une catégorie (copiée de ShopManagementSection)
+  const handleAddCategory = async () => {
+    if (!newCategoryName.trim()) return;
+    if (!currentUser || currentUser.role === "MEMBER") return;
+
+    setLoadingAddCategory(true);
+    try {
+      const response = await fetch("/api/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: currentUser.id,
+          name: newCategoryName.trim(),
+          color: selectedColor,
+          order: categories.length,
+        }),
+      });
+
+      if (response.ok) {
+        const newCategory = await response.json();
+
+        // Ajouter la nouvelle catégorie à la liste locale
+        setCategories((prev) => [
+          ...prev,
+          {
+            id: newCategory.id,
+            name: newCategory.name,
+            color: newCategory.color,
+          },
+        ]);
+
+        // Sélectionner automatiquement la nouvelle catégorie
+        setSelectedCategory(newCategory.name);
+
+        // Réinitialiser le formulaire
+        setNewCategoryName("");
+        setSelectedColor("bg-blue-500");
+        setShowAddCategoryModal(false);
+
+        console.log("Catégorie créée avec succès:", newCategory);
+      } else {
+        const error = await response.json();
+        alert(error.error || "Erreur lors de la création");
+      }
+    } catch (error) {
+      console.error("Error creating category:", error);
+      alert("Erreur lors de la création");
+    } finally {
+      setLoadingAddCategory(false);
+    }
+  };
+
+  // Couleurs disponibles (copiées de ShopManagementSection)
+  const COLOR_OPTIONS = [
+    { name: "Bleu", value: "bg-blue-500" },
+    { name: "Orange", value: "bg-orange-500" },
+    { name: "Vert", value: "bg-emerald-500" },
+    { name: "Rouge", value: "bg-red-500" },
+    { name: "Violet", value: "bg-violet-500" },
+    { name: "Jaune", value: "bg-amber-500" },
+    { name: "Rose", value: "bg-pink-500" },
+    { name: "Cyan", value: "bg-cyan-500" },
+  ];
 
   const handleClose = () => {
     resetForm();
@@ -244,7 +306,7 @@ export default function CreatePostModal({
                     : "hover:bg-gray-50"
                 }`}
                 style={{
-                  borderColor: isDragOver ? undefined : colors.Bordures
+                  borderColor: isDragOver ? undefined : colors.Bordures,
                 }}
                 onClick={() => fileInputRef.current?.click()}
                 onDrop={handleDrop}
@@ -274,7 +336,6 @@ export default function CreatePostModal({
 
         {/* Catégories */}
         <div className="space-y-3">
-          <Label className="text-sm font-medium">Ajouter une catégorie</Label>
           <div className="flex flex-wrap gap-1 sm:gap-2">
             {categories.map((category) => (
               <Button
@@ -294,6 +355,17 @@ export default function CreatePostModal({
                 {category.name}
               </Button>
             ))}
+            {/* Bouton pour créer une catégorie - visible seulement pour non-MEMBER */}
+            {currentUser && currentUser.role !== "MEMBER" && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="w-8 h-8 rounded-full border-2 border-dashed"
+                onClick={() => setShowAddCategoryModal(true)}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
 
@@ -378,6 +450,76 @@ export default function CreatePostModal({
             )}
           </Button>
         </div>
+
+        {/* Modal d'ajout de catégorie (copiée de ShopManagementSection) */}
+        <Dialog
+          open={showAddCategoryModal}
+          onOpenChange={setShowAddCategoryModal}
+        >
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Ajouter une catégorie</DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  Nom de la catégorie
+                </label>
+                <Input
+                  placeholder="Ex: Mode, Tech, Lifestyle..."
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  Couleur
+                </label>
+                <div className="grid grid-cols-4 gap-2">
+                  {COLOR_OPTIONS.map((color) => (
+                    <button
+                      key={color.value}
+                      onClick={() => setSelectedColor(color.value)}
+                      className={`w-12 h-8 rounded-md relative ${color.value} ${
+                        selectedColor === color.value
+                          ? "ring-2 ring-gray-900 ring-offset-2"
+                          : ""
+                      }`}
+                    >
+                      {selectedColor === color.value && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-2 h-2 bg-white rounded-full"></div>
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowAddCategoryModal(false);
+                    setNewCategoryName("");
+                    setSelectedColor("bg-blue-500");
+                  }}
+                  disabled={loadingAddCategory}
+                >
+                  Annuler
+                </Button>
+                <Button
+                  onClick={handleAddCategory}
+                  disabled={!newCategoryName.trim() || loadingAddCategory}
+                >
+                  {loadingAddCategory ? "Création..." : "Créer"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </DialogContent>
     </Dialog>
   );
