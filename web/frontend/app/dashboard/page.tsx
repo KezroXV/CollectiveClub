@@ -21,7 +21,7 @@ export default function DashboardPage() {
   const [showCategoriesModal, setShowCategoriesModal] = useState(false);
   const [actualShopId, setActualShopId] = useState<string>("");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const { loadUserTheme, colors } = useTheme();
+  const { colors } = useTheme();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -94,12 +94,6 @@ export default function DashboardPage() {
     return null;
   }
 
-  // Charger le thème utilisateur
-  useEffect(() => {
-    if (currentUser?.id && hasAccess) {
-      loadUserTheme(currentUser.id);
-    }
-  }, [currentUser?.id, hasAccess, loadUserTheme]);
 
   // Afficher un loader pendant la vérification
   if (loading) {
