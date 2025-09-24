@@ -33,6 +33,7 @@ interface ShopManagementSectionProps {
   userId?: string;
   shopId: string;
   onThemeClick: () => void;
+  borderColor?: string;
 }
 
 interface User {
@@ -57,6 +58,7 @@ export default function ShopManagementSection({
   userId,
   shopId,
   onThemeClick,
+  borderColor = "#E5E7EB",
 }: ShopManagementSectionProps) {
   const [users, setUsers] = useState<User[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -105,9 +107,11 @@ export default function ShopManagementSection({
   const fetchUsers = async () => {
     try {
       setLoadingUsers(true);
-      const url = userId ? `/api/members?userId=${userId}&limit=100` : `/api/members?limit=100`;
-      console.log('🔍 Fetching users from:', url);
-      
+      const url = userId
+        ? `/api/members?userId=${userId}&limit=100`
+        : `/api/members?limit=100`;
+      console.log("🔍 Fetching users from:", url);
+
       const response = await fetch(url, {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -117,7 +121,7 @@ export default function ShopManagementSection({
         throw new Error(`HTTP error! status: ${response.status}`);
 
       const data = await response.json();
-      console.log('👥 Raw users data:', data);
+      console.log("👥 Raw users data:", data);
 
       // Filtrer pour ne garder que les admins et modérateurs
       const filteredUsers = data.members
@@ -129,8 +133,12 @@ export default function ShopManagementSection({
           image: user.image || null,
         }));
 
-      console.log('👑 Filtered admin/mod users:', filteredUsers);
-      console.log('📊 Setting users state with:', filteredUsers.length, 'users');
+      console.log("👑 Filtered admin/mod users:", filteredUsers);
+      console.log(
+        "📊 Setting users state with:",
+        filteredUsers.length,
+        "users"
+      );
       setUsers(filteredUsers);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -144,8 +152,8 @@ export default function ShopManagementSection({
   const fetchCategories = async () => {
     try {
       setLoadingCategories(true);
-      console.log('🔍 Fetching categories from: /api/categories');
-      
+      console.log("🔍 Fetching categories from: /api/categories");
+
       const response = await fetch("/api/categories", {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -155,8 +163,12 @@ export default function ShopManagementSection({
         throw new Error(`HTTP error! status: ${response.status}`);
 
       const data = await response.json();
-      console.log('📁 Categories data received:', data);
-      console.log('📊 Setting categories state with:', data.length, 'categories');
+      console.log("📁 Categories data received:", data);
+      console.log(
+        "📊 Setting categories state with:",
+        data.length,
+        "categories"
+      );
       setCategories(data);
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -407,7 +419,7 @@ export default function ShopManagementSection({
   };
 
   // DEBUG: Log des états avant le rendu
-  console.log('🔍 RENDER DEBUG:', {
+  console.log("🔍 RENDER DEBUG:", {
     shopId,
     userId,
     users: users.length,
@@ -415,7 +427,7 @@ export default function ShopManagementSection({
     loadingUsers,
     loadingCategories,
     filteredUsers: filteredUsers.length,
-    filteredCategories: filteredCategories.length
+    filteredCategories: filteredCategories.length,
   });
 
   // Reset pagination when search changes
@@ -429,7 +441,7 @@ export default function ShopManagementSection({
 
   return (
     <div className="col-span-4">
-      <Card className="hover:shadow-sm border-chart-4">
+      <Card className="hover:shadow-sm" style={{ borderColor }}>
         <CardContent className="">
           {/* Section Rôles */}
           <div className="flex items-center justify-between mb-4">
@@ -569,13 +581,14 @@ export default function ShopManagementSection({
             <Button
               variant="ghost"
               size="icon"
-              className="w-8 h-8 rounded-full border-2 border-dashed border-gray-300"
+              className="w-8 h-8 rounded-full border-2 border-dashed"
+              style={{ borderColor }}
               onClick={() => setShowClientsModal(true)}
             >
               <Plus className="h-4 w-4" />
             </Button>
           </div>
-          <hr className="border-chart-4 border-[1px] mb-6" />
+          <hr className="border-[1px] mb-6" style={{ borderColor }} />
 
           {/* Section Catégories */}
           <div className="flex items-center justify-between mb-4">
@@ -637,7 +650,8 @@ export default function ShopManagementSection({
               paginatedCategories.map((category) => (
                 <div
                   key={category.id}
-                  className="flex items-center h-6 px-2 py-2 justify-between rounded-full border border-gray-200 hover:bg-gray-50 transition-colors"
+                  className="flex items-center h-6 px-2 py-2 justify-between rounded-full border hover:bg-gray-50 transition-colors"
+                  style={{ borderColor }}
                 >
                   <div className="flex items-center gap-2">
                     <div
@@ -689,13 +703,14 @@ export default function ShopManagementSection({
             <Button
               variant="ghost"
               size="icon"
-              className="ml-auto w-8 h-8 rounded-full border-2 border-dashed border-gray-300 mb-6"
+              className="ml-auto w-8 h-8 rounded-full border-2 border-dashed mb-6"
+              style={{ borderColor }}
               onClick={() => setShowAddCategoryModal(true)}
             >
               <Plus className="h-4 w-4" />
             </Button>
           </div>
-          <hr className="border-chart-4 border-[1px] mb-6" />
+          <hr className="border-[1px] mb-6" style={{ borderColor }} />
 
           {/* Section Personnalisation */}
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -705,7 +720,8 @@ export default function ShopManagementSection({
           <Button
             variant="ghost"
             onClick={onThemeClick}
-            className="w-full justify-start h-16 border border-dashed border-chart-4 text-gray-600 hover:bg-gray-50"
+            className="w-full justify-start h-16 border border-dashed text-gray-600 hover:bg-gray-50"
+            style={{ borderColor }}
           >
             <Edit className="h-4 w-4 mr-2" />
             Personnaliser

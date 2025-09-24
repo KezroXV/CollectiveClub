@@ -13,9 +13,10 @@ interface Post {
 interface PopularPostsProps {
   shopId: string;
   refreshTrigger?: number; // Trigger pour forcer le refresh
+  borderColor?: string;
 }
 
-export default function PopularPosts({ shopId, refreshTrigger }: PopularPostsProps) {
+export default function PopularPosts({ shopId, refreshTrigger, borderColor = "#E5E7EB" }: PopularPostsProps) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +62,7 @@ export default function PopularPosts({ shopId, refreshTrigger }: PopularPostsPro
 
   if (isLoading) {
     return (
-      <Card className="hover:shadow-sm border-chart-4">
+      <Card className="hover:shadow-sm" style={{ borderColor }}>
         <CardContent className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
             Communautés phares
@@ -81,7 +82,7 @@ export default function PopularPosts({ shopId, refreshTrigger }: PopularPostsPro
 
   if (error) {
     return (
-      <Card className="hover:shadow-sm border-chart-4">
+      <Card className="hover:shadow-sm" style={{ borderColor }}>
         <CardContent className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
             Communautés phares
@@ -93,7 +94,7 @@ export default function PopularPosts({ shopId, refreshTrigger }: PopularPostsPro
   }
 
   return (
-    <Card className="hover:shadow-sm border-chart-4">
+    <Card className="hover:shadow-sm" style={{ borderColor }}>
       <CardContent className="p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Communautés phares
@@ -102,9 +103,9 @@ export default function PopularPosts({ shopId, refreshTrigger }: PopularPostsPro
         {posts.length === 0 ? (
           <div className="space-y-4 text-sm text-gray-800">
             <p>Un espace pour les ecommerçants dans la cosmétique</p>
-            <hr className="border-chart-4 border-[1px]" />
+            <hr className="border-[1px]" style={{ borderColor }} />
             <p>Débutants : Envoyez tous vos conseils ici sur comment gérer sa boutique</p>
-            <hr className="border-chart-4 border-[1px]" />
+            <hr className="border-[1px]" style={{ borderColor }} />
             <p>Quels sont vos objectifs ?</p>
           </div>
         ) : (
@@ -112,7 +113,7 @@ export default function PopularPosts({ shopId, refreshTrigger }: PopularPostsPro
             {posts.slice(0, 3).map((post, index) => (
               <div key={post.id}>
                 <p>{post.title}</p>
-                {index < posts.slice(0, 3).length - 1 && <hr className="border-chart-4 border-[1px] mt-4" />}
+                {index < posts.slice(0, 3).length - 1 && <hr className="border-[1px] mt-4" style={{ borderColor }} />}
               </div>
             ))}
           </div>

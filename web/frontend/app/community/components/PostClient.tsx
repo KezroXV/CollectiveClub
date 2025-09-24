@@ -4,6 +4,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useRouter, notFound } from "next/navigation";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
+import { useTheme } from "@/contexts/ThemeContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
@@ -148,6 +149,7 @@ const PostClient = () => {
   const params = useParams();
   const router = useRouter();
   const { currentUser, loading: userLoading } = useCurrentUser();
+  const { colors } = useTheme();
   const [data, setData] = useState<PostDetailData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showComments, setShowComments] = useState(false);
@@ -464,7 +466,7 @@ const PostClient = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Colonne principale (66%) */}
             <div className="lg:col-span-2">
-              <Card className="hover:shadow-sm">
+              <Card className="hover:shadow-sm" style={{ border: `1px solid ${colors.Bordures}`, backgroundColor: colors.Posts }}>
                 <CardHeader className="">
                   <PostHeader
                     author={post.author}

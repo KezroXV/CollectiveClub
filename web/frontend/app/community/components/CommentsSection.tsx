@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
 import CommentItem from "./CommentItem";
+import { useTheme } from "@/contexts/ThemeContext";
 
 type ReactionType = "LIKE" | "LOVE" | "LAUGH" | "WOW" | "APPLAUSE";
 
@@ -66,9 +67,17 @@ const CommentsSection = ({
   getInitials,
   formatRelativeDate,
 }: CommentsSectionProps) => {
+  const { colors } = useTheme();
+
   return (
-    <div className="mt-8 pt-6 border-t border-gray-100">
-      <h3 className="text-xl font-bold mb-6 text-gray-900">
+    <div
+      className="mt-8 pt-6 border-t"
+      style={{ borderTopColor: colors.Bordures }}
+    >
+      <h3
+        className="text-xl font-bold mb-6"
+        style={{ color: colors.Police }}
+      >
         Commentaires ({commentsCount})
       </h3>
 
@@ -77,7 +86,10 @@ const CommentsSection = ({
         <div className="mb-8">
           <form
             onSubmit={onSubmitComment}
-            className="bg-white rounded-2xl border border-gray-100 hover:shadow-sm p-4"
+            className="bg-white rounded-2xl hover:shadow-sm p-4"
+            style={{
+              border: `1px solid ${colors.Bordures}`
+            }}
           >
             <div className="flex gap-3">
               <Avatar className="h-10 w-10">
@@ -87,7 +99,10 @@ const CommentsSection = ({
               </Avatar>
               <div className="flex-1">
                 <div className="mb-3">
-                  <p className="text-sm font-semibold text-gray-900">
+                  <p
+                    className="text-sm font-semibold"
+                    style={{ color: colors.Police }}
+                  >
                     {currentUser.name}
                   </p>
                   <p className="text-xs text-gray-500">Membre</p>
@@ -98,13 +113,21 @@ const CommentsSection = ({
                     value={newComment}
                     onChange={(e) => onNewCommentChange(e.target.value)}
                     disabled={submittingComment}
-                    className="border-chart-4 rounded-xl bg-gray-50 focus:bg-white transition-colors"
+                    className="bg-gray-50 focus:bg-white rounded-xl transition-colors theme-input"
+                    style={{
+                      borderColor: colors.Bordures,
+                      color: colors.Police
+                    }}
                   />
                   <Button
                     type="submit"
                     size="sm"
                     disabled={!newComment.trim() || submittingComment}
-                    className="bg-blue-600 hover:bg-blue-700 rounded-xl px-4"
+                    className="rounded-xl px-4"
+                    style={{
+                      backgroundColor: colors.Posts,
+                      color: "white"
+                    }}
                   >
                     <Send className="h-4 w-4" />
                   </Button>
@@ -121,7 +144,10 @@ const CommentsSection = ({
           comments.map((comment) => (
             <div
               key={comment.id}
-              className="bg-white rounded-2xl border border-gray-100 hover:shadow-sm p-5 hover:shadow-md transition-shadow duration-200"
+              className="bg-white rounded-2xl hover:shadow-sm p-5 hover:shadow-md transition-shadow duration-200"
+              style={{
+                border: `1px solid ${colors.Bordures}`
+              }}
             >
               <CommentItem
                 comment={comment}
@@ -137,7 +163,12 @@ const CommentsSection = ({
           ))
         ) : (
           <div className="text-center py-12">
-            <div className="bg-white rounded-2xl border border-gray-100 hover:shadow-sm p-8">
+            <div
+              className="bg-white rounded-2xl hover:shadow-sm p-8"
+              style={{
+                border: `1px solid ${colors.Bordures}`
+              }}
+            >
               <p className="text-gray-500 text-sm">
                 Aucun commentaire pour l&apos;instant. Soyez le premier à
                 commenter !

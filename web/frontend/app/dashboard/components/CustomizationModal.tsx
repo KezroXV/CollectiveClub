@@ -66,7 +66,7 @@ export default function CustomizationModal({
     // Récupérer les informations utilisateur depuis localStorage
     const storedUser = localStorage.getItem("currentUser");
     let shopId = null;
-    
+
     if (storedUser) {
       try {
         const user = JSON.parse(storedUser);
@@ -84,18 +84,26 @@ export default function CustomizationModal({
 
     setIsLoadingBadges(true);
     try {
-      const response = await fetch(`/api/badges?userId=${userId}&shopId=${shopId}`);
-      
+      const response = await fetch(
+        `/api/badges?userId=${userId}&shopId=${shopId}`
+      );
+
       if (response.ok) {
         const badgesData = await response.json();
 
         // Trier les badges par ordre croissant de points requis
-        const sortedBadges = badgesData.sort((a: any, b: any) => a.requiredPoints - b.requiredPoints);
-        
+        const sortedBadges = badgesData.sort(
+          (a: any, b: any) => a.requiredPoints - b.requiredPoints
+        );
+
         // L'API crée automatiquement les badges par défaut si ils n'existent pas
         setBadges(sortedBadges);
       } else {
-        console.error("Failed to load badges:", response.status, response.statusText);
+        console.error(
+          "Failed to load badges:",
+          response.status,
+          response.statusText
+        );
       }
     } catch (error) {
       console.error("Erreur lors du chargement des badges:", error);
@@ -103,7 +111,6 @@ export default function CustomizationModal({
       setIsLoadingBadges(false);
     }
   }, [userId]);
-
 
   // Synchroniser avec le contexte global au moment de l'ouverture
   useEffect(() => {

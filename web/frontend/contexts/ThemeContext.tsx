@@ -1,6 +1,13 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+  useCallback,
+} from "react";
 
 interface ThemeColors {
   Posts: string;
@@ -14,7 +21,12 @@ interface ThemeContextType {
   selectedFont: string;
   coverImageUrl: string | null;
   bannerImageUrl: string;
-  updateTheme: (colors: ThemeColors, font: string, coverImage?: string | null, bannerImage?: string) => void;
+  updateTheme: (
+    colors: ThemeColors,
+    font: string,
+    coverImage?: string | null,
+    bannerImage?: string
+  ) => void;
   loadUserTheme: (userId: string) => Promise<void>;
 }
 
@@ -33,7 +45,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
   const [bannerImageUrl, setBannerImageUrl] = useState<string>("/Bannière.svg");
 
-  const updateTheme = (newColors: ThemeColors, font: string, coverImage?: string | null, bannerImage?: string) => {
+  const updateTheme = (
+    newColors: ThemeColors,
+    font: string,
+    coverImage?: string | null,
+    bannerImage?: string
+  ) => {
     setColors(newColors);
     setSelectedFont(font);
     if (coverImage !== undefined) {

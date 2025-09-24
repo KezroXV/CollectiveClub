@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Heart, MessageSquare, Share2 } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 type ReactionType = "LIKE" | "LOVE" | "LAUGH" | "WOW" | "APPLAUSE";
 
@@ -45,8 +46,10 @@ const PostActions = ({
   onCommentsClick,
   onShare,
 }: PostActionsProps) => {
+  const { colors } = useTheme();
+
   return (
-    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+    <div className="flex items-center justify-between pt-4 border-t" style={{ borderTopColor: colors.Bordures }}>
       <div className="flex items-center gap-6">
         {/* Reactions with dropdown */}
         <div className="relative">
@@ -66,7 +69,7 @@ const PostActions = ({
 
           {/* Dropdown des réactions */}
           {showReactionDropdown && currentUser && (
-            <div className="reaction-dropdown absolute bottom-full left-0 mb-2 bg-white border border-chart-4 rounded-lg shadow-lg p-2 z-10">
+            <div className="reaction-dropdown absolute bottom-full left-0 mb-2 rounded-lg shadow-lg p-2 z-10" style={{ backgroundColor: colors.Fond, border: `1px solid ${colors.Bordures}` }}>
               <div className="flex gap-1 mb-2">
                 {Object.entries(REACTION_EMOJIS).map(([type, emoji]) => {
                   const isSelected = userReaction === type;

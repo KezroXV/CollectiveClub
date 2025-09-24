@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -11,6 +10,7 @@ import CreatePostModal from "@/components/CreatePostModal";
 import PostsList from "@/components/PostsList";
 import ThemeWrapper from "@/components/ThemeWrapper";
 import { useShopPersistence } from "@/lib/useShopPersistence";
+import { useTheme } from "@/contexts/ThemeContext";
 // ReactionPicker retiré pour n'afficher que coeur + commentaires
 
 interface Post {
@@ -50,6 +50,7 @@ interface Post {
 
 export default function HomePage() {
   const { currentUser } = useCurrentUser();
+  const { colors } = useTheme();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -60,7 +61,7 @@ export default function HomePage() {
 
   const searchParams = useSearchParams();
   const [sortBy, setSortBy] = useState("newest");
-  
+
   // 🏪 Initialiser la persistance du shop
   const { currentShop } = useShopPersistence();
 
@@ -69,12 +70,12 @@ export default function HomePage() {
     try {
       const params = new URLSearchParams();
       if (showPinnedOnly) {
-        params.append('pinnedOnly', 'true');
+        params.append("pinnedOnly", "true");
       }
       if (currentUser?.id) {
-        params.append('userId', currentUser.id);
+        params.append("userId", currentUser.id);
       }
-      
+
       const response = await fetch(`/api/posts?${params}`);
       const data = await response.json();
       const postsArray = data.posts || data; // Support nouvelle et ancienne structure
@@ -90,7 +91,6 @@ export default function HomePage() {
   useEffect(() => {
     fetchPosts();
   }, [showPinnedOnly, currentUser?.id]);
-
 
   // Filter posts
   // Modifier le filtering par catégorie :
@@ -147,10 +147,18 @@ export default function HomePage() {
       {/* Hero Banner */}
       <HeroBanner />
       {/* Section unifiée: Filtres + Posts */}
-      <div className="bg-white min-h-screen">
+      <div className="bg-gray-50 min-h-screen">
         <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-8">
-          <div className="max-w-4xl mx-auto rounded-[16px] sm:rounded-[22px] border border-primary/20 bg-white hover:shadow-sm overflow-hidden">
-            <div className="p-4 sm:p-6">
+          <div
+            className="max-w-4xl mx-auto rounded-[16px] sm:rounded-[22px] hover:shadow-sm overflow-hidden bg-white"
+            style={{
+              border: `1px solid ${colors.Bordures}`,
+            }}
+          >
+            <div
+              className="p-4 sm:p-6"
+              style={{ backgroundColor: colors.Fond }}
+            >
               <CategoryFilter
                 selectedCategory={selectedCategory}
                 onCategoryChange={setSelectedCategory}
@@ -163,7 +171,10 @@ export default function HomePage() {
                 pinnedCount={pinnedCount}
               />
               {/* Séparateur entre filtres et posts */}
-              <div className="w-full h-px bg-gray-200 "></div>
+              <div
+                className="w-full h-px"
+                style={{ backgroundColor: colors.Bordures }}
+              ></div>
 
               {/* Posts Content */}
               <PostsList

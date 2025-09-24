@@ -7,6 +7,7 @@ import ThemeWrapper from "@/components/ThemeWrapper";
 import AuthorSidebar from "@/app/community/components/AuthorSidebar";
 import ProfileHeader from "./components/ProfileHeader";
 import ProfileEditForm from "./components/ProfileEditForm";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface AuthorPost {
   id: string;
@@ -43,6 +44,7 @@ interface BadgeInfo {
 
 export default function ProfilePage() {
   const { currentUser, loading } = useCurrentUser();
+  const { colors } = useTheme();
   const [authorRecentPosts, setAuthorRecentPosts] = useState<AuthorPost[]>([]);
   const [authorRecentComments, setAuthorRecentComments] = useState<
     AuthorComment[]
@@ -154,11 +156,13 @@ export default function ProfilePage() {
                 isSaving={isSaving}
                 onEditingToggle={handleEditToggle}
                 onSaveProfile={handleSaveProfile}
+                borderColor={colors.Bordures}
               />
               <ProfileEditForm
                 currentUser={currentUser}
                 isEditing={isEditing}
                 onEditingChange={setIsEditing}
+                borderColor={colors.Bordures}
               />
             </div>
             {/* Colonne droite - Sidebar avec infos utilisateur */}

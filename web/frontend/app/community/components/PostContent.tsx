@@ -1,5 +1,6 @@
 import Image from "next/image";
 import PollDisplay from "@/components/PollDisplay";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface PostContentProps {
   content: string;
@@ -28,12 +29,17 @@ const PostContent = ({
   poll,
   currentUser,
 }: PostContentProps) => {
+  const { colors } = useTheme();
+
   return (
     <>
       {/* Post Image */}
       {imageUrl && (
         <div className="mb-6">
-          <div className="rounded-xl overflow-hidden">
+          <div
+            className="rounded-xl overflow-hidden"
+            style={{ border: `1px solid ${colors.Bordures}` }}
+          >
             <Image
               src={imageUrl}
               alt={title}
@@ -46,14 +52,23 @@ const PostContent = ({
       )}
       {/* Post Content */}
       <div className="prose max-w-none mb-6">
-        <p className="text-gray-700 text-[13px] leading-relaxed whitespace-pre-wrap">
+        <p
+          className="text-[13px] leading-relaxed whitespace-pre-wrap"
+          style={{ color: colors.Police }}
+        >
           {content}
         </p>
       </div>
 
       {/* Poll Display */}
       {poll && (
-        <div className="mb-6">
+        <div
+          className="mb-6 p-4 rounded-xl"
+          style={{
+            backgroundColor: colors.Fond,
+            border: `1px solid ${colors.Bordures}`
+          }}
+        >
           <PollDisplay
             poll={poll}
             currentUser={currentUser}

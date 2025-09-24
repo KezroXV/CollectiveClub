@@ -24,6 +24,7 @@ interface StatCardProps {
   trend: "up" | "down";
   iconSrc: string;
   isLoading?: boolean;
+  borderColor?: string;
 }
 
 function StatCard({
@@ -33,6 +34,7 @@ function StatCard({
   trend,
   iconSrc,
   isLoading,
+  borderColor = "#E5E7EB",
 }: StatCardProps) {
   const [displayValue, setDisplayValue] = useState(0);
 
@@ -62,7 +64,7 @@ function StatCard({
 
   if (isLoading) {
     return (
-      <Card className="hover:shadow-sm border-chart-4 animate-pulse">
+      <Card className="hover:shadow-sm animate-pulse" style={{ borderColor }}>
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-1">
             <div className="h-4 w-16 bg-gray-200 rounded"></div>
@@ -83,7 +85,10 @@ function StatCard({
   const valueColor = title === "Posts" ? "text-blue-600" : "text-gray-900";
 
   return (
-    <Card className="hover:shadow-sm border-chart-4 hover:shadow-md transition-all pt-0 h-32 duration-300 hover:-translate-y-1">
+    <Card
+      className="hover:shadow-md transition-all pt-0 h-32 duration-300 hover:-translate-y-1"
+      style={{ borderColor }}
+    >
       <CardContent className="p-6">
         <div className="flex items-center justify-between mb-1">
           <p className="text-lg text-black text-semibold">{title}</p>
@@ -117,9 +122,13 @@ function StatCard({
 
 interface StatsCardsProps {
   shopId?: string;
+  borderColor?: string;
 }
 
-export default function StatsCards({ shopId }: StatsCardsProps) {
+export default function StatsCards({
+  shopId,
+  borderColor = "#E5E7EB",
+}: StatsCardsProps) {
   const [stats, setStats] = useState<StatsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -171,7 +180,10 @@ export default function StatsCards({ shopId }: StatsCardsProps) {
   if (error) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="hover:shadow-sm border-red-200">
+        <Card
+          className="hover:shadow-sm border-red-200"
+          style={{ borderColor: "#FCA5A5" }}
+        >
           <CardContent className="p-6 text-center">
             <p className="text-sm text-red-600">{error}</p>
           </CardContent>
@@ -189,6 +201,7 @@ export default function StatsCards({ shopId }: StatsCardsProps) {
         trend={stats?.posts.trend || "up"}
         iconSrc="/postIcon.svg"
         isLoading={isLoading}
+        borderColor={borderColor}
       />
 
       <StatCard
@@ -198,6 +211,7 @@ export default function StatsCards({ shopId }: StatsCardsProps) {
         trend={stats?.engagement.trend || "up"}
         iconSrc="/EngagementIcon.svg"
         isLoading={isLoading}
+        borderColor={borderColor}
       />
 
       <StatCard
@@ -207,6 +221,7 @@ export default function StatsCards({ shopId }: StatsCardsProps) {
         trend={stats?.members.trend || "up"}
         iconSrc="/FollowIcon.svg"
         isLoading={isLoading}
+        borderColor={borderColor}
       />
     </div>
   );

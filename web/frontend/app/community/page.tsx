@@ -21,6 +21,7 @@ import Link from "next/link";
 import ReactionPicker from "@/components/ReactionPicker";
 import PollDisplay from "@/components/PollDisplay";
 import ThemeWrapper from "@/components/ThemeWrapper";
+import { useTheme } from "@/contexts/ThemeContext";
 interface Post {
   id: string;
   title: string;
@@ -61,6 +62,7 @@ interface Comment {
 
 export default function CommunityPage() {
   const { currentUser } = useCurrentUser();
+  const { colors } = useTheme();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -225,20 +227,20 @@ export default function CommunityPage() {
 
         {/* User Info */}
         {currentUser && (
-          <Card className="mb-6 hover:shadow-sm border-0 bg-gradient-to-r from-primary/5 to-secondary/5">
+          <Card className="mb-6 hover:shadow-sm border-0" style={{ backgroundColor: `${colors.Posts}08` }}>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-10 w-10">
-                    <AvatarFallback className="bg-gradient-to-r from-primary to-secondary text-white font-semibold">
+                    <AvatarFallback className="text-white font-semibold" style={{ backgroundColor: colors.Posts }}>
                       {getInitials(currentUser.name)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-semibold text-foreground">
+                    <p className="font-semibold" style={{ color: colors.Police }}>
                       Connecté en tant que {currentUser.name}
                     </p>
-                    <p className="text-sm text-muted-foreground">{currentUser.email}</p>
+                    <p className="text-sm text-gray-600">{currentUser.email}</p>
                   </div>
                 </div>
                 <Badge variant="secondary" className="text-xs">
@@ -252,13 +254,13 @@ export default function CommunityPage() {
 
         {/* Create Post Form */}
         {showCreateForm && (
-          <Card className="mb-8 hover:shadow-sm border-0">
-            <CardHeader className="border-b bg-muted/30">
-              <CardTitle className="flex items-center gap-2">
+          <Card className="mb-8 hover:shadow-sm" style={{ border: `1px solid ${colors.Bordures}`, backgroundColor: colors.Fond }}>
+            <CardHeader className="border-b" style={{ backgroundColor: `${colors.Fond}`, borderBottomColor: colors.Bordures }}>
+              <CardTitle className="flex items-center gap-2" style={{ color: colors.Police }}>
                 <Plus className="h-5 w-5" />
                 Créer un nouveau post
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-gray-600">
                 Partagez vos idées avec la communauté
               </CardDescription>
             </CardHeader>
@@ -270,7 +272,8 @@ export default function CommunityPage() {
                   onChange={(e) =>
                     setNewPost({ ...newPost, title: e.target.value })
                   }
-                  className="border-muted-foreground/20 focus:border-primary"
+                  className="theme-input"
+                  style={{ borderColor: colors.Bordures, backgroundColor: colors.Fond, color: colors.Police }}
                 />
                 <Textarea
                   placeholder="Contenu de votre post..."
@@ -279,10 +282,11 @@ export default function CommunityPage() {
                   onChange={(e) =>
                     setNewPost({ ...newPost, content: e.target.value })
                   }
-                  className="border-muted-foreground/20 focus:border-primary resize-none"
+                  className="theme-input resize-none"
+                  style={{ borderColor: colors.Bordures, backgroundColor: colors.Fond, color: colors.Police }}
                 />
                 <div className="flex gap-2">
-                  <Button type="submit" disabled={loading} className="px-6">
+                  <Button type="submit" disabled={loading} className="px-6" style={{ backgroundColor: colors.Posts, color: "white" }}>
                     {loading ? "Publication..." : "Publier"}
                   </Button>
                   <Button
@@ -410,7 +414,7 @@ export default function CommunityPage() {
             </Card>
           ) : (
             filteredAndSortedPosts.map((post) => (
-              <Card key={post.id} className="hover:shadow-sm border-0 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
+              <Card key={post.id} className="hover:shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 bg-white" style={{ border: `1px solid ${colors.Bordures}` }}>
                 <CardHeader className="pb-4">
                   <div className="flex justify-between items-start">
                     <div className="flex items-start gap-3 flex-1">

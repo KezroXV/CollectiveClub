@@ -58,12 +58,14 @@ interface ProfileEditFormProps {
   currentUser: User;
   isEditing: boolean;
   onEditingChange: (editing: boolean) => void;
+  borderColor?: string;
 }
 
 export default function ProfileEditForm({
   currentUser,
   isEditing,
   onEditingChange,
+  borderColor = "#E5E7EB",
 }: ProfileEditFormProps) {
   const { update: updateSession } = useSession();
   const [editForm, setEditForm] = useState({
@@ -181,7 +183,7 @@ export default function ProfileEditForm({
   };
 
   return (
-    <Card>
+    <Card style={{ borderColor }}>
       <CardHeader>
         <CardTitle>Informations du profil</CardTitle>
       </CardHeader>

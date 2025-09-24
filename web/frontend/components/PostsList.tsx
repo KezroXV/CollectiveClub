@@ -60,7 +60,7 @@ export default function PostsList({
   }
 
   return (
-    <div className="space-y-0">
+    <div className="space-y-0 bg-transparent">
       {posts.map((post, index) => (
         <PostCard
           key={post.id}

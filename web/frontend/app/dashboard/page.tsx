@@ -18,21 +18,21 @@ export default function DashboardPage() {
   const [showPostsModal, setShowPostsModal] = useState(false);
   const [showClientsModal, setShowClientsModal] = useState(false);
   const [showThemeModal, setShowThemeModal] = useState(false);
-  const [actualShopId, setActualShopId] = useState<string>('');
+  const [actualShopId, setActualShopId] = useState<string>("");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const { loadUserTheme } = useTheme();
+  const { loadUserTheme, colors } = useTheme();
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   // Vérifier si l'utilisateur a accès au dashboard
   const hasAccess = isAdmin || isModerator;
-  
+
   // Récupérer le shopId depuis URL ou cookies
   useEffect(() => {
-    const shopFromUrl = searchParams.get('shop');
-    if (shopFromUrl === 'collective-club.myshopify.com') {
+    const shopFromUrl = searchParams.get("shop");
+    if (shopFromUrl === "collective-club.myshopify.com") {
       // Utiliser le shopId connu pour collective-club
-      setActualShopId('cmf57twjy0000u34sla2lhgl9');
+      setActualShopId("cmf57twjy0000u34sla2lhgl9");
     } else if (shopFromUrl) {
       // Pour d'autres shops, récupérer dynamiquement
       const fetchShopId = async () => {
@@ -46,7 +46,7 @@ export default function DashboardPage() {
             }
           }
         } catch (error) {
-          console.error('Error fetching shop:', error);
+          console.error("Error fetching shop:", error);
         }
       };
       fetchShopId();
@@ -58,14 +58,14 @@ export default function DashboardPage() {
     }
   }, [searchParams, currentUser?.shopId]);
 
-  const shopId = actualShopId || currentUser?.shopId || '';
-  
+  const shopId = actualShopId || currentUser?.shopId || "";
+
   // DEBUG: Vérifier le currentUser et shopId
-  console.log('🏪 DashboardPage DEBUG:', {
+  console.log("🏪 DashboardPage DEBUG:", {
     currentUser,
     shopId,
     hasCurrentUser: !!currentUser,
-    hasShopId: !!currentUser?.shopId
+    hasShopId: !!currentUser?.shopId,
   });
 
   const handleClientsClick = () => setShowClientsModal(true);
@@ -78,7 +78,7 @@ export default function DashboardPage() {
 
   const handlePostDeleted = () => {
     // Incrémenter le trigger pour forcer le refresh de PopularPosts
-    setRefreshTrigger(prev => prev + 1);
+    setRefreshTrigger((prev) => prev + 1);
   };
 
   // Rediriger si pas d'accès
@@ -133,7 +133,7 @@ export default function DashboardPage() {
   return (
     <ThemeWrapper applyBackgroundColor={true} className="min-h-screen p-8">
       <div className="max-w-7xl mx-auto space-y-8">
-        <DashboardHeader shopId={shopId} />
+        <DashboardHeader shopId={shopId} borderColor={colors.Bordures} />
 
         <div className="grid grid-cols-12 gap-6">
           <ManagementSection
@@ -142,12 +142,14 @@ export default function DashboardPage() {
             onThemeClick={handleThemeClick}
             shopId={shopId}
             refreshTrigger={refreshTrigger}
+            borderColor={colors.Bordures}
           />
 
           <ShopManagementSection
             userId={currentUser?.id}
             shopId={shopId}
             onThemeClick={handleThemeClick}
+            borderColor={colors.Bordures}
           />
         </div>
 

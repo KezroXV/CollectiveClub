@@ -24,6 +24,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const SORT_OPTIONS = [
   {
@@ -75,6 +76,7 @@ export default function CategoryFilter({
   onPinnedFilterChange,
   pinnedCount = 0,
 }: CategoryFilterProps) {
+  const { colors } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,7 +124,7 @@ export default function CategoryFilter({
 
   if (loading) {
     return (
-      <div className="bg-white">
+      <div className="bg-transparent">
         <div className="container mx-auto px-6">
           <div className="flex items-center gap-6 py-6">
             <div className="h-12 w-32 bg-gray-200 rounded-2xl animate-pulse"></div>
@@ -135,7 +137,7 @@ export default function CategoryFilter({
   }
 
   return (
-    <div className="bg-white">
+    <div className="bg-transparent">
       <div className="container mx-auto px-6">
         {/* Top Row: Filter + Search + Create Button */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-6 py-4 sm:py-6">
@@ -144,7 +146,8 @@ export default function CategoryFilter({
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="gap-3 text-base px-6 py-3 h-auto rounded-2xl border-gray-300 bg-white hover:bg-gray-50 transition-all font-medium"
+                className="gap-3 text-base px-6 py-3 h-auto rounded-2xl bg-white hover:bg-gray-50 transition-all font-medium"
+                style={{ borderColor: colors.Bordures }}
               >
                 <Filter className="h-4 w-4" />
                 Filtrer
@@ -183,7 +186,8 @@ export default function CategoryFilter({
               placeholder="Rechercher par nom ou par post..."
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
-              className="pl-10 sm:pl-14 h-12 sm:h-14 border border-gray-300 focus:border-primary focus:ring-primary rounded-xl sm:rounded-2xl text-sm sm:text-base bg-white"
+              className="pl-10 sm:pl-14 h-12 sm:h-14 border focus:border-primary focus:ring-primary rounded-xl sm:rounded-2xl text-sm sm:text-base bg-white"
+              style={{ borderColor: colors.Bordures }}
             />
           </div>
 
@@ -206,9 +210,10 @@ export default function CategoryFilter({
               onClick={() => onCategoryChange(category.id)}
               className={`flex items-center gap-2.5 px-2.5 py-1 rounded-lg whitespace-nowrap transition-all text-xs font-medium border ${
                 selectedCategory === category.id
-                  ? "bg-white text-gray-900 border-gray-300 ring-2 ring-blue-300"
-                  : "bg-white text-gray-900 border-gray-300 hover:bg-gray-50"
+                  ? "bg-white text-gray-900 ring-2 ring-blue-300"
+                  : "bg-white text-gray-900 hover:bg-gray-50"
               }`}
+              style={{ borderColor: colors.Bordures }}
             >
               <div className={`w-3 h-3 rounded-full ${category.color}`}></div>
               <span>{category.name}</span>
@@ -224,7 +229,10 @@ export default function CategoryFilter({
           {overflowCategories.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2.5 px-2.5 py-1 rounded-lg whitespace-nowrap transition-all text-xs font-medium border bg-white text-gray-900 border-gray-300 hover:bg-gray-50">
+                <button
+                  className="flex items-center gap-2.5 px-2.5 py-1 rounded-lg whitespace-nowrap transition-all text-xs font-medium border bg-white text-gray-900 hover:bg-gray-50"
+                  style={{ borderColor: colors.Bordures }}
+                >
                   <span>Voir plus</span>
                   <ChevronDown className="h-3 w-3" />
                 </button>
@@ -261,9 +269,12 @@ export default function CategoryFilter({
               onClick={() => onPinnedFilterChange?.(!showPinnedOnly)}
               className={`flex items-center gap-2 px-3 py-2 rounded-lg whitespace-nowrap transition-all text-xs font-medium border ${
                 showPinnedOnly
-                  ? "bg-blue-50 text-blue-700 border-blue-200"
-                  : "bg-white text-gray-900 border-gray-300 hover:bg-gray-50"
+                  ? "bg-blue-50 text-blue-700"
+                  : "bg-white text-gray-900 hover:bg-gray-50"
               }`}
+              style={{
+                borderColor: showPinnedOnly ? colors.Posts : colors.Bordures,
+              }}
             >
               <Pin
                 className={`h-3 w-3 ${

@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Heart, MessageCircle, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { useTheme } from "@/contexts/ThemeContext";
 
 type ReactionType = "LIKE" | "LOVE" | "LAUGH" | "WOW" | "APPLAUSE";
 
@@ -78,6 +79,7 @@ const CommentItem = ({
   onReactionUpdated,
   isReply = false,
 }: CommentItemProps) => {
+  const { colors } = useTheme();
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [showReplies, setShowReplies] = useState(false);
   const [showReactionDropdown, setShowReactionDropdown] = useState(false);
@@ -206,11 +208,17 @@ const CommentItem = ({
   };
 
   return (
-    <div className={`${isReply ? "ml-4 border-l-2 border-gray-200 pl-4" : ""}`}>
+    <div
+      className={`${isReply ? "ml-4 border-l-2 pl-4" : ""}`}
+      style={isReply ? { borderLeftColor: colors.Bordures } : {}}
+    >
       <div className="flex gap-4">
         <Avatar className="h-10 w-10 flex-shrink-0">
           <AvatarImage src={comment.author.avatar} />
-          <AvatarFallback className="text-sm">
+          <AvatarFallback
+            className="text-sm text-white"
+            style={{ backgroundColor: colors.Posts }}
+          >
             {getInitials(comment.author.name)}
           </AvatarFallback>
         </Avatar>
@@ -218,7 +226,10 @@ const CommentItem = ({
         <div className="flex-1">
           <div className="mb-3">
             <div className="flex items-center gap-2 mb-1">
-              <span className="font-bold text-base text-gray-900">
+              <span
+                className="font-bold text-base"
+                style={{ color: colors.Police }}
+              >
                 {comment.author.name}
               </span>
               <span className="text-xs text-gray-400 font-medium">
@@ -229,7 +240,10 @@ const CommentItem = ({
           </div>
 
           <div className="mb-4">
-            <p className="text-sm text-gray-800 leading-relaxed">
+            <p
+              className="text-sm leading-relaxed"
+              style={{ color: colors.Police }}
+            >
               {comment.content}
             </p>
           </div>
@@ -255,7 +269,12 @@ const CommentItem = ({
 
               {/* Dropdown des réactions */}
               {showReactionDropdown && currentUser && (
-                <div className="reaction-dropdown absolute bottom-full left-0 mb-2 bg-white border border-chart-4 rounded-lg shadow-lg p-2 z-10">
+                <div
+                  className="reaction-dropdown absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-lg p-2 z-10"
+                  style={{
+                    border: `1px solid ${colors.Bordures}`
+                  }}
+                >
                   <div className="flex gap-1 mb-2">
                     {Object.entries(REACTION_EMOJIS).map(([type, emoji]) => {
                       const isSelected = comment.userReaction === type;
@@ -385,7 +404,10 @@ const CommentItem = ({
                   </Avatar>
                   <div className="flex-1">
                     <div className="mb-2">
-                      <p className="text-xs font-semibold text-gray-900">
+                      <p
+                        className="text-xs font-semibold"
+                        style={{ color: colors.Police }}
+                      >
                         {currentUser.name}
                       </p>
                     </div>
@@ -395,13 +417,21 @@ const CommentItem = ({
                         value={replyContent}
                         onChange={(e) => setReplyContent(e.target.value)}
                         disabled={submittingReply}
-                        className="text-sm border-chart-4 rounded-xl bg-white"
+                        className="text-sm bg-white rounded-xl theme-input"
+                        style={{
+                          borderColor: colors.Bordures,
+                          color: colors.Police
+                        }}
                       />
                       <Button
                         type="submit"
                         size="sm"
                         disabled={!replyContent.trim() || submittingReply}
-                        className="bg-blue-600 hover:bg-blue-700 rounded-xl"
+                        className="rounded-xl"
+                        style={{
+                          backgroundColor: colors.Posts,
+                          color: "white"
+                        }}
                       >
                         <Send className="h-3 w-3" />
                       </Button>

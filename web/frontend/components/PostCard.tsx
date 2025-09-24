@@ -9,6 +9,7 @@ import Link from "next/link";
 import Image from "next/image";
 import PollDisplay from "@/components/PollDisplay";
 import { toast } from "sonner";
+import { useTheme } from "@/contexts/ThemeContext";
 
 type ReactionType = "LIKE" | "LOVE" | "LAUGH" | "WOW" | "APPLAUSE";
 
@@ -76,6 +77,7 @@ export default function PostCard({
   onVote,
   isLast = false,
 }: PostCardProps) {
+  const { colors } = useTheme();
   const [showReactionDropdown, setShowReactionDropdown] = useState(false);
 
   // Gérer le clic à l'extérieur pour fermer le dropdown
@@ -133,14 +135,27 @@ export default function PostCard({
   };
 
   return (
-    <div className={`pb-4 sm:pb-8 ${!isLast ? "border-b border-gray-100" : ""}`}>
+    <div
+      className="pb-4 sm:pb-8"
+      style={{
+        ...((!isLast) && {
+          borderBottom: `1px solid ${colors.Bordures}`
+        })
+      }}
+    >
       <Link href={`/community/posts/${post.slug || post.id}`} className="block cursor-pointer">
         {/* Post Title and Content */}
         <div className="mb-4 sm:mb-6 pt-4 sm:pt-7 relative">
-          <h2 className="text-sm sm:text-[13px] md:text-[15px] font-semibold text-gray-900 mb-2 leading-tight line-clamp-2 sm:line-clamp-1 hover:text-primary transition-colors duration-200">
+          <h2
+            className="text-sm sm:text-[13px] md:text-[15px] font-semibold mb-2 leading-tight line-clamp-2 sm:line-clamp-1 transition-colors duration-200"
+            style={{ color: colors.Police }}
+          >
             {post.title}
           </h2>
-          <p className="text-gray-700 text-xs sm:text-[13px] leading-5 sm:leading-6 line-clamp-3 sm:line-clamp-2">
+          <p
+            className="text-xs sm:text-[13px] leading-5 sm:leading-6 line-clamp-3 sm:line-clamp-2"
+            style={{ color: colors.Police }}
+          >
             {post.content}
           </p>
         </div>
@@ -148,7 +163,10 @@ export default function PostCard({
         {/* Post Image */}
         {post.imageUrl && (
           <div className="mb-8 ">
-            <div className="rounded-2xl overflow-hidden hover:shadow-sm border border-gray-100">
+            <div
+              className="rounded-2xl overflow-hidden hover:shadow-sm"
+              style={{ border: `1px solid ${colors.Bordures}` }}
+            >
               <Image
                 src={post.imageUrl}
                 alt={post.title}
@@ -178,11 +196,14 @@ export default function PostCard({
         <div className="relative">
           <Button
             variant="outline"
-            className={`flex items-center gap-2 sm:gap-3 bg-gray-50 px-3 sm:px-6 py-2 sm:py-3 rounded-full border-2 border-gray-200 hover:bg-gray-100 transition-colors ${
+            className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-6 py-2 sm:py-3 rounded-full border-2 transition-colors ${
               post.userReaction
-                ? "text-red-600 border-red-300 bg-red-50"
-                : "text-gray-700"
+                ? "text-red-600 bg-red-50"
+                : "text-gray-700 bg-gray-50 hover:bg-gray-100"
             }`}
+            style={{
+              borderColor: colors.Bordures
+            }}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -237,7 +258,8 @@ export default function PostCard({
 
         <Button
           variant="outline"
-          className="flex items-center gap-2 sm:gap-3 bg-gray-50 px-3 sm:px-6 py-2 sm:py-3 rounded-full border-2 border-gray-200 hover:bg-gray-100 text-gray-700"
+          className="flex items-center gap-2 sm:gap-3 bg-gray-50 px-3 sm:px-6 py-2 sm:py-3 rounded-full border-2 hover:bg-gray-100 text-gray-700"
+          style={{ borderColor: colors.Bordures }}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -252,7 +274,8 @@ export default function PostCard({
 
         <Button
           variant="outline"
-          className="ml-auto flex items-center gap-1 sm:gap-2 bg-white px-2 sm:px-4 py-2 rounded-full border-chart-4 hover:bg-gray-100 text-gray-600"
+          className="ml-auto flex items-center gap-1 sm:gap-2 bg-white px-2 sm:px-4 py-2 rounded-full hover:bg-gray-100 text-gray-600"
+          style={{ borderColor: colors.Bordures }}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();

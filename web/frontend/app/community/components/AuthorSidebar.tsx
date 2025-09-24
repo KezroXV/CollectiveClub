@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import FollowButton from "@/components/FollowButton";
 import { Coins, Heart, MessageSquare, Star } from "lucide-react";
 import Image from "next/image";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface BadgeInfo {
   id: string;
@@ -79,6 +80,7 @@ const AuthorSidebar = ({
   badges: propBadges,
   points: propPoints,
 }: AuthorSidebarProps) => {
+  const { colors } = useTheme();
   const [authorPoints, setAuthorPoints] = useState<UserPointsInfo | null>(null);
   const [authorBadges, setAuthorBadges] = useState<BadgeInfo[]>([]);
   const [isLoadingBadges, setIsLoadingBadges] = useState(true);
@@ -191,19 +193,19 @@ const AuthorSidebar = ({
     loadAuthorData();
   }, [author.id, currentUser?.shopId, propBadges, propPoints]);
   return (
-    <Card className="overflow-hidden bg-white max-w-[400px]">
+    <Card className="overflow-hidden bg-white max-w-[400px]" style={{ border: `1px solid ${colors.Bordures}` }}>
       <CardContent className="p-0">
         {/* Profil de l'auteur */}
         <div className={`p-6 ${currentUser && currentUser.id !== author.id ? 'flex gap-4' : ''}`}>
           <div className="flex items-center gap-3 mb-4">
             <Avatar className="h-16 w-16">
               <AvatarImage src={author.image} />
-              <AvatarFallback className="bg-blue-500 text-white font-semibold text-lg">
+              <AvatarFallback className="text-white font-semibold text-lg" style={{ backgroundColor: colors.Posts }}>
                 {getInitials(author.name)}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <h3 className="font-bold text-lg text-gray-900">{author.name}</h3>
+              <h3 className="font-bold text-lg" style={{ color: colors.Police }}>{author.name}</h3>
               <p className="text-[10px] text-gray-500">
                 Membre depuis le {formatDate(author.createdAt)}
               </p>
@@ -237,7 +239,7 @@ const AuthorSidebar = ({
 
         {/* Badges de l'auteur */}
         <div className="px-6 pb-6">
-          <h4 className="font-bold text-[18px] text-gray-900 mb-4">Badges</h4>
+          <h4 className="font-bold text-[18px] mb-4" style={{ color: colors.Police }}>Badges</h4>
 
           {isLoadingBadges && (
             <div className="flex gap-2 mb-4">
@@ -267,7 +269,7 @@ const AuthorSidebar = ({
                         className="rounded-full"
                       />
                     </div>
-                    <p className="font-medium text-[10px] text-gray-900">
+                    <p className="font-medium text-[10px]" style={{ color: colors.Police }}>
                       {badge.name}
                     </p>
                   </div>
@@ -283,16 +285,16 @@ const AuthorSidebar = ({
 
         {/* Posts récents */}
         <div className="px-6 pb-6">
-          <h4 className="font-bold text-[18px] text-gray-900 mb-4">
+          <h4 className="font-bold text-[18px] mb-4" style={{ color: colors.Police }}>
             Posts récents
           </h4>
           <div className="space-y-3">
             {authorRecentPosts.length > 0 ? (
               authorRecentPosts.slice(0, 2).map((authorPost) => (
                 <Link key={authorPost.id} href={`/community/posts/${authorPost.slug || authorPost.id}`}>
-                  <Card className="p-0 my-2.5 hover:shadow-md transition-shadow cursor-pointer">
+                  <Card className="p-0 my-2.5 bg-white hover:shadow-md transition-shadow cursor-pointer" style={{ border: `1px solid ${colors.Bordures}` }}>
                     <CardContent className="p-4">
-                      <h5 className="text-[13px] font-medium text-gray-900 mb-2 line-clamp-2">
+                      <h5 className="text-[13px] font-medium mb-2 line-clamp-2" style={{ color: colors.Police }}>
                         {authorPost.title}
                       </h5>
                       <div className="flex items-center gap-4 text-xs text-gray-500">
@@ -310,7 +312,7 @@ const AuthorSidebar = ({
                 </Link>
               ))
             ) : (
-              <Card>
+              <Card className="bg-white" style={{ border: `1px solid ${colors.Bordures}` }}>
                 <CardContent className="p-4 text-center">
                   <p className="text-sm text-gray-500">Aucun post récent</p>
                 </CardContent>
@@ -321,16 +323,16 @@ const AuthorSidebar = ({
 
         {/* Commentaires récents */}
         <div className="px-6 pb-6">
-          <h4 className="font-bold text-[18px] text-gray-900 mb-4">
+          <h4 className="font-bold text-[18px] mb-4" style={{ color: colors.Police }}>
             Commentaires récents
           </h4>
           <div className="space-y-3">
             {authorRecentComments.length > 0 ? (
               authorRecentComments.slice(0, 2).map((comment) => (
                 <Link key={comment.id} href={`/community/posts/${comment.post.slug || comment.post.id}`}>
-                  <Card className="p-0 my-2.5 hover:shadow-md transition-shadow cursor-pointer">
+                  <Card className="p-0 my-2.5 bg-white hover:shadow-md transition-shadow cursor-pointer" style={{ border: `1px solid ${colors.Bordures}` }}>
                     <CardContent className="p-4">
-                      <p className="text-sm text-gray-700 mb-2 line-clamp-2">
+                      <p className="text-sm mb-2 line-clamp-2" style={{ color: colors.Police }}>
                         {comment.content}
                       </p>
 
@@ -349,7 +351,7 @@ const AuthorSidebar = ({
                 </Link>
               ))
             ) : (
-              <Card>
+              <Card className="bg-white" style={{ border: `1px solid ${colors.Bordures}` }}>
                 <CardContent className="p-4 text-center">
                   <p className="text-sm text-gray-500">
                     Aucun commentaire récent

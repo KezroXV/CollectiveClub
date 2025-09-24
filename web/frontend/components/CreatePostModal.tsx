@@ -22,6 +22,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface CreatePostModalProps {
   isOpen: boolean;
@@ -35,6 +36,7 @@ export default function CreatePostModal({
   onPostCreated,
 }: CreatePostModalProps) {
   const { currentUser } = useCurrentUser();
+  const { colors } = useTheme();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -239,8 +241,11 @@ export default function CreatePostModal({
                 className={`w-full max-w-[230px] h-[60px] border-2 border-dashed rounded-lg cursor-pointer transition-all duration-200 flex items-center justify-center ${
                   isDragOver
                     ? "border-primary bg-primary/10"
-                    : "border-gray-300 hover:border-gray-400 hover:bg-gray-50"
+                    : "hover:bg-gray-50"
                 }`}
+                style={{
+                  borderColor: isDragOver ? undefined : colors.Bordures
+                }}
                 onClick={() => fileInputRef.current?.click()}
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}

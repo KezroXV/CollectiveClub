@@ -22,6 +22,7 @@ import { MoreHorizontal, Pin, PinOff, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface PostHeaderProps {
   author: {
@@ -203,6 +204,8 @@ const PostHeader = ({
       setIsDeleting(false);
     }
   };
+  const { colors } = useTheme();
+
   return (
     <>
       {/* Post Header */}
@@ -210,14 +213,20 @@ const PostHeader = ({
         <div className="flex items-start gap-3">
           <Avatar className="h-10 w-10">
             <AvatarImage src={author.image} />
-            <AvatarFallback className="bg-blue-500 text-white font-semibold text-sm">
+            <AvatarFallback
+              className="text-white font-semibold text-sm"
+              style={{ backgroundColor: colors.Posts }}
+            >
               {getInitials(author.name)}
             </AvatarFallback>
           </Avatar>
           <div>
             {/* Nom et date sur la même ligne */}
             <div className="flex items-center gap-2 mb-1">
-              <p className="font-semibold text-gray-900 text-sm">
+              <p
+                className="font-semibold text-sm"
+                style={{ color: colors.Police }}
+              >
                 {author.name}
               </p>
               <span className="text-xs text-gray-500">
@@ -286,14 +295,25 @@ const PostHeader = ({
       </div>
 
       {/* Post Title */}
-      <h1 className="text-[13px] font-semibold text-gray-900 mb-4">{title}</h1>
+      <h1
+        className="text-[13px] font-semibold mb-4"
+        style={{ color: colors.Police }}
+      >
+        {title}
+      </h1>
 
       {/* Categories badges - Style CategoriesSection */}
       <div className="flex gap-2">
         {category && (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-chart-4">
+          <div
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white"
+            style={{ border: `1px solid ${colors.Bordures}` }}
+          >
             <span className={`w-2.5 h-2.5 rounded-full ${category.color}`} />
-            <span className="text-[12px] font-medium text-gray-900">
+            <span
+              className="text-[12px] font-medium"
+              style={{ color: colors.Police }}
+            >
               {category.name}
             </span>
           </div>

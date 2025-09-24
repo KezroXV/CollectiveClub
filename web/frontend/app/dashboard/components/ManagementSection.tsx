@@ -10,6 +10,7 @@ interface ManagementSectionProps {
   onThemeClick: () => void;
   shopId: string;
   refreshTrigger?: number;
+  borderColor?: string;
 }
 
 export default function ManagementSection({
@@ -18,17 +19,22 @@ export default function ManagementSection({
   onThemeClick,
   shopId,
   refreshTrigger,
+  borderColor = "#E5E7EB",
 }: ManagementSectionProps) {
   return (
     <div className="col-span-8 space-y-6">
-      <Card className="hover:shadow-sm border-chart-4">
+      <Card 
+        className="hover:shadow-sm"
+        style={{ borderColor }}
+      >
         <CardContent className="">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Gérer</h3>
           <nav className="space-y-1">
             <Button
               variant="ghost"
               onClick={onClientsClick}
-              className="w-full text-md justify-start h-16  py-5 text-gray-600 bg-chart-6 border-chart-4 mb-4 border"
+              className="w-full text-md justify-start h-16 py-5 text-gray-600 bg-chart-6 mb-4 border"
+              style={{ borderColor }}
               icon={<Users className="h-4 w-4" />}
             >
               Clients
@@ -36,7 +42,8 @@ export default function ManagementSection({
             <Button
               variant="ghost"
               onClick={onPostsClick}
-              className="w-full text-md justify-start h-16  py-5 text-gray-600 bg-chart-6 border-chart-4 mb-4 border"
+              className="w-full text-md justify-start h-16 py-5 text-gray-600 bg-chart-6 mb-4 border"
+              style={{ borderColor }}
               icon={<FileText className="h-4 w-4" />}
             >
               Posts
@@ -44,7 +51,8 @@ export default function ManagementSection({
             <Button
               variant="ghost"
               onClick={onThemeClick}
-              className="w-full text-md justify-start h-16  py-5 text-gray-600 bg-chart-6 border-chart-4  border"
+              className="w-full text-md justify-start h-16 py-5 text-gray-600 bg-chart-6 border"
+              style={{ borderColor }}
               icon={<Palette className="h-4 w-4" />}
             >
               Thème
@@ -53,7 +61,7 @@ export default function ManagementSection({
         </CardContent>
       </Card>
 
-      <PopularPosts shopId={shopId} refreshTrigger={refreshTrigger} />
+      <PopularPosts shopId={shopId} refreshTrigger={refreshTrigger} borderColor={borderColor} />
     </div>
   );
 }
