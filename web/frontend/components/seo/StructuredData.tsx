@@ -3,7 +3,7 @@
  * Génère les données structurées JSON-LD pour SEO
  */
 
-import { generateArticleStructuredData, ArticleStructuredData } from '@/lib/seo';
+import { generateArticleStructuredData, generateCommentStructuredData, ArticleStructuredData, CommentStructuredData } from '@/lib/seo';
 
 interface PostStructuredDataProps {
   post: {
@@ -30,13 +30,25 @@ interface PostStructuredDataProps {
       reactions: number;
     };
   };
+  comments?: Array<{
+    id: string;
+    content: string;
+    createdAt: Date | string;
+    updatedAt?: Date | string;
+    author: {
+      id: string;
+      name: string;
+    };
+    parentId?: string;
+    reactions?: Array<{ type: string; count: number }>;
+  }>;
   baseUrl?: string;
 }
 
 /**
- * Composant pour les données structurées d'un article/post
+ * Composant pour les données structurées d'un article/post avec commentaires
  */
-export function PostStructuredData({ post, baseUrl }: PostStructuredDataProps) {
+export function PostStructuredData({ post, comments, baseUrl }: PostStructuredDataProps) {
   // Convertir les dates en objets Date si nécessaire
   const postForStructuredData = {
     ...post,
@@ -44,9 +56,17 @@ export function PostStructuredData({ post, baseUrl }: PostStructuredDataProps) {
     updatedAt: typeof post.updatedAt === 'string' ? new Date(post.updatedAt) : post.updatedAt,
   };
 
+  // Convertir les commentaires si fournis
+  const commentsForStructuredData = comments?.map(comment => ({
+    ...comment,
+    createdAt: typeof comment.createdAt === 'string' ? new Date(comment.createdAt) : comment.createdAt,
+    updatedAt: comment.updatedAt ? (typeof comment.updatedAt === 'string' ? new Date(comment.updatedAt) : comment.updatedAt) : undefined,
+  }));
+
   const structuredData = generateArticleStructuredData(
     postForStructuredData,
     post.shop,
+    commentsForStructuredData,
     baseUrl
   );
 
@@ -232,11 +252,11 @@ interface DiscussionStructuredDataProps {
   baseUrl?: string;
 }
 
-export function DiscussionStructuredData({ 
-  post, 
-  comments, 
-  shop, 
-  baseUrl 
+export function DiscussionStructuredData({
+  post,
+  comments,
+  shop,
+  baseUrl
 }: DiscussionStructuredDataProps) {
   const base = baseUrl || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
@@ -245,29 +265,30 @@ export function DiscussionStructuredData({
     '@type': 'DiscussionForumPosting',
     headline: post.title,
     url: `${base}/community/posts/${post.slug}`,
-    
+
     author: {
       '@type': 'Person',
       name: post.author.name,
       url: `${base}/community/users/${post.author.id}`
     },
 
-    datePublished: typeof post.createdAt === 'string' 
-      ? post.createdAt 
+    datePublished: typeof post.createdAt === 'string'
+      ? post.createdAt
       : post.createdAt.toISOString(),
 
     commentCount: post._count?.comments || comments.length,
 
-    comment: comments.slice(0, 10).map(comment => ({ // Limiter à 10 commentaires
+    comment: comments.slice(0, 10).map(comment => ({
       '@type': 'Comment',
-      text: comment.content.substring(0, 200), // Limiter la longueur
+      text: comment.content.substring(0, 300),
       author: {
         '@type': 'Person',
         name: comment.author.name
       },
-      datePublished: typeof comment.createdAt === 'string' 
-        ? comment.createdAt 
+      datePublished: typeof comment.createdAt === 'string'
+        ? comment.createdAt
         : comment.createdAt.toISOString(),
+      url: `${base}/community/posts/${post.slug}#comment-${comment.id}`,
     })),
 
     publisher: {
@@ -276,6 +297,50 @@ export function DiscussionStructuredData({
       url: `https://${shop.shopDomain}`
     }
   };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify(structuredData, null, 2)
+      }}
+    />
+  );
+}
+
+/**
+ * Composant pour données structurées d'un commentaire individuel
+ */
+interface CommentStructuredDataProps {
+  comment: {
+    id: string;
+    content: string;
+    createdAt: Date | string;
+    updatedAt?: Date | string;
+    author: {
+      id: string;
+      name: string;
+    };
+    parentId?: string;
+    reactions?: Array<{ type: string; count: number }>;
+  };
+  postSlug: string;
+  baseUrl?: string;
+}
+
+export function CommentStructuredDataComponent({ comment, postSlug, baseUrl }: CommentStructuredDataProps) {
+  // Convertir les dates si nécessaire
+  const commentForStructuredData = {
+    ...comment,
+    createdAt: typeof comment.createdAt === 'string' ? new Date(comment.createdAt) : comment.createdAt,
+    updatedAt: comment.updatedAt ? (typeof comment.updatedAt === 'string' ? new Date(comment.updatedAt) : comment.updatedAt) : undefined,
+  };
+
+  const structuredData = generateCommentStructuredData(
+    commentForStructuredData,
+    postSlug,
+    baseUrl
+  );
 
   return (
     <script

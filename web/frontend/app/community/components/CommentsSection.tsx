@@ -43,6 +43,8 @@ interface CommentsSectionProps {
   newComment: string;
   submittingComment: boolean;
   postId: string;
+  postSlug?: string;
+  postTitle?: string;
   onNewCommentChange: (value: string) => void;
   onSubmitComment: (e: React.FormEvent) => void;
   onCommentAdded: () => void;
@@ -59,6 +61,8 @@ const CommentsSection = ({
   newComment,
   submittingComment,
   postId,
+  postSlug,
+  postTitle,
   onNewCommentChange,
   onSubmitComment,
   onCommentAdded,
@@ -70,16 +74,21 @@ const CommentsSection = ({
   const { colors } = useTheme();
 
   return (
-    <div
+    <section
       className="mt-8 pt-6 border-t"
       style={{ borderTopColor: colors.Bordures }}
+      itemScope
+      itemType="https://schema.org/ItemList"
+      aria-label="Section des commentaires"
     >
       <h3
         className="text-xl font-bold mb-6"
         style={{ color: colors.Police }}
+        itemProp="name"
       >
         Commentaires ({commentsCount})
       </h3>
+      <meta itemProp="numberOfItems" content={commentsCount.toString()} />
 
       {/* Comment Form */}
       {currentUser && (
@@ -141,24 +150,32 @@ const CommentsSection = ({
       {/* Comments List */}
       <div className="space-y-4">
         {comments.length > 0 ? (
-          comments.map((comment) => (
+          comments.map((comment, index) => (
             <div
               key={comment.id}
               className="bg-white rounded-2xl hover:shadow-sm p-5 hover:shadow-md transition-shadow duration-200"
               style={{
                 border: `1px solid ${colors.Bordures}`
               }}
+              itemScope
+              itemType="https://schema.org/ListItem"
+              itemProp="itemListElement"
             >
-              <CommentItem
-                comment={comment}
-                currentUser={currentUser}
-                postId={postId}
-                getInitials={getInitials}
-                formatRelativeDate={formatRelativeDate}
-                onCommentAdded={onCommentAdded}
-                onCommentDeleted={onCommentDeleted}
-                onReactionUpdated={onReactionUpdated}
-              />
+              <meta itemProp="position" content={(index + 1).toString()} />
+              <div itemProp="item">
+                <CommentItem
+                  comment={comment}
+                  currentUser={currentUser}
+                  postId={postId}
+                  postSlug={postSlug}
+                  postTitle={postTitle}
+                  getInitials={getInitials}
+                  formatRelativeDate={formatRelativeDate}
+                  onCommentAdded={onCommentAdded}
+                  onCommentDeleted={onCommentDeleted}
+                  onReactionUpdated={onReactionUpdated}
+                />
+              </div>
             </div>
           ))
         ) : (
@@ -177,7 +194,7 @@ const CommentsSection = ({
           </div>
         )}
       </div>
-    </div>
+    </section>
   );
 };
 

@@ -20,6 +20,7 @@ export default async function PostBySlugPage({ params }: PageProps) {
 
   // Récupération des données côté serveur pour le SEO
   let post = null;
+  let comments = null;
   try {
     post = await prisma.post.findFirst({
       where: {
@@ -59,14 +60,55 @@ export default async function PostBySlugPage({ params }: PageProps) {
         },
       },
     });
+
+    // Récupérer les premiers commentaires pour SEO (limités à 5)
+    if (post) {
+      comments = await prisma.comment.findMany({
+        where: {
+          postId: post.id,
+          parentId: null, // Seulement les commentaires de premier niveau
+        },
+        include: {
+          author: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          reactions: {
+            select: {
+              type: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'asc',
+        },
+        take: 5, // Limiter pour SEO
+      });
+
+      // Transformer les réactions pour correspondre au format attendu
+      comments = comments.map(comment => ({
+        ...comment,
+        reactions: comment.reactions.reduce((acc: Array<{ type: string; count: number }>, reaction) => {
+          const existing = acc.find(r => r.type === reaction.type);
+          if (existing) {
+            existing.count++;
+          } else {
+            acc.push({ type: reaction.type, count: 1 });
+          }
+          return acc;
+        }, []),
+      }));
+    }
   } catch (error) {
     console.error("Error fetching post for SSR:", error);
   }
 
   return (
     <>
-      {/* Données structurées SEO - côté serveur */}
-      {post && <PostStructuredData post={post} />}
+      {/* Données structurées SEO - côté serveur avec commentaires */}
+      {post && <PostStructuredData post={post} comments={comments || []} />}
 
       {/* Composant client pour l'interactivité */}
       <PostClient />

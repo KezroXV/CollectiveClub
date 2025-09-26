@@ -103,7 +103,12 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
   // Générer les métadonnées SEO
   const title = generateSEOTitle(post.title, post.shop.shopName, post.category?.name);
-  const description = truncateForSEO(post.content, 160);
+  const baseDescription = truncateForSEO(post.content, 120);
+  const commentsInfo = post._count.comments > 0
+    ? ` | ${post._count.comments} commentaire${post._count.comments > 1 ? 's' : ''}`
+    : '';
+  const description = baseDescription + commentsInfo;
+
   const keywords = generateSEOKeywords(
     post.title,
     post.content,
@@ -139,6 +144,11 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       ],
       siteName: `${post.shop.shopName} Community`,
       locale: 'fr_FR',
+      // Ajouter des informations spécifiques pour les commentaires
+      ...(post._count.comments > 0 && {
+        // Open Graph permet d'ajouter des métadonnées custom
+        'article:comment_count': post._count.comments.toString(),
+      }),
     },
 
     // Twitter Card
@@ -172,7 +182,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
     // Métadonnées additionnelles
     category: post.category?.name,
-    
+
     // JSON-LD sera ajouté via le composant StructuredData
     other: {
       'article:author': post.author.name,
@@ -180,6 +190,10 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       'article:published_time': post.createdAt.toISOString(),
       'article:modified_time': post.updatedAt.toISOString(),
       'article:tag': keywords.join(', '),
+      'article:comment_count': post._count.comments.toString(),
+      // Ajout de métadonnées pour les interactions sociales
+      'article:reaction_count': post._count.reactions.toString(),
+      'og:engagement': (post._count.comments + post._count.reactions).toString(),
     },
   };
 }

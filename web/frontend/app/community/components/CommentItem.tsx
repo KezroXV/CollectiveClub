@@ -16,6 +16,7 @@ import {
 import { Heart, MessageCircle, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "@/contexts/ThemeContext";
+import { CommentShare } from "@/components/seo/CommentShare";
 
 type ReactionType = "LIKE" | "LOVE" | "LAUGH" | "WOW" | "APPLAUSE";
 
@@ -52,6 +53,8 @@ interface CommentItemProps {
     role?: string;
   } | null;
   postId: string;
+  postSlug?: string;
+  postTitle?: string;
   getInitials: (name: string) => string;
   formatRelativeDate: (dateString: string) => string;
   onCommentAdded: () => void;
@@ -72,6 +75,8 @@ const CommentItem = ({
   comment,
   currentUser,
   postId,
+  postSlug,
+  postTitle,
   getInitials,
   formatRelativeDate,
   onCommentAdded,
@@ -209,8 +214,11 @@ const CommentItem = ({
 
   return (
     <div
+      id={`comment-${comment.id}`}
       className={`${isReply ? "ml-4 border-l-2 pl-4" : ""}`}
       style={isReply ? { borderLeftColor: colors.Bordures } : {}}
+      itemScope
+      itemType="https://schema.org/Comment"
     >
       <div className="flex gap-4">
         <Avatar className="h-10 w-10 flex-shrink-0">
@@ -229,11 +237,19 @@ const CommentItem = ({
               <span
                 className="font-bold text-base"
                 style={{ color: colors.Police }}
+                itemProp="author"
+                itemScope
+                itemType="https://schema.org/Person"
               >
-                {comment.author.name}
+                <span itemProp="name">{comment.author.name}</span>
               </span>
               <span className="text-xs text-gray-400 font-medium">
-                • {formatRelativeDate(comment.createdAt)}
+                • <time
+                    itemProp="dateCreated"
+                    dateTime={new Date(comment.createdAt).toISOString()}
+                  >
+                    {formatRelativeDate(comment.createdAt)}
+                  </time>
               </span>
             </div>
             <p className="text-xs text-gray-500 font-medium">Membre</p>
@@ -243,6 +259,7 @@ const CommentItem = ({
             <p
               className="text-sm leading-relaxed"
               style={{ color: colors.Police }}
+              itemProp="text"
             >
               {comment.content}
             </p>
@@ -344,6 +361,17 @@ const CommentItem = ({
                 <MessageCircle className="h-4 w-4" />
                 Répondre
               </button>
+            )}
+
+            {/* Bouton de partage */}
+            {postSlug && postTitle && (
+              <CommentShare
+                commentId={comment.id}
+                postSlug={postSlug}
+                postTitle={postTitle}
+                commentText={comment.content}
+                authorName={comment.author.name}
+              />
             )}
 
             {/* Bouton de suppression */}
@@ -451,6 +479,8 @@ const CommentItem = ({
                   comment={reply}
                   currentUser={currentUser}
                   postId={postId}
+                  postSlug={postSlug}
+                  postTitle={postTitle}
                   getInitials={getInitials}
                   formatRelativeDate={formatRelativeDate}
                   onCommentAdded={onCommentAdded}

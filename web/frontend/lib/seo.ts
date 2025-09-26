@@ -151,6 +151,28 @@ export function generateCanonicalURL(slug: string, baseUrl?: string): string {
 }
 
 /**
+ * Génère une URL pour un commentaire spécifique
+ * @param postSlug - Slug du post
+ * @param commentId - ID du commentaire
+ * @param baseUrl - URL de base du site
+ * @returns URL complète vers le commentaire
+ */
+export function generateCommentURL(postSlug: string, commentId: string, baseUrl?: string): string {
+  const base = baseUrl || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  return `${base}/community/posts/${postSlug}#comment-${commentId}`;
+}
+
+/**
+ * Extrait l'ID d'un commentaire depuis une URL avec ancre
+ * @param url - URL contenant l'ancre du commentaire
+ * @returns ID du commentaire ou null
+ */
+export function extractCommentIdFromURL(url: string): string | null {
+  const match = url.match(/#comment-(.+)$/);
+  return match ? match[1] : null;
+}
+
+/**
  * Génère une URL d'image Open Graph par défaut
  * @param title - Titre pour l'image
  * @param baseUrl - URL de base
@@ -253,6 +275,7 @@ export interface ArticleStructuredData {
   };
   articleSection?: string;
   commentCount?: number;
+  comment?: CommentStructuredData[];
   interactionStatistic?: Array<{
     '@type': 'InteractionCounter';
     interactionType: string;
@@ -260,8 +283,76 @@ export interface ArticleStructuredData {
   }>;
 }
 
+export interface CommentStructuredData {
+  '@context'?: 'https://schema.org';
+  '@type': 'Comment';
+  text: string;
+  dateCreated: string;
+  dateModified?: string;
+  author: {
+    '@type': 'Person';
+    name: string;
+    url?: string;
+  };
+  url?: string;
+  parentItem?: {
+    '@type': 'Comment' | 'Article';
+    '@id': string;
+  };
+  upvoteCount?: number;
+  downvoteCount?: number;
+}
+
 /**
- * Génère les données structurées Schema.org pour un article
+ * Génère les données structurées Schema.org pour un commentaire
+ */
+export function generateCommentStructuredData(
+  comment: {
+    id: string;
+    content: string;
+    createdAt: Date;
+    updatedAt?: Date;
+    author: { name: string; id: string };
+    parentId?: string;
+    reactions?: Array<{ type: string; count: number }>;
+  },
+  postSlug: string,
+  baseUrl?: string
+): CommentStructuredData {
+  const base = baseUrl || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const postUrl = generateCanonicalURL(postSlug, base);
+
+  const totalReactions = comment.reactions?.reduce((sum, r) => sum + r.count, 0) || 0;
+
+  return {
+    '@type': 'Comment',
+    text: truncateForSEO(comment.content, 300),
+    dateCreated: comment.createdAt.toISOString(),
+    dateModified: comment.updatedAt?.toISOString(),
+
+    author: {
+      '@type': 'Person',
+      name: comment.author.name,
+      url: `${base}/community/users/${comment.author.id}`
+    },
+
+    url: `${postUrl}#comment-${comment.id}`,
+
+    parentItem: comment.parentId ? {
+      '@type': 'Comment',
+      '@id': `${postUrl}#comment-${comment.parentId}`
+    } : {
+      '@type': 'Article',
+      '@id': postUrl
+    },
+
+    upvoteCount: totalReactions,
+    downvoteCount: 0
+  };
+}
+
+/**
+ * Génère les données structurées Schema.org pour un article avec commentaires
  */
 export function generateArticleStructuredData(
   post: {
@@ -276,11 +367,20 @@ export function generateArticleStructuredData(
     _count?: { comments: number; reactions: number };
   },
   shop: { shopName: string; shopDomain: string },
+  comments?: Array<{
+    id: string;
+    content: string;
+    createdAt: Date;
+    updatedAt?: Date;
+    author: { name: string; id: string };
+    parentId?: string;
+    reactions?: Array<{ type: string; count: number }>;
+  }>,
   baseUrl?: string
 ): ArticleStructuredData {
   const base = baseUrl || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-  
-  return {
+
+  const structuredData: ArticleStructuredData = {
     '@context': 'https://schema.org',
     '@type': 'Article',
     headline: post.title,
@@ -288,13 +388,13 @@ export function generateArticleStructuredData(
     image: post.imageUrl ? [post.imageUrl] : undefined,
     datePublished: post.createdAt.toISOString(),
     dateModified: post.updatedAt.toISOString(),
-    
+
     author: {
       '@type': 'Person',
       name: post.author.name,
       url: `${base}/community/users/${post.author.id}`
     },
-    
+
     publisher: {
       '@type': 'Organization',
       name: shop.shopName,
@@ -304,15 +404,15 @@ export function generateArticleStructuredData(
         url: `${base}/logo.png` // TODO: Logo de la boutique
       }
     },
-    
+
     mainEntityOfPage: {
       '@type': 'WebPage',
       '@id': generateCanonicalURL(post.slug, base)
     },
-    
+
     articleSection: post.category?.name,
     commentCount: post._count?.comments,
-    
+
     interactionStatistic: [
       {
         '@type': 'InteractionCounter',
@@ -320,10 +420,19 @@ export function generateArticleStructuredData(
         userInteractionCount: post._count?.comments || 0
       },
       {
-        '@type': 'InteractionCounter', 
+        '@type': 'InteractionCounter',
         interactionType: 'https://schema.org/LikeAction',
         userInteractionCount: post._count?.reactions || 0
       }
     ]
   };
+
+  // Ajouter les commentaires si fournis (limiter à 5 pour SEO)
+  if (comments && comments.length > 0) {
+    structuredData.comment = comments.slice(0, 5).map(comment =>
+      generateCommentStructuredData(comment, post.slug, base)
+    );
+  }
+
+  return structuredData;
 }
