@@ -83,7 +83,12 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
  * Vérifie si un utilisateur a une permission spécifique
  */
 export function hasPermission(userRole: UserRole, permission: Permission): boolean {
-  return ROLE_PERMISSIONS[userRole].includes(permission);
+  const rolePermissions = ROLE_PERMISSIONS[userRole];
+  if (!rolePermissions) {
+    // Si le rôle n'existe pas dans ROLE_PERMISSIONS (rôle personnalisé), retourner false
+    return false;
+  }
+  return rolePermissions.includes(permission);
 }
 
 /**
@@ -211,6 +216,83 @@ export function getRoleColor(role: UserRole): string {
     default:
       return 'bg-gray-100 text-gray-800 border-gray-200';
   }
+}
+
+/**
+ * Obtient la couleur d'affichage d'un rôle personnalisé
+ */
+export function getCustomRoleColor(customRoleColor: string): string {
+  // Conversion de couleur hexadécimale vers des classes CSS
+  return `text-white border-gray-200`;
+}
+
+/**
+ * Obtient le nom affiché d'un utilisateur (rôle de base + rôle personnalisé si présent)
+ */
+export function getUserDisplayRole(
+  baseRole: UserRole,
+  customRoleName?: string
+): string {
+  const baseLabel = getRoleLabel(baseRole);
+
+  if (customRoleName) {
+    return `${baseLabel} • ${customRoleName}`;
+  }
+
+  return baseLabel;
+}
+
+/**
+ * Vérifie si un utilisateur avec un rôle personnalisé a une permission
+ */
+export function hasCustomRolePermission(
+  customRolePermissions: string[],
+  permission: Permission
+): boolean {
+  return customRolePermissions.includes(permission);
+}
+
+/**
+ * Vérifie si un utilisateur a une permission (rôle de base + rôle personnalisé)
+ */
+export function hasUserPermission(
+  baseRole: UserRole,
+  customRolePermissions: string[] | null,
+  permission: Permission
+): boolean {
+  // D'abord vérifier les permissions du rôle de base
+  if (hasPermission(baseRole, permission)) {
+    return true;
+  }
+
+  // Ensuite vérifier les permissions du rôle personnalisé si il existe
+  if (customRolePermissions && customRolePermissions.length > 0) {
+    return hasCustomRolePermission(customRolePermissions, permission);
+  }
+
+  return false;
+}
+
+/**
+ * Obtient toutes les permissions d'un utilisateur (base + personnalisées)
+ */
+export function getAllUserPermissions(
+  baseRole: UserRole,
+  customRolePermissions: string[] | null
+): Permission[] {
+  const basePermissions = ROLE_PERMISSIONS[baseRole];
+
+  if (!customRolePermissions || customRolePermissions.length === 0) {
+    return basePermissions;
+  }
+
+  // Combiner les permissions de base avec les permissions personnalisées
+  const allPermissions = new Set([
+    ...basePermissions,
+    ...customRolePermissions.filter(perm => Object.values(Permission).includes(perm as Permission))
+  ]);
+
+  return Array.from(allPermissions) as Permission[];
 }
 
 /**

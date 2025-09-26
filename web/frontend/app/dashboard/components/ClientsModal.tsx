@@ -35,6 +35,8 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { useShop } from "@/lib/hooks/useShop";
+import { usePermissions } from "@/lib/hooks/usePermissions";
 
 interface MemberData {
   id: string;
@@ -47,6 +49,22 @@ interface MemberData {
   postsCount: number;
   commentsCount: number;
   reactionsCount: number;
+  roleInfo?: {
+    id: string;
+    name: string;
+    displayName: string;
+    color: string;
+    isDefault: boolean;
+  };
+}
+
+interface Role {
+  id: string;
+  name: string;
+  displayName: string;
+  color: string;
+  permissions: string[];
+  isDefault: boolean;
 }
 
 interface PaginatedResponse {
@@ -71,6 +89,8 @@ export default function ClientsModal({
   userId,
   userRole,
 }: ClientsModalProps) {
+  const { shopDomain } = useShop();
+  const { canBanUsers, canManageUsers, canChangeRoles } = usePermissions();
   const [members, setMembers] = useState<MemberData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -90,8 +110,24 @@ export default function ClientsModal({
   } | null>(null);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [roleChangeUserId, setRoleChangeUserId] = useState<string | null>(null);
+  const [availableRoles, setAvailableRoles] = useState<Role[]>([]);
 
   const ITEMS_PER_PAGE = 10;
+
+  // Charger tous les rôles disponibles
+  const loadAvailableRoles = async () => {
+    if (!shopDomain) return;
+
+    try {
+      const response = await fetch(`/api/roles?shop=${shopDomain}`);
+      if (response.ok) {
+        const roles = await response.json();
+        setAvailableRoles(roles);
+      }
+    } catch (error) {
+      console.error("Error loading roles:", error);
+    }
+  };
 
   // Debounce search query
   useEffect(() => {
@@ -104,7 +140,7 @@ export default function ClientsModal({
   }, [searchQuery]);
 
   const fetchMembers = async (page: number = 1, search: string = "") => {
-    if (!isOpen) return;
+    if (!isOpen || !shopDomain) return;
 
     try {
       setIsLoading(true);
@@ -114,7 +150,7 @@ export default function ClientsModal({
       params.append("limit", ITEMS_PER_PAGE.toString());
       if (search.trim()) params.append("search", search.trim());
 
-      const response = await fetch(`/api/members?${params.toString()}`, {
+      const response = await fetch(`/api/members?${params.toString()}&shop=${shopDomain}`, {
         method: "GET",
         credentials: "include",
       });
@@ -176,14 +212,14 @@ export default function ClientsModal({
   };
 
   const handleToggleBan = async (memberId: string, isBanned: boolean) => {
-    if (!userId || !["ADMIN", "MODERATOR"].includes(userRole || "")) return;
+    if (!userId || !canBanUsers()) return;
 
     try {
       setBanningUserId(memberId);
       const endpoint = `/api/users/${memberId}/ban`;
       const method = isBanned ? "DELETE" : "POST";
 
-      const response = await fetch(endpoint, {
+      const response = await fetch(`${endpoint}?shop=${shopDomain}`, {
         method,
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -212,12 +248,12 @@ export default function ClientsModal({
   };
 
   const handleDeleteUser = async (memberId: string) => {
-    if (!userId || !["ADMIN"].includes(userRole || "")) return; // Seulement les ADMIN
+    if (!userId || !canManageUsers()) return; // Seulement ceux qui peuvent gérer les utilisateurs
 
     try {
       setDeletingUserId(memberId);
 
-      const response = await fetch(`/api/users/${memberId}`, {
+      const response = await fetch(`/api/users/${memberId}?shop=${shopDomain}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -243,20 +279,18 @@ export default function ClientsModal({
     }
   };
 
-  const handleChangeRole = async (memberId: string, newRole: string) => {
-    if (!userId || userRole !== "ADMIN") return; // Seulement les ADMIN
+  const handleChangeRole = async (memberId: string, newRoleName: string) => {
+    if (!userId || !canChangeRoles()) return; // Seulement ceux qui peuvent changer les rôles
 
     try {
       setRoleChangeUserId(memberId);
 
-      const response = await fetch(`/api/users/${memberId}`, {
+      const response = await fetch(`/api/users/${memberId}/role-assignment?userId=${userId}&shop=${shopDomain}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          userId,
-          userRole,
-          newRole,
+          roleName: newRoleName,
         }),
       });
 
@@ -267,10 +301,22 @@ export default function ClientsModal({
         );
       }
 
+      const result = await response.json();
+
       // Mettre à jour le membre dans la liste locale
       setMembers((prev) =>
         prev.map((member) =>
-          member.id === memberId ? { ...member, role: newRole } : member
+          member.id === memberId ? {
+            ...member,
+            role: newRoleName,
+            roleInfo: result.roleInfo ? {
+              id: result.roleInfo.id,
+              name: result.roleInfo.name,
+              displayName: result.roleInfo.displayName,
+              color: result.roleInfo.color,
+              isDefault: result.roleInfo.isDefault
+            } : undefined
+          } : member
         )
       );
     } catch (error) {
@@ -280,11 +326,13 @@ export default function ClientsModal({
     }
   };
 
+
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && shopDomain) {
       fetchMembers(currentPage, debouncedSearch);
+      loadAvailableRoles();
     }
-  }, [isOpen, userId, debouncedSearch, currentPage]);
+  }, [isOpen, userId, debouncedSearch, currentPage, shopDomain]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -365,13 +413,22 @@ export default function ClientsModal({
                             </p>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
-                            <Badge
-                              className={`text-xs ${getRoleBadgeColor(
-                                member.role
-                              )}`}
-                            >
-                              {getRoleLabel(member.role)}
-                            </Badge>
+                            {member.roleInfo && !member.roleInfo.isDefault ? (
+                              <Badge
+                                className="text-xs text-white border-gray-200"
+                                style={{ backgroundColor: member.roleInfo.color }}
+                              >
+                                {member.roleInfo.displayName}
+                              </Badge>
+                            ) : (
+                              <Badge
+                                className={`text-xs ${getRoleBadgeColor(
+                                  member.role
+                                )}`}
+                              >
+                                {getRoleLabel(member.role)}
+                              </Badge>
+                            )}
                             {member.isBanned ? (
                               <Badge
                                 variant="destructive"
@@ -420,7 +477,7 @@ export default function ClientsModal({
                       </div>
 
                       {/* Actions de modération */}
-                      {["ADMIN", "MODERATOR"].includes(userRole || "") &&
+                      {canBanUsers() &&
                         member.role !== "ADMIN" && (
                           <div className="flex items-center gap-2 ml-4">
                             {/* Menu Actions */}
@@ -477,8 +534,8 @@ export default function ClientsModal({
                                   l&apos;utilisateur
                                 </DropdownMenuItem>
 
-                                {/* Actions réservées aux ADMIN */}
-                                {userRole === "ADMIN" && (
+                                {/* Actions réservées aux utilisateurs avec permissions */}
+                                {canChangeRoles() && (
                                   <>
                                     <DropdownMenuSeparator />
 
@@ -489,26 +546,21 @@ export default function ClientsModal({
                                     >
                                       Changer le rôle
                                     </DropdownMenuItem>
-                                    {["MEMBER", "MODERATOR", "ADMIN"]
-                                      .filter((role) => role !== member.role)
+
+                                    {/* Tous les rôles disponibles */}
+                                    {availableRoles
+                                      .filter((role) => role.name !== member.role)
                                       .map((role) => (
                                         <DropdownMenuItem
-                                          key={role}
-                                          onClick={() =>
-                                            handleChangeRole(member.id, role)
-                                          }
+                                          key={role.id}
+                                          onClick={() => handleChangeRole(member.id, role.name)}
                                           className="flex items-center gap-2"
                                         >
                                           <span
-                                            className={`w-2 h-2 rounded-full ${
-                                              role === "ADMIN"
-                                                ? "bg-red-500"
-                                                : role === "MODERATOR"
-                                                ? "bg-blue-500"
-                                                : "bg-green-500"
-                                            }`}
+                                            className="w-2 h-2 rounded-full"
+                                            style={{ backgroundColor: role.color }}
                                           />
-                                          {getRoleLabel(role)}
+                                          {role.displayName}
                                         </DropdownMenuItem>
                                       ))}
 

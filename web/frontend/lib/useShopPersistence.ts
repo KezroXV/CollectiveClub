@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { logger } from '@/lib/logger';
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { logger } from "@/lib/logger";
 
 export function useShopPersistence() {
   const searchParams = useSearchParams();
@@ -10,19 +10,17 @@ export function useShopPersistence() {
 
   useEffect(() => {
     // Récupérer le shop depuis l'URL
-    const shopFromUrl = searchParams.get('shop');
-    
+    const shopFromUrl = searchParams.get("shop");
+
     if (shopFromUrl) {
       // Sauvegarder dans localStorage
-      localStorage.setItem('shopDomain', shopFromUrl);
+      localStorage.setItem("shopDomain", shopFromUrl);
       setCurrentShop(shopFromUrl);
-      logger.debug('ShopDomain sauvegardé:', { shop: shopFromUrl.substring(0, 10) + '...' });
     } else {
       // Récupérer depuis localStorage
-      const shopFromStorage = localStorage.getItem('shopDomain');
+      const shopFromStorage = localStorage.getItem("shopDomain");
       if (shopFromStorage) {
         setCurrentShop(shopFromStorage);
-        logger.debug('ShopDomain récupéré du localStorage:', { shop: shopFromStorage.substring(0, 10) + '...' });
       }
     }
   }, [searchParams]);
@@ -30,8 +28,8 @@ export function useShopPersistence() {
   // Function pour ajouter le shop à n'importe quel lien
   const addShopToUrl = (url: string): string => {
     if (!currentShop) return url;
-    
-    const separator = url.includes('?') ? '&' : '?';
+
+    const separator = url.includes("?") ? "&" : "?";
     return `${url}${separator}shop=${currentShop}`;
   };
 

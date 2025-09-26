@@ -1,12 +1,12 @@
-import { NextAuthOptions } from "next-auth"
-import { PrismaAdapter } from "@next-auth/prisma-adapter"
-import GoogleProvider from "next-auth/providers/google"
-import { prisma } from "@/lib/prisma"
-import { getCurrentShopId } from "@/lib/shop-context"
+import { NextAuthOptions } from "next-auth";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import GoogleProvider from "next-auth/providers/google";
+import { prisma } from "@/lib/prisma";
+import { getCurrentShopId } from "@/lib/shop-context";
 
 export const authOptions: NextAuthOptions = {
   // ✅ Ne pas utiliser PrismaAdapter pour multi-tenant - gérer manuellement
-  
+
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -16,16 +16,15 @@ export const authOptions: NextAuthOptions = {
 
   callbacks: {
     async signIn({ user, account }) {
-      if (!user.email || account?.provider !== 'google') return false;
-      
+      if (!user.email || account?.provider !== "google") return false;
+
       // Récupérer le shopId OBLIGATOIRE
       const shopId = await getCurrentShopId();
-      
+
       if (!shopId) {
-        console.error('🚫 SignIn blocked: No shopId found');
         return false; // ❌ BLOQUER si pas de shopId
       }
-      
+
       return true;
     },
 
@@ -37,18 +36,19 @@ export const authOptions: NextAuthOptions = {
         session.user.role = (token.role as any) || "MEMBER";
         session.user.isShopOwner = (token.isShopOwner as boolean) || false;
         session.user.shopId = (token.shopId as string)!; // ✅ OBLIGATOIRE
+        session.user.roleInfo = token.roleInfo as any;
       }
       return session;
     },
 
     async jwt({ token, user, account }) {
       // Premier sign-in avec Google
-      if (user && account?.provider === 'google') {
+      if (user && account?.provider === "google") {
         try {
           const shopId = await getCurrentShopId();
-          
+
           if (!shopId) {
-            throw new Error('No shopId available during authentication');
+            throw new Error("No shopId available during authentication");
           }
 
           // Créer ou récupérer l'account pour cette boutique
@@ -56,30 +56,30 @@ export const authOptions: NextAuthOptions = {
             where: {
               provider: account.provider,
               providerAccountId: account.providerAccountId,
-              shopId: shopId
-            }
+              shopId: shopId,
+            },
           });
 
           // Vérifier si l'utilisateur existe déjà dans cette boutique
           let shopUser = await prisma.user.findFirst({
             where: {
               email: user.email!,
-              shopId: shopId
-            }
+              shopId: shopId,
+            },
           });
-          
+
           if (!shopUser) {
             // Vérifier si un admin existe déjà
             const existingAdmin = await prisma.user.findFirst({
               where: {
                 shopId: shopId,
-                role: 'ADMIN'
-              }
+                isShopOwner: true,
+              },
             });
-            
-            const role = !existingAdmin ? 'ADMIN' : 'MEMBER';
+
+            const role = !existingAdmin ? "ADMIN" : "MEMBER";
             const isShopOwner = !existingAdmin;
-            
+
             // Créer nouvel utilisateur avec shopId OBLIGATOIRE
             shopUser = await prisma.user.create({
               data: {
@@ -88,15 +88,15 @@ export const authOptions: NextAuthOptions = {
                 image: user.image,
                 shopId: shopId, // ✅ OBLIGATOIRE
                 role: role,
-                isShopOwner: isShopOwner
-              }
+                isShopOwner: isShopOwner,
+              },
             });
 
             // ✅ Mettre à jour l'ownerId du shop si c'est le premier admin
-            if (role === 'ADMIN' && isShopOwner) {
+            if (role === "ADMIN" && isShopOwner) {
               await prisma.shop.update({
                 where: { id: shopId },
-                data: { ownerId: shopUser.id }
+                data: { ownerId: shopUser.id },
               });
             }
           }
@@ -116,77 +116,89 @@ export const authOptions: NextAuthOptions = {
                 scope: account.scope,
                 id_token: account.id_token,
                 session_state: account.session_state,
-                shopId: shopId
-              }
+                shopId: shopId,
+              },
             });
           }
-          
+
           // Mettre à jour le token avec les infos de cet utilisateur
           token.sub = shopUser.id;
           token.role = shopUser.role;
           token.isShopOwner = shopUser.isShopOwner;
           token.shopId = shopUser.shopId;
         } catch (error) {
-          console.error('🚫 JWT Error:', error);
+          console.error("🚫 JWT Error:", error);
           return false; // ❌ BLOQUER l'auth si erreur
         }
       } else if (token.sub) {
         // Connexions suivantes
         const dbUser = await prisma.user.findUnique({
           where: { id: token.sub },
-          select: { role: true, isShopOwner: true, shopId: true, email: true, name: true, image: true }
+          select: {
+            role: true,
+            isShopOwner: true,
+            shopId: true,
+            email: true,
+            name: true,
+            image: true,
+            roleInfo: true,
+          },
         });
-        
+
         if (dbUser) {
           token.role = dbUser.role;
           token.isShopOwner = dbUser.isShopOwner;
           token.shopId = dbUser.shopId;
           token.name = dbUser.name;
           token.picture = dbUser.image;
+          token.roleInfo = dbUser.roleInfo;
         } else {
           return false; // ❌ BLOQUER si utilisateur n'existe plus
         }
       }
-      
+
       return token;
-    }
+    },
   },
 
   pages: {
-    signIn: '/auth/signin',
-    error: '/auth/error',
+    signIn: "/auth/signin",
+    error: "/auth/error",
   },
 
   session: {
     strategy: "jwt", // Changer pour JWT temporairement
     maxAge: 30 * 24 * 60 * 60, // 30 jours
   },
-  
-  debug: false
-}
 
-export async function verifyAdminRole(userId: string, shopId?: string): Promise<{ isAdmin: boolean; error?: string }> {
+  debug: false,
+};
+
+export async function verifyAdminRole(
+  userId: string,
+  shopId?: string
+): Promise<{ isAdmin: boolean; error?: string }> {
   try {
     if (!userId) {
       return { isAdmin: false, error: "userId is required" };
     }
 
     let user;
-    
+
     // Si shopId fourni, chercher dans la boutique spécifique
     if (shopId) {
       user = await prisma.user.findFirst({
-        where: { 
+        where: {
           id: userId,
-          shopId: shopId 
+          shopId: shopId,
         },
-        select: { id: true, role: true, email: true, shopId: true }
+        select: { id: true, role: true, email: true, shopId: true },
       });
     } else {
       // Fallback: chercher par ID uniquement
       user = await prisma.user.findUnique({
         where: { id: userId },
-        select: { id: true, role: true, email: true, shopId: true }
+        select: { id: true, role: true, email: true, shopId: true },
       });
     }
 
@@ -194,7 +206,7 @@ export async function verifyAdminRole(userId: string, shopId?: string): Promise<
       return { isAdmin: false, error: "User not found" };
     }
 
-    if (user.role !== 'ADMIN') {
+    if (user.role !== "ADMIN") {
       return { isAdmin: false, error: "Admin privileges required" };
     }
 
@@ -206,11 +218,11 @@ export async function verifyAdminRole(userId: string, shopId?: string): Promise<
 
 export async function getShopAdmin(shopId: string) {
   let adminUser = await prisma.user.findFirst({
-    where: { 
+    where: {
       shopId: shopId,
-      role: 'ADMIN' 
+      role: "ADMIN",
     },
-    select: { id: true, role: true, email: true, shopId: true, name: true }
+    select: { id: true, role: true, email: true, shopId: true, name: true },
   });
 
   // Si aucun admin n'existe, créer un admin automatiquement
@@ -218,7 +230,7 @@ export async function getShopAdmin(shopId: string) {
     try {
       const shop = await prisma.shop.findUnique({
         where: { id: shopId },
-        select: { shopDomain: true, shopName: true }
+        select: { shopDomain: true, shopName: true },
       });
 
       if (!shop) {
@@ -229,13 +241,12 @@ export async function getShopAdmin(shopId: string) {
         data: {
           email: `admin@${shop.shopDomain}`,
           name: `Admin ${shop.shopName}`,
-          role: 'ADMIN',
+          role: "ADMIN",
           shopId: shopId,
           shopDomain: shop.shopDomain,
         },
-        select: { id: true, role: true, email: true, shopId: true, name: true }
+        select: { id: true, role: true, email: true, shopId: true, name: true },
       });
-
     } catch (error) {
       throw new Error("No admin user found and failed to create one");
     }
@@ -244,46 +255,49 @@ export async function getShopAdmin(shopId: string) {
   return adminUser;
 }
 
-export async function resolveActingAdmin(providedUserId: string | null | undefined, shopId: string): Promise<string> {
+export async function resolveActingAdmin(
+  providedUserId: string | null | undefined,
+  shopId: string
+): Promise<string> {
   let actingUserId: string | null = providedUserId || null;
-  
+
   if (actingUserId) {
     // Vérifier si l'utilisateur fourni existe et est admin dans cette boutique
     const user = await prisma.user.findFirst({
       where: { id: actingUserId, shopId },
       select: { id: true, role: true },
     });
-    
+
     // Si l'utilisateur n'existe pas ou n'est pas admin, chercher un admin existant
     if (!user || user.role !== "ADMIN") {
       const adminUser = await prisma.user.findFirst({
-        where: { 
+        where: {
           shopId: shopId,
-          role: 'ADMIN' 
+          role: "ADMIN",
         },
-        select: { id: true }
+        select: { id: true },
       });
-      
+
       if (!adminUser) {
         throw new Error("No admin user found in this shop");
       }
-      
+
       actingUserId = adminUser.id;
     }
   } else {
     // Si aucun userId fourni, chercher un admin existant
     const adminUser = await prisma.user.findFirst({
-      where: { 
+      where: {
         shopId: shopId,
-        role: 'ADMIN' 
+        role: "ADMIN",
       },
-      select: { id: true }
+      select: { id: true },
     });
-    
+
     if (!adminUser) {
       throw new Error("No admin user found in this shop");
     }
-    
+
     actingUserId = adminUser.id;
   }
 
@@ -297,18 +311,18 @@ export async function resolveActingAdmin(providedUserId: string | null | undefin
 export async function requireAdmin(userId: string, shopId?: string) {
   // 🔒 SÉCURITÉ: Validation stricte - ne pas auto-créer d'admin
   // Si l'userId est invalide, rejeter immédiatement
-  if (!userId || typeof userId !== 'string' || userId.length < 10) {
+  if (!userId || typeof userId !== "string" || userId.length < 10) {
     throw new Error("Valid userId is required");
   }
 
   // Si l'userId est en fait l'ID de la boutique, utiliser l'admin existant UNIQUEMENT
   if (shopId && userId === shopId) {
     const adminUser = await prisma.user.findFirst({
-      where: { 
+      where: {
         shopId: shopId,
-        role: 'ADMIN' 
+        role: "ADMIN",
       },
-      select: { id: true, role: true, email: true, shopId: true }
+      select: { id: true, role: true, email: true, shopId: true },
     });
 
     if (!adminUser) {
@@ -319,10 +333,10 @@ export async function requireAdmin(userId: string, shopId?: string) {
   }
 
   const auth = await verifyAdminRole(userId, shopId);
-  
+
   if (!auth.isAdmin) {
     throw new Error(auth.error || "Unauthorized");
   }
-  
+
   return true;
 }

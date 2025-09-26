@@ -8,9 +8,17 @@ export interface CurrentUser {
   email: string;
   name: string;
   image?: string;
-  role: 'ADMIN' | 'MODERATOR' | 'MEMBER';
+  role: string; // Peut être ADMIN, MODERATOR, MEMBER ou un rôle personnalisé
   isShopOwner?: boolean;
   shopId?: string;
+  roleInfo?: {
+    id: string;
+    name: string;
+    displayName: string;
+    color: string;
+    permissions: string[];
+    isDefault: boolean;
+  };
 }
 
 /**
@@ -36,7 +44,8 @@ export function useCurrentUser() {
         image: session.user.image || undefined,
         role: (session.user as any).role || 'MEMBER',
         isShopOwner: (session.user as any).isShopOwner || false,
-        shopId: (session.user as any).shopId || undefined
+        shopId: (session.user as any).shopId || undefined,
+        roleInfo: (session.user as any).roleInfo || undefined
       };
       
       setCurrentUser(user);

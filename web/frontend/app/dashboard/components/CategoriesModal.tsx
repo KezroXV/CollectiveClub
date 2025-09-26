@@ -481,3 +481,4 @@ export default function CategoriesModal({
     </Dialog>
   );
 }
+

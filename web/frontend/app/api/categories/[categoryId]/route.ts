@@ -8,15 +8,17 @@ const prisma = new PrismaClient();
 // PUT - Mettre à jour une catégorie
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { categoryId: string } }
+  { params }: { params: Promise<{ categoryId: string }> }
 ) {
   try {
+    // Await params (Next.js 15 requirement)
+    const { categoryId } = await params;
+
     // 🏪 ISOLATION MULTI-TENANT
     const shopId = await getShopId(request);
     ensureShopIsolation(shopId);
 
     const body = await request.json();
-    const categoryId = params.categoryId;
     
     // Récupérer ou utiliser l'utilisateur admin par défaut de cette boutique
     let userId = body.userId;
@@ -130,14 +132,13 @@ export async function PUT(
 // DELETE - Supprimer une catégorie
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { categoryId: string } }
+  { params }: { params: Promise<{ categoryId: string }> }
 ) {
   try {
     // 🏪 ISOLATION MULTI-TENANT
     const shopId = await getShopId(request);
     ensureShopIsolation(shopId);
 
-    const categoryId = params.categoryId;
     const { searchParams } = new URL(request.url);
     const userIdParam = searchParams.get("userId");
     
@@ -261,14 +262,13 @@ export async function DELETE(
 // GET - Récupérer une catégorie spécifique
 export async function GET(
   request: NextRequest,
-  { params }: { params: { categoryId: string } }
+  { params }: { params: Promise<{ categoryId: string }> }
 ) {
   try {
     // 🏪 ISOLATION MULTI-TENANT
     const shopId = await getShopId(request);
     ensureShopIsolation(shopId);
 
-    const categoryId = params.categoryId;
 
     const category = await prisma.category.findFirst({
       where: {

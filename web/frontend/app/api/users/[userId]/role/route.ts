@@ -30,14 +30,17 @@ interface RoleChangeResponse {
 // PUT /api/users/[userId]/role - Changer le rôle d'un utilisateur (ADMIN ONLY, sécurisé)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ): Promise<NextResponse<RoleChangeResponse | { error: string }>> {
   try {
+    // Await params (Next.js 15 requirement)
+    const { userId } = await params;
+
     // 🏪 ISOLATION MULTI-TENANT
     const shopId = await getShopId(request);
     ensureShopIsolation(shopId);
 
-    const targetUserId = params.userId;
+    const targetUserId = userId;
     const body: RoleChangeRequest = await request.json();
     const { searchParams } = new URL(request.url);
     const actingUserId = searchParams.get("userId");
@@ -188,14 +191,17 @@ export async function PUT(
 // GET - Obtenir les informations de rôle d'un utilisateur
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ): Promise<NextResponse> {
   try {
+    // Await params (Next.js 15 requirement)
+    const { userId } = await params;
+
     // 🏪 ISOLATION MULTI-TENANT
     const shopId = await getShopId(request);
     ensureShopIsolation(shopId);
 
-    const targetUserId = params.userId;
+    const targetUserId = userId;
     const { searchParams } = new URL(request.url);
     const actingUserId = searchParams.get("userId");
 

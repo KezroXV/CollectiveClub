@@ -27,6 +27,7 @@ import {
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import ClientsModal from "./ClientsModal";
+import CustomRolesModal from "./CustomRolesModal";
 import Image from "next/image";
 
 interface ShopManagementSectionProps {
@@ -67,6 +68,7 @@ export default function ShopManagementSection({
 
   // États pour les modals
   const [showClientsModal, setShowClientsModal] = useState(false);
+  const [showCustomRolesModal, setShowCustomRolesModal] = useState(false);
 
   // États pour la recherche
   const [userSearchQuery, setUserSearchQuery] = useState("");
@@ -583,10 +585,33 @@ export default function ShopManagementSection({
               size="icon"
               className="w-8 h-8 rounded-full border-2 border-dashed"
               style={{ borderColor }}
-              onClick={() => setShowClientsModal(true)}
+              onClick={() => setShowCustomRolesModal(true)}
             >
               <Plus className="h-4 w-4" />
             </Button>
+          </div>
+          <hr className="border-[1px] mb-6" style={{ borderColor }} />
+
+          {/* Section Rôles Personnalisés */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Rôles Personnalisés
+              </h3>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowCustomRolesModal(true)}
+                className="text-gray-600 hover:text-gray-700"
+              >
+                <Users className="w-4 h-4 mr-2" />
+                Gérer les rôles
+              </Button>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              Créez des rôles personnalisés avec des permissions spécifiques
+              comme Discord
+            </p>
           </div>
           <hr className="border-[1px] mb-6" style={{ borderColor }} />
 
@@ -931,6 +956,14 @@ export default function ShopManagementSection({
         userId={userId}
         shopId={shopId}
         userRole="ADMIN"
+      />
+
+      {/* CustomRolesModal */}
+      <CustomRolesModal
+        isOpen={showCustomRolesModal}
+        onClose={() => setShowCustomRolesModal(false)}
+        userId={userId}
+        shopId={shopId}
       />
     </div>
   );

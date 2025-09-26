@@ -40,4 +40,14 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# debug and test files
+/app/debug-session/
+/app/test-permissions/
+
+# temporary files
+*.tmp
+*.temp
+*.bak
+*~
+
 /lib/generated/prisma

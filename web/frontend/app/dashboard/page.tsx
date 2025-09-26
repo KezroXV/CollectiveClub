@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import ThemeWrapper from "@/components/ThemeWrapper";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
+import { usePermissions } from "@/lib/hooks/usePermissions";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -13,7 +14,8 @@ import ShopManagementSection from "./components/ShopManagementSection";
 import ModalsManager from "./components/ModalsManager";
 
 export default function DashboardPage() {
-  const { currentUser, loading, isAdmin, isModerator } = useCurrentUser();
+  const { currentUser, loading } = useCurrentUser();
+  const { isAdmin, isModerator } = usePermissions();
   const [showCustomization, setShowCustomization] = useState(false);
   const [showPostsModal, setShowPostsModal] = useState(false);
   const [showClientsModal, setShowClientsModal] = useState(false);
@@ -26,7 +28,17 @@ export default function DashboardPage() {
   const searchParams = useSearchParams();
 
   // Vérifier si l'utilisateur a accès au dashboard
-  const hasAccess = isAdmin || isModerator;
+  const hasAccess = isAdmin() || isModerator();
+
+  // DEBUG: Vérifier les permissions
+  console.log("🔐 Dashboard ACCESS DEBUG:", {
+    isAdmin: isAdmin(),
+    isModerator: isModerator(),
+    hasAccess,
+    currentUserRole: currentUser?.role,
+    currentUserRoleInfo: currentUser?.roleInfo?.displayName,
+    loading
+  });
 
   // Récupérer le shopId depuis URL ou cookies
   useEffect(() => {

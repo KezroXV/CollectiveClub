@@ -98,7 +98,7 @@ export async function getShopContext(request: NextRequest): Promise<ShopContext>
           fallbackAction: 'redirect_to_shopify_auth'
         });
       }
-      shopDomain = "collective-club-dev.myshopify.com";
+      shopDomain = "collective-club.myshopify.com";
     }
     
     // Valider le format du shopDomain
@@ -123,7 +123,7 @@ export async function getShopContext(request: NextRequest): Promise<ShopContext>
 
     if (!shop) {
       // En production, ne pas créer automatiquement des boutiques
-      if (process.env.NODE_ENV === 'production' && !shopDomain.includes('collective-club-dev')) {
+      if (process.env.NODE_ENV === 'production') {
         throw new ShopIsolationException({
           code: 'SHOP_NOT_FOUND',
           message: `Shop not found: ${shopDomain}. Shop must be registered first.`,

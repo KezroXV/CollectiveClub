@@ -82,7 +82,8 @@ model Shop {
   userPoints  UserPoints[]
   pointTransactions PointTransaction[]
   userBadges  UserBadge[]
-  
+  roles       Role[]
+
   @@map("shops")
 }
 
@@ -92,7 +93,7 @@ model User {
   name          String?
   image         String?  // Avatar NextAuth
   emailVerified DateTime? // Requis NextAuth
-  role          Role     @default(MEMBER) // Rôle par boutique
+  role          String   @default("MEMBER") // Rôle par boutique (dynamique)
   isShopOwner   Boolean  @default(false) // Marqueur propriétaire boutique
   shopId        String   // ✅ OBLIGATOIRE - ID de la boutique
   shopDomain    String?  // Domain de la boutique pour référence
@@ -120,8 +121,9 @@ model User {
   pointTransactions PointTransaction[]
   userBadges UserBadge[]
 
-  // Relations avec Shop
+  // Relations avec Shop et Role
   shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  roleInfo Role? @relation(fields: [role, shopId], references: [name, shopId])
 
   @@unique([shopId, email], name: "shopId_email") // ✅ SEULE contrainte d'unicité
   @@map("users")
@@ -265,10 +267,24 @@ model Reaction {
   @@map("reactions")
 }
 
-enum Role {
-  ADMIN
-  MODERATOR
-  MEMBER
+// Modèle pour gérer les rôles dynamiques par boutique
+model Role {
+  id          String @id @default(cuid())
+  name        String // ADMIN, MODERATOR, MEMBER, ou rôles personnalisés
+  displayName String // Nom affiché "Administrateur", "Super Modérateur"
+  color       String @default("#3B82F6") // Couleur d'affichage
+  permissions Json   // Permissions JSON ["MANAGE_POSTS", "DELETE_COMMENTS", etc.]
+  isDefault   Boolean @default(false) // true pour ADMIN, MODERATOR, MEMBER
+  shopId      String // ✅ OBLIGATOIRE pour multi-tenant
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  shop        Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  users       User[] // Utilisateurs qui ont ce rôle
+
+  @@unique([shopId, name]) // Nom unique par shop
+  @@map("roles")
 }
 
 enum PostStatus {
@@ -416,3 +432,4 @@ enum PointAction {
   BADGE_UNLOCKED    // -points requis
   DAILY_LOGIN       // +1 point
 }
+
