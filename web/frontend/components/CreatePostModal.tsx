@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { X, Loader2, Image as ImageIcon, BarChart3, Plus } from "lucide-react";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
+import { usePermissions } from "@/lib/hooks/usePermissions";
 import { useTheme } from "@/contexts/ThemeContext";
 
 interface CreatePostModalProps {
@@ -30,6 +31,7 @@ export default function CreatePostModal({
   onPostCreated,
 }: CreatePostModalProps) {
   const { currentUser } = useCurrentUser();
+  const { canManageCategories } = usePermissions();
   const { colors } = useTheme();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -61,7 +63,7 @@ export default function CreatePostModal({
   // Fonction pour ajouter une catégorie (copiée de ShopManagementSection)
   const handleAddCategory = async () => {
     if (!newCategoryName.trim()) return;
-    if (!currentUser || currentUser.role === "MEMBER") return;
+    if (!currentUser || !canManageCategories()) return;
 
     setLoadingAddCategory(true);
     try {
@@ -355,8 +357,8 @@ export default function CreatePostModal({
                 {category.name}
               </Button>
             ))}
-            {/* Bouton pour créer une catégorie - visible seulement pour non-MEMBER */}
-            {currentUser && currentUser.role !== "MEMBER" && (
+            {/* Bouton pour créer une catégorie - visible seulement pour ceux qui ont la permission */}
+            {currentUser && canManageCategories() && (
               <Button
                 variant="ghost"
                 size="icon"

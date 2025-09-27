@@ -58,6 +58,7 @@ export function usePermissions() {
   const canModerateComments = () => hasPermission(Permission.MODERATE_COMMENTS);
   const canManageShop = () => hasPermission(Permission.MANAGE_SHOP);
   const canManageCategories = () => hasPermission(Permission.MANAGE_CATEGORIES);
+  const canManagePosts = () => hasPermission(Permission.MANAGE_POSTS);
 
   // Helper pour vérifier si c'est un admin (avec permissions complètes)
   const isAdmin = () => hasPermission(Permission.MANAGE_SHOP);
@@ -78,6 +79,7 @@ export function usePermissions() {
     canModerateComments,
     canManageShop,
     canManageCategories,
+    canManagePosts,
     isAdmin,
     isModerator,
     currentUser

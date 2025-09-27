@@ -7,23 +7,25 @@ import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
+import { usePermissions } from "@/lib/hooks/usePermissions";
 import { signOut } from "next-auth/react";
 import { useTheme } from "@/contexts/ThemeContext";
 
 export default function Header() {
-  const { currentUser, isAdmin, isModerator } = useCurrentUser();
+  const { currentUser } = useCurrentUser();
+  const { canManageShop, isModerator } = usePermissions();
   const { colors } = useTheme();
   const [showMenu, setShowMenu] = useState(false);
   const pathname = usePathname();
 
-  // Vérifier si l'utilisateur est admin ou modérateur
-  const isAdminOrMod = isAdmin || isModerator;
+  // Vérifier si l'utilisateur peut accéder au dashboard
+  const canAccessDashboard = canManageShop() || isModerator();
 
   const navigation = [
     { name: "Accueil", href: "/", current: pathname === "/" },
     { name: "Post", href: "/community", current: pathname === "/community" },
-    // Dashboard visible uniquement pour les admins et modérateurs
-    ...(isAdminOrMod
+    // Dashboard visible uniquement pour ceux qui ont les permissions de gestion
+    ...(canAccessDashboard
       ? [
           {
             name: "Dashboard",

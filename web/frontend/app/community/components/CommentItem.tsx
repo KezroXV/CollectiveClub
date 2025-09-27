@@ -16,6 +16,7 @@ import {
 import { Heart, MessageCircle, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "@/contexts/ThemeContext";
+import { usePermissions } from "@/lib/hooks/usePermissions";
 import { CommentShare } from "@/components/seo/CommentShare";
 
 type ReactionType = "LIKE" | "LOVE" | "LAUGH" | "WOW" | "APPLAUSE";
@@ -85,6 +86,7 @@ const CommentItem = ({
   isReply = false,
 }: CommentItemProps) => {
   const { colors } = useTheme();
+  const { canDeleteComments } = usePermissions();
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [showReplies, setShowReplies] = useState(false);
   const [showReactionDropdown, setShowReactionDropdown] = useState(false);
@@ -102,8 +104,7 @@ const CommentItem = ({
   const canDelete =
     currentUser &&
     (comment.author.id === currentUser.id || // L'auteur peut supprimer son commentaire
-      currentUser.role === "ADMIN" || // Les admins peuvent tout supprimer
-      currentUser.role === "MODERATOR"); // Les modérateurs peuvent tout supprimer
+      canDeleteComments()); // Utilise le système de permissions
 
   const handleClickOutside = useCallback((event: MouseEvent) => {
     const target = event.target as Element;

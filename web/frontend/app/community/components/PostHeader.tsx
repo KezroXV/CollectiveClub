@@ -23,6 +23,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useTheme } from "@/contexts/ThemeContext";
+import { usePermissions } from "@/lib/hooks/usePermissions";
 
 interface PostHeaderProps {
   author: {
@@ -76,11 +77,12 @@ const PostHeader = ({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isPinning, setIsPinning] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const { canManagePosts, canDeletePosts } = usePermissions();
 
-  // Permissions
-  const canPin = currentUser && ['ADMIN', 'MODERATOR'].includes(currentUser.role || '');
+  // Permissions basées sur le nouveau système
+  const canPin = currentUser && canManagePosts();
   const canDelete = currentUser && (
-    ['ADMIN', 'MODERATOR'].includes(currentUser.role || '') ||
+    canDeletePosts() ||
     post.authorId === currentUser.id
   );
 
