@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
+import { RequireAuth } from "@/components/auth/RequireAuth";
 import HeroBanner from "@/components/HeroBanner";
 import CategoryFilter from "@/components/CategoryFilter";
 import CreatePostModal from "@/components/CreatePostModal";
@@ -48,9 +49,10 @@ interface Post {
   createdAt: string;
 }
 
-export default function HomePage() {
+function HomePageContent() {
   const { currentUser } = useCurrentUser();
   const { colors } = useTheme();
+  const searchParams = useSearchParams();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -58,8 +60,6 @@ export default function HomePage() {
   const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
   const [showPinnedOnly, setShowPinnedOnly] = useState(false);
   const [pinnedCount, setPinnedCount] = useState(0);
-
-  const searchParams = useSearchParams();
   const [sortBy, setSortBy] = useState("newest");
 
   // 🏪 Initialiser la persistance du shop
@@ -194,5 +194,13 @@ export default function HomePage() {
         onPostCreated={fetchPosts}
       />
     </ThemeWrapper>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <RequireAuth>
+      <HomePageContent />
+    </RequireAuth>
   );
 }
