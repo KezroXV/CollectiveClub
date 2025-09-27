@@ -52,7 +52,7 @@ export const authOptions: NextAuthOptions = {
           }
 
           // Créer ou récupérer l'account pour cette boutique
-          let accountRecord = await prisma.account.findFirst({
+          const accountRecord = await prisma.account.findFirst({
             where: {
               provider: account.provider,
               providerAccountId: account.providerAccountId,

@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import { usePermissions } from "@/lib/hooks/usePermissions";
-import { signOut } from "next-auth/react";
+import { signOut, signIn } from "next-auth/react";
 import { useTheme } from "@/contexts/ThemeContext";
 
 export default function Header() {
@@ -17,9 +17,25 @@ export default function Header() {
   const { colors } = useTheme();
   const [showMenu, setShowMenu] = useState(false);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Récupérer le shop depuis les paramètres URL pour la connexion
+  const shopParam = searchParams.get('shop');
 
   // Vérifier si l'utilisateur peut accéder au dashboard
   const canAccessDashboard = canManageShop() || isModerator();
+
+  // Fonction pour gérer la connexion avec le shop approprié
+  const handleSignIn = () => {
+    const callbackUrl = window.location.href;
+    if (shopParam) {
+      // Si on a un shop dans l'URL, l'inclure dans le callback
+      signIn('google', { callbackUrl });
+    } else {
+      // Sinon, rediriger vers la page de connexion standard
+      signIn('google', { callbackUrl });
+    }
+  };
 
   const navigation = [
     { name: "Accueil", href: "/", current: pathname === "/" },
@@ -93,9 +109,9 @@ export default function Header() {
               )}
             </button>
 
-            {/* Avatar */}
-            {currentUser && (
-              <div className="relative">
+            {/* Avatar ou bouton de connexion */}
+            {currentUser ? (
+              <div className="relative hidden md:block">
                 <button
                   onClick={() => setShowMenu(!showMenu)}
                   className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100"
@@ -128,18 +144,6 @@ export default function Header() {
                     >
                       {currentUser.name}
                     </div>
-                    <Link
-                      href="/profile"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      🔧 Paramètres
-                    </Link>
-                    <Link
-                      href="/help"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      ❓ Aide
-                    </Link>
                     <button
                       onClick={() => signOut()}
                       className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
@@ -149,6 +153,17 @@ export default function Header() {
                   </div>
                 )}
               </div>
+            ) : (
+              <Button
+                onClick={handleSignIn}
+                className="hidden md:block rounded-full px-4 py-2 text-sm font-medium"
+                style={{
+                  backgroundColor: colors.Posts,
+                  color: "white",
+                }}
+              >
+                Se connecter
+              </Button>
             )}
           </div>
         </div>
@@ -169,6 +184,34 @@ export default function Header() {
                   </Button>
                 </Link>
               ))}
+
+              {/* Options pour utilisateur connecté */}
+              {currentUser ? (
+                <div className="border-t pt-2 mt-2" style={{ borderTopColor: colors.Bordures }}>
+                  <div className="px-3 py-2 text-sm text-gray-500">
+                    {currentUser.name}
+                  </div>
+                  <Button
+                    onClick={() => signOut()}
+                    variant="ghost"
+                    className="w-full justify-start text-red-600 hover:bg-red-50"
+                  >
+                    🚪 Se déconnecter
+                  </Button>
+                </div>
+              ) : (
+                /* Bouton de connexion mobile pour les utilisateurs non connectés */
+                <Button
+                  onClick={handleSignIn}
+                  className="w-full justify-start mt-4"
+                  style={{
+                    backgroundColor: colors.Posts,
+                    color: "white",
+                  }}
+                >
+                  Se connecter
+                </Button>
+              )}
             </nav>
           </div>
         )}
