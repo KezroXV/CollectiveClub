@@ -18,7 +18,7 @@ interface PostActionsProps {
   currentUser: {
     id: string;
     name: string;
-    shopId: string;
+    shopId?: string;
   } | null;
   onReactionClick: () => void;
   onReaction: (type: ReactionType) => void;

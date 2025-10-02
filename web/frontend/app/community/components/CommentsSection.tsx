@@ -37,7 +37,7 @@ interface CommentsSectionProps {
   currentUser: {
     id: string;
     name: string;
-    shopId: string;
+    shopId?: string;
     role?: string;
   } | null;
   newComment: string;

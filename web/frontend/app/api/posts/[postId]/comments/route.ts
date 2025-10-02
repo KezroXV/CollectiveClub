@@ -10,7 +10,7 @@ const prisma = new PrismaClient();
 // GET /api/posts/[id]/comments - Récupérer les commentaires d'un post (isolés par boutique)
 export async function GET(
   request: NextRequest,
-  { params }: { params: { postId: string } }
+  { params }: { params: Promise<{ postId: string }> }
 ) {
   try {
     // 🏪 ISOLATION MULTI-TENANT
@@ -141,7 +141,7 @@ export async function GET(
 // POST /api/posts/[id]/comments - Créer un commentaire (isolé par boutique)
 export async function POST(
   request: NextRequest,
-  { params }: { params: { postId: string } }
+  { params }: { params: Promise<{ postId: string }> }
 ) {
   try {
     // 🔐 AUTHENTICATION: Vérifier que l'utilisateur est connecté

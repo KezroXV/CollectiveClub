@@ -62,7 +62,7 @@ interface AuthorSidebarProps {
   currentUser: {
     id: string;
     name: string;
-    shopId: string;
+    shopId?: string;
   } | null;
   getInitials: (name: string) => string;
   formatDate: (dateString: string) => string;

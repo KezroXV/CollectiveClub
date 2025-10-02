@@ -7,14 +7,14 @@ const prisma = new PrismaClient();
 
 interface MemberResponse {
   id: string;
-  name: string;
+  name: string | null;
   email: string;
   role: string;
   createdAt: string;
   isActive: boolean;
   isOwner?: boolean;
   isBanned?: boolean;
-  image?: string;
+  image?: string | null;
   postsCount: number;
   commentsCount: number;
   reactionsCount: number;

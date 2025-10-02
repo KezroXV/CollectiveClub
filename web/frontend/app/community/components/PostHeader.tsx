@@ -51,9 +51,9 @@ interface PostHeaderProps {
   getRoleLabel: (role: string) => string;
   currentUser?: {
     id: string;
-    shopId: string;
+    shopId?: string;
     role?: string;
-  };
+  } | null;
   onPin?: () => void;
   onDelete?: () => void;
 }

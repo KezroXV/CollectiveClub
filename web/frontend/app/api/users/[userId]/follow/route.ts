@@ -4,9 +4,9 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     userId: string;
-  };
+  }>;
 }
 
 /**
@@ -14,7 +14,8 @@ interface RouteParams {
  */
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
-    const { userId: targetUserId } = params;
+    const resolvedParams = await params;
+    const { userId: targetUserId } = resolvedParams;
     const body = await request.json();
     const { followerId, shopId } = body;
 
@@ -108,7 +109,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
  */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
-    const { userId: targetUserId } = params;
+    const resolvedParams = await params;
+    const { userId: targetUserId } = resolvedParams;
     const { searchParams } = new URL(request.url);
     const followerId = searchParams.get('followerId');
     const shopId = searchParams.get('shopId');
@@ -181,7 +183,8 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const { userId: targetUserId } = params;
+    const resolvedParams = await params;
+    const { userId: targetUserId } = resolvedParams;
     const { searchParams } = new URL(request.url);
     const followerId = searchParams.get('followerId');
     const shopId = searchParams.get('shopId');

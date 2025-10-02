@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Menu, X } from "lucide-react";
@@ -11,7 +11,7 @@ import { usePermissions } from "@/lib/hooks/usePermissions";
 import { signOut, signIn } from "next-auth/react";
 import { useTheme } from "@/contexts/ThemeContext";
 
-export default function Header() {
+function HeaderContent() {
   const { currentUser } = useCurrentUser();
   const { canManageShop, isModerator } = usePermissions();
   const { colors } = useTheme();
@@ -217,5 +217,26 @@ export default function Header() {
         )}
       </div>
     </header>
+  );
+}
+
+export default function Header() {
+  return (
+    <Suspense fallback={
+      <header className="border-b bg-white">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="flex justify-between items-center h-14 sm:h-16">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-7 sm:w-8 h-7 sm:h-8 bg-black rounded-full flex items-center justify-center">
+                <span className="text-white font-bold text-xs sm:text-sm">C</span>
+              </div>
+              <span className="font-semibold text-base sm:text-lg">Collective Club</span>
+            </div>
+          </div>
+        </div>
+      </header>
+    }>
+      <HeaderContent />
+    </Suspense>
   );
 }

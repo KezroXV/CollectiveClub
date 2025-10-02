@@ -10,7 +10,7 @@ const prisma = new PrismaClient();
 // GET /api/posts/[id]/reactions - Récupérer les réactions d'un post (isolées par boutique)
 export async function GET(
   request: NextRequest,
-  { params }: { params: { postId: string } }
+  { params }: { params: Promise<{ postId: string }> }
 ) {
   try {
     // 🏪 ISOLATION MULTI-TENANT
@@ -54,7 +54,7 @@ export async function GET(
 // POST /api/posts/[id]/reactions - Ajouter/enlever une réaction (isolée par boutique)
 export async function POST(
   request: NextRequest,
-  { params }: { params: { postId: string } }
+  { params }: { params: Promise<{ postId: string }> }
 ) {
   try {
     // 🏪 ISOLATION MULTI-TENANT

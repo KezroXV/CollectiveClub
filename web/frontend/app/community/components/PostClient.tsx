@@ -342,15 +342,18 @@ const PostClient = () => {
       // Fonction récursive pour supprimer un commentaire ou une réponse
       const removeCommentFromArray = (comments: Comment[]): Comment[] => {
         return comments
-          .filter(comment => comment.id !== commentId)
-          .map(comment => ({
+          .filter((comment) => comment.id !== commentId)
+          .map((comment) => ({
             ...comment,
-            replies: comment.replies ? removeCommentFromArray(comment.replies) : undefined
+            replies: comment.replies
+              ? removeCommentFromArray(comment.replies)
+              : undefined,
           }));
       };
 
       const updatedComments = removeCommentFromArray(prev.post.comments);
-      const commentCountDiff = prev.post.comments.length - updatedComments.length;
+      const commentCountDiff =
+        prev.post.comments.length - updatedComments.length;
 
       return {
         ...prev,
@@ -366,42 +369,53 @@ const PostClient = () => {
     });
   }, []);
 
-  const handleReactionUpdated = useCallback((commentId: string, reactions: ReactionData[], userReaction: ReactionType | null) => {
-    setData((prev) => {
-      if (!prev) return null;
+  const handleReactionUpdated = useCallback(
+    (
+      commentId: string,
+      reactions: ReactionData[],
+      userReaction: ReactionType | null
+    ) => {
+      setData((prev) => {
+        if (!prev) return null;
 
-      // Fonction récursive pour mettre à jour les réactions d'un commentaire ou d'une réponse
-      const updateCommentReactions = (comments: Comment[]): Comment[] => {
-        return comments.map(comment => {
-          if (comment.id === commentId) {
+        // Fonction récursive pour mettre à jour les réactions d'un commentaire ou d'une réponse
+        const updateCommentReactions = (comments: Comment[]): Comment[] => {
+          return comments.map((comment) => {
+            if (comment.id === commentId) {
+              return {
+                ...comment,
+                reactions,
+                userReaction,
+                _count: {
+                  ...comment._count,
+                  reactions: reactions
+                    ? reactions.reduce((sum, r) => sum + r.count, 0)
+                    : 0,
+                },
+              };
+            }
             return {
               ...comment,
-              reactions,
-              userReaction,
-              _count: {
-                ...comment._count,
-                reactions: reactions ? reactions.reduce((sum, r) => sum + r.count, 0) : 0
-              }
+              replies: comment.replies
+                ? updateCommentReactions(comment.replies)
+                : undefined,
             };
-          }
-          return {
-            ...comment,
-            replies: comment.replies ? updateCommentReactions(comment.replies) : undefined
-          };
-        });
-      };
+          });
+        };
 
-      const updatedComments = updateCommentReactions(prev.post.comments);
+        const updatedComments = updateCommentReactions(prev.post.comments);
 
-      return {
-        ...prev,
-        post: {
-          ...prev.post,
-          comments: updatedComments,
-        },
-      };
-    });
-  }, []);
+        return {
+          ...prev,
+          post: {
+            ...prev.post,
+            comments: updatedComments,
+          },
+        };
+      });
+    },
+    []
+  );
 
   if (loading || userLoading) {
     return (
@@ -446,7 +460,7 @@ const PostClient = () => {
 
   return (
     <ThemeWrapper applyBackgroundColor={true} className="min-h-screen">
-      <Header currentUser={currentUser} />
+      <Header />
       <div className="container mx-auto px-6 py-8">
         <div className="max-w-6xl mx-auto">
           {/* Breadcrumbs SEO */}
@@ -466,7 +480,13 @@ const PostClient = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Colonne principale (66%) */}
             <div className="lg:col-span-2">
-              <Card className="hover:shadow-sm" style={{ border: `1px solid ${colors.Bordures}`, backgroundColor: colors.Posts }}>
+              <Card
+                className="hover:shadow-sm"
+                style={{
+                  border: `1px solid ${colors.Bordures}`,
+                  backgroundColor: colors.Posts,
+                }}
+              >
                 <CardHeader className="">
                   <PostHeader
                     author={post.author}

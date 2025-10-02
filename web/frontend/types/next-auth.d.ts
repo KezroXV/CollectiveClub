@@ -7,6 +7,7 @@ declare module "next-auth" {
       role: "ADMIN" | "MODERATOR" | "MEMBER"
       isShopOwner: boolean
       shopId: string // ✅ OBLIGATOIRE
+      roleInfo?: any
     } & DefaultSession["user"]
   }
 
@@ -22,5 +23,6 @@ declare module "next-auth/jwt" {
     role: "ADMIN" | "MODERATOR" | "MEMBER"
     isShopOwner: boolean
     shopId: string // ✅ OBLIGATOIRE
+    roleInfo?: any
   }
 }

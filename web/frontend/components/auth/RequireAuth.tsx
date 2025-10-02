@@ -5,7 +5,7 @@
 
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
 
@@ -15,7 +15,7 @@ interface RequireAuthProps {
   redirectTo?: string;
 }
 
-export function RequireAuth({
+function RequireAuthContent({
   children,
   fallback,
   redirectTo = '/auth/signin'
@@ -63,11 +63,24 @@ export function RequireAuth({
   return <>{children}</>;
 }
 
-/**
- * Hook personnalisé pour protéger une page
- * Retourne null si l'utilisateur n'est pas connecté (avec redirection automatique)
- */
-export function useRequireAuth() {
+export function RequireAuth(props: RequireAuthProps) {
+  return (
+    <Suspense fallback={
+      props.fallback || (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Chargement...</p>
+          </div>
+        </div>
+      )
+    }>
+      <RequireAuthContent {...props} />
+    </Suspense>
+  );
+}
+
+function UseRequireAuthContent() {
   const { currentUser, loading } = useCurrentUser();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -89,6 +102,16 @@ export function useRequireAuth() {
   }, [currentUser, loading, router, searchParams]);
 
   return { currentUser, loading, isAuthenticated: !!currentUser };
+}
+
+/**
+ * Hook personnalisé pour protéger une page
+ * Retourne null si l'utilisateur n'est pas connecté (avec redirection automatique)
+ */
+export function useRequireAuth() {
+  // Note: Ce hook doit être utilisé dans un composant déjà wrappé avec Suspense
+  // car il utilise useSearchParams
+  return UseRequireAuthContent();
 }
 
 /**

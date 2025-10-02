@@ -3,24 +3,29 @@
  * Génère les données structurées JSON-LD pour SEO
  */
 
-import { generateArticleStructuredData, generateCommentStructuredData, ArticleStructuredData, CommentStructuredData } from '@/lib/seo';
+import {
+  generateArticleStructuredData,
+  generateCommentStructuredData,
+  ArticleStructuredData,
+  CommentStructuredData,
+} from "@/lib/seo";
 
 interface PostStructuredDataProps {
   post: {
     id: string;
     title: string;
     content: string;
-    slug: string;
-    imageUrl?: string;
+    slug: string | null;
+    imageUrl?: string | null;
     createdAt: Date | string;
     updatedAt: Date | string;
     author: {
       id: string;
-      name: string;
+      name: string | null;
     };
     category?: {
       name: string;
-    };
+    } | null;
     shop: {
       shopName: string;
       shopDomain: string;
@@ -37,9 +42,9 @@ interface PostStructuredDataProps {
     updatedAt?: Date | string;
     author: {
       id: string;
-      name: string;
+      name: string | null;
     };
-    parentId?: string;
+    parentId?: string | null;
     reactions?: Array<{ type: string; count: number }>;
   }>;
   baseUrl?: string;
@@ -48,33 +53,54 @@ interface PostStructuredDataProps {
 /**
  * Composant pour les données structurées d'un article/post avec commentaires
  */
-export function PostStructuredData({ post, comments, baseUrl }: PostStructuredDataProps) {
+export function PostStructuredData({
+  post,
+  comments,
+  baseUrl,
+}: PostStructuredDataProps) {
   // Convertir les dates en objets Date si nécessaire
   const postForStructuredData = {
     ...post,
-    createdAt: typeof post.createdAt === 'string' ? new Date(post.createdAt) : post.createdAt,
-    updatedAt: typeof post.updatedAt === 'string' ? new Date(post.updatedAt) : post.updatedAt,
+    createdAt:
+      typeof post.createdAt === "string"
+        ? new Date(post.createdAt)
+        : post.createdAt,
+    updatedAt:
+      typeof post.updatedAt === "string"
+        ? new Date(post.updatedAt)
+        : post.updatedAt,
   };
 
   // Convertir les commentaires si fournis
-  const commentsForStructuredData = comments?.map(comment => ({
+  const commentsForStructuredData = comments?.map((comment) => ({
     ...comment,
-    createdAt: typeof comment.createdAt === 'string' ? new Date(comment.createdAt) : comment.createdAt,
-    updatedAt: comment.updatedAt ? (typeof comment.updatedAt === 'string' ? new Date(comment.updatedAt) : comment.updatedAt) : undefined,
+    createdAt:
+      typeof comment.createdAt === "string"
+        ? new Date(comment.createdAt)
+        : comment.createdAt,
+    updatedAt: comment.updatedAt
+      ? typeof comment.updatedAt === "string"
+        ? new Date(comment.updatedAt)
+        : comment.updatedAt
+      : undefined,
   }));
 
   const structuredData = generateArticleStructuredData(
     postForStructuredData,
     post.shop,
-    commentsForStructuredData,
+    commentsForStructuredData
+      ? commentsForStructuredData.map((comment) => ({
+          ...comment,
+          parentId: comment.parentId ?? undefined, // Convertir null en undefined
+        }))
+      : undefined,
     baseUrl
   );
-
   return (
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{
-        __html: JSON.stringify(structuredData, null, 2)
+        __html: JSON.stringify(structuredData, null, 2),
       }}
     />
   );
@@ -98,50 +124,56 @@ interface ForumStructuredDataProps {
   baseUrl?: string;
 }
 
-export function ForumStructuredData({ shop, posts, baseUrl }: ForumStructuredDataProps) {
-  const base = baseUrl || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+export function ForumStructuredData({
+  shop,
+  posts,
+  baseUrl,
+}: ForumStructuredDataProps) {
+  const base =
+    baseUrl || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
   const structuredData = {
-    '@context': 'https://schema.org',
-    '@type': 'CollectionPage',
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
     name: `${shop.shopName} Community Forum`,
     description: `Discussion forum and community for ${shop.shopName}`,
     url: `${base}/community`,
-    
+
     publisher: {
-      '@type': 'Organization',
+      "@type": "Organization",
       name: shop.shopName,
       url: `https://${shop.shopDomain}`,
     },
 
     mainEntity: {
-      '@type': 'ItemList',
+      "@type": "ItemList",
       numberOfItems: posts.length,
       itemListElement: posts.map((post, index) => ({
-        '@type': 'ListItem',
+        "@type": "ListItem",
         position: index + 1,
         item: {
-          '@type': 'Article',
+          "@type": "Article",
           headline: post.title,
           url: `${base}/community/posts/${post.slug}`,
           author: {
-            '@type': 'Person',
+            "@type": "Person",
             name: post.author.name,
           },
-          datePublished: typeof post.createdAt === 'string' 
-            ? post.createdAt 
-            : post.createdAt.toISOString(),
+          datePublished:
+            typeof post.createdAt === "string"
+              ? post.createdAt
+              : post.createdAt.toISOString(),
           commentCount: post._count?.comments || 0,
-        }
-      }))
-    }
+        },
+      })),
+    },
   };
 
   return (
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{
-        __html: JSON.stringify(structuredData, null, 2)
+        __html: JSON.stringify(structuredData, null, 2),
       }}
     />
   );
@@ -160,25 +192,29 @@ interface BreadcrumbStructuredDataProps {
   baseUrl?: string;
 }
 
-export function BreadcrumbStructuredData({ items, baseUrl }: BreadcrumbStructuredDataProps) {
-  const base = baseUrl || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+export function BreadcrumbStructuredData({
+  items,
+  baseUrl,
+}: BreadcrumbStructuredDataProps) {
+  const base =
+    baseUrl || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
   const structuredData = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
     itemListElement: items.map((item, index) => ({
-      '@type': 'ListItem',
+      "@type": "ListItem",
       position: index + 1,
       name: item.label,
-      item: item.href.startsWith('http') ? item.href : `${base}${item.href}`
-    }))
+      item: item.href.startsWith("http") ? item.href : `${base}${item.href}`,
+    })),
   };
 
   return (
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{
-        __html: JSON.stringify(structuredData, null, 2)
+        __html: JSON.stringify(structuredData, null, 2),
       }}
     />
   );
@@ -195,34 +231,36 @@ interface OrganizationStructuredDataProps {
   baseUrl?: string;
 }
 
-export function OrganizationStructuredData({ shop, baseUrl }: OrganizationStructuredDataProps) {
-  const base = baseUrl || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+export function OrganizationStructuredData({
+  shop,
+  baseUrl,
+}: OrganizationStructuredDataProps) {
+  const base =
+    baseUrl || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
   const structuredData = {
-    '@context': 'https://schema.org',
-    '@type': 'Organization',
+    "@context": "https://schema.org",
+    "@type": "Organization",
     name: shop.shopName,
     url: `https://${shop.shopDomain}`,
-    
+
     // Liens sociaux et community
-    sameAs: [
-      `${base}/community`,
-    ],
+    sameAs: [`${base}/community`],
 
     // Sous-organisation pour la communauté
     subOrganization: {
-      '@type': 'Organization',
+      "@type": "Organization",
       name: `${shop.shopName} Community`,
       url: `${base}/community`,
       description: `Community forum for ${shop.shopName} customers and enthusiasts`,
-    }
+    },
   };
 
   return (
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{
-        __html: JSON.stringify(structuredData, null, 2)
+        __html: JSON.stringify(structuredData, null, 2),
       }}
     />
   );
@@ -256,53 +294,56 @@ export function DiscussionStructuredData({
   post,
   comments,
   shop,
-  baseUrl
+  baseUrl,
 }: DiscussionStructuredDataProps) {
-  const base = baseUrl || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const base =
+    baseUrl || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
   const structuredData = {
-    '@context': 'https://schema.org',
-    '@type': 'DiscussionForumPosting',
+    "@context": "https://schema.org",
+    "@type": "DiscussionForumPosting",
     headline: post.title,
     url: `${base}/community/posts/${post.slug}`,
 
     author: {
-      '@type': 'Person',
+      "@type": "Person",
       name: post.author.name,
-      url: `${base}/community/users/${post.author.id}`
+      url: `${base}/community/users/${post.author.id}`,
     },
 
-    datePublished: typeof post.createdAt === 'string'
-      ? post.createdAt
-      : post.createdAt.toISOString(),
+    datePublished:
+      typeof post.createdAt === "string"
+        ? post.createdAt
+        : post.createdAt.toISOString(),
 
     commentCount: post._count?.comments || comments.length,
 
-    comment: comments.slice(0, 10).map(comment => ({
-      '@type': 'Comment',
+    comment: comments.slice(0, 10).map((comment) => ({
+      "@type": "Comment",
       text: comment.content.substring(0, 300),
       author: {
-        '@type': 'Person',
-        name: comment.author.name
+        "@type": "Person",
+        name: comment.author.name,
       },
-      datePublished: typeof comment.createdAt === 'string'
-        ? comment.createdAt
-        : comment.createdAt.toISOString(),
+      datePublished:
+        typeof comment.createdAt === "string"
+          ? comment.createdAt
+          : comment.createdAt.toISOString(),
       url: `${base}/community/posts/${post.slug}#comment-${comment.id}`,
     })),
 
     publisher: {
-      '@type': 'Organization',
+      "@type": "Organization",
       name: shop.shopName,
-      url: `https://${shop.shopDomain}`
-    }
+      url: `https://${shop.shopDomain}`,
+    },
   };
 
   return (
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{
-        __html: JSON.stringify(structuredData, null, 2)
+        __html: JSON.stringify(structuredData, null, 2),
       }}
     />
   );
@@ -328,12 +369,23 @@ interface CommentStructuredDataProps {
   baseUrl?: string;
 }
 
-export function CommentStructuredDataComponent({ comment, postSlug, baseUrl }: CommentStructuredDataProps) {
+export function CommentStructuredDataComponent({
+  comment,
+  postSlug,
+  baseUrl,
+}: CommentStructuredDataProps) {
   // Convertir les dates si nécessaire
   const commentForStructuredData = {
     ...comment,
-    createdAt: typeof comment.createdAt === 'string' ? new Date(comment.createdAt) : comment.createdAt,
-    updatedAt: comment.updatedAt ? (typeof comment.updatedAt === 'string' ? new Date(comment.updatedAt) : comment.updatedAt) : undefined,
+    createdAt:
+      typeof comment.createdAt === "string"
+        ? new Date(comment.createdAt)
+        : comment.createdAt,
+    updatedAt: comment.updatedAt
+      ? typeof comment.updatedAt === "string"
+        ? new Date(comment.updatedAt)
+        : comment.updatedAt
+      : undefined,
   };
 
   const structuredData = generateCommentStructuredData(
@@ -346,7 +398,7 @@ export function CommentStructuredDataComponent({ comment, postSlug, baseUrl }: C
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{
-        __html: JSON.stringify(structuredData, null, 2)
+        __html: JSON.stringify(structuredData, null, 2),
       }}
     />
   );

@@ -17,6 +17,7 @@ interface RouteParams {
  */
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
+    const resolvedParams = await params;
     // 🏪 ISOLATION MULTI-TENANT
     const shopId = await getShopId(request);
     ensureShopIsolation(shopId);
@@ -127,6 +128,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
  */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
+    const resolvedParams = await params;
     // 🏪 ISOLATION MULTI-TENANT
     const shopId = await getShopId(request);
     ensureShopIsolation(shopId);
@@ -170,6 +172,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
+    const resolvedParams = await params;
     // 🏪 ISOLATION MULTI-TENANT
     const shopId = await getShopId(request);
     ensureShopIsolation(shopId);

@@ -18,7 +18,7 @@ interface PostContentProps {
   currentUser: {
     id: string;
     name: string;
-    shopId: string;
+    shopId?: string;
   } | null;
 }
 
@@ -70,7 +70,17 @@ const PostContent = ({
           }}
         >
           <PollDisplay
-            poll={poll}
+            poll={{
+              id: poll.id,
+              question: poll.question,
+              options: poll.options.map((opt, index) => ({
+                id: opt.id,
+                text: opt.text,
+                order: index,
+                _count: { votes: opt.votes }
+              })),
+              _count: { votes: poll.options.reduce((sum, opt) => sum + opt.votes, 0) }
+            }}
             currentUser={currentUser}
             onVote={() => window.location.reload()}
           />

@@ -312,7 +312,7 @@ export function generateCommentStructuredData(
     content: string;
     createdAt: Date;
     updatedAt?: Date;
-    author: { name: string; id: string };
+    author: { name: string | null; id: string };
     parentId?: string;
     reactions?: Array<{ type: string; count: number }>;
   },
@@ -332,7 +332,7 @@ export function generateCommentStructuredData(
 
     author: {
       '@type': 'Person',
-      name: comment.author.name,
+      name: comment.author.name || 'Anonyme',
       url: `${base}/community/users/${comment.author.id}`
     },
 
@@ -358,12 +358,12 @@ export function generateArticleStructuredData(
   post: {
     title: string;
     content: string;
-    slug: string;
-    imageUrl?: string;
+    slug: string | null;
+    imageUrl?: string | null;
     createdAt: Date;
     updatedAt: Date;
-    author: { name: string; id: string };
-    category?: { name: string };
+    author: { name: string | null; id: string };
+    category?: { name: string } | null;
     _count?: { comments: number; reactions: number };
   },
   shop: { shopName: string; shopDomain: string },
@@ -372,7 +372,7 @@ export function generateArticleStructuredData(
     content: string;
     createdAt: Date;
     updatedAt?: Date;
-    author: { name: string; id: string };
+    author: { name: string | null; id: string };
     parentId?: string;
     reactions?: Array<{ type: string; count: number }>;
   }>,
@@ -391,7 +391,7 @@ export function generateArticleStructuredData(
 
     author: {
       '@type': 'Person',
-      name: post.author.name,
+      name: post.author.name || 'Anonyme',
       url: `${base}/community/users/${post.author.id}`
     },
 
@@ -407,7 +407,7 @@ export function generateArticleStructuredData(
 
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': generateCanonicalURL(post.slug, base)
+      '@id': generateCanonicalURL(post.slug || '', base)
     },
 
     articleSection: post.category?.name,
@@ -430,7 +430,7 @@ export function generateArticleStructuredData(
   // Ajouter les commentaires si fournis (limiter à 5 pour SEO)
   if (comments && comments.length > 0) {
     structuredData.comment = comments.slice(0, 5).map(comment =>
-      generateCommentStructuredData(comment, post.slug, base)
+      generateCommentStructuredData(comment, post.slug || '', base)
     );
   }
 

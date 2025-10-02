@@ -14,16 +14,16 @@ interface PostForMetadata {
   id: string;
   title: string;
   content: string;
-  slug: string;
-  imageUrl?: string;
+  slug: string | null;
+  imageUrl: string | null;
   createdAt: Date;
   updatedAt: Date;
   author: {
-    name: string;
+    name: string | null;
   };
   category?: {
     name: string;
-  };
+  } | null;
   shop: {
     shopName: string;
     shopDomain: string;
@@ -83,7 +83,7 @@ async function getPostBySlug(slug: string): Promise<PostForMetadata | null> {
 /**
  * Génère les métadonnées SEO pour une page de post
  */
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   
   // Récupérer le post
@@ -115,15 +115,15 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     post.category?.name,
     post.shop.shopName
   );
-  const canonicalUrl = generateCanonicalURL(post.slug);
+  const canonicalUrl = generateCanonicalURL(post.slug || post.id);
   const imageUrl = post.imageUrl || generateOGImageURL(post.title);
 
   return {
     title,
     description,
     keywords,
-    authors: [{ name: post.author.name }],
-    
+    authors: [{ name: post.author.name || 'Anonyme' }],
+
     // Open Graph
     openGraph: {
       title: post.title,
@@ -131,7 +131,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       type: 'article',
       publishedTime: post.createdAt.toISOString(),
       modifiedTime: post.updatedAt.toISOString(),
-      authors: [post.author.name],
+      authors: [post.author.name || 'Anonyme'],
       section: post.category?.name,
       tags: keywords,
       images: [
@@ -157,7 +157,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       title: post.title,
       description,
       images: [imageUrl],
-      creator: `@${post.author.name.replace(/\s+/g, '').toLowerCase()}`,
+      creator: `@${(post.author.name || 'anonyme').replace(/\s+/g, '').toLowerCase()}`,
     },
 
     // URLs
@@ -185,7 +185,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
     // JSON-LD sera ajouté via le composant StructuredData
     other: {
-      'article:author': post.author.name,
+      'article:author': post.author.name || 'Anonyme',
       'article:section': post.category?.name || 'General',
       'article:published_time': post.createdAt.toISOString(),
       'article:modified_time': post.updatedAt.toISOString(),

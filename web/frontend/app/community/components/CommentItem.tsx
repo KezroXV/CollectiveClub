@@ -50,7 +50,7 @@ interface CommentItemProps {
   currentUser: {
     id: string;
     name: string;
-    shopId: string;
+    shopId?: string;
     role?: string;
   } | null;
   postId: string;

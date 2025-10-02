@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 // DELETE /api/comments/[commentId] - Supprimer un commentaire
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { commentId: string } }
+  { params }: { params: Promise<{ commentId: string }> }
 ) {
   try {
     // 🏪 ISOLATION MULTI-TENANT

@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
 import ThemeWrapper from "@/components/ThemeWrapper";
 import { Users, Crown, Sparkles } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 
-export default function SignIn() {
+function SignInContent() {
   const searchParams = useSearchParams();
   const shop = searchParams.get("shop");
   const callbackUrl = searchParams.get("callbackUrl") || "/";
@@ -258,5 +258,17 @@ export default function SignIn() {
         </div>
       </div>
     </ThemeWrapper>
+  );
+}
+
+export default function SignIn() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      </div>
+    }>
+      <SignInContent />
+    </Suspense>
   );
 }

@@ -8,7 +8,7 @@ import { toast } from "sonner";
 interface FollowButtonProps {
   targetUserId: string;
   currentUserId: string;
-  shopId: string;
+  shopId?: string;
   isFollowing: boolean;
   followersCount: number;
   onToggle?: (isFollowing: boolean, newFollowersCount: number) => void;
@@ -41,8 +41,8 @@ export default function FollowButton({
     setFollowersCount(initialFollowersCount);
   }, [initialFollowersCount]);
 
-  // Ne pas afficher le bouton si c'est le même utilisateur
-  if (!currentUserId || !targetUserId || currentUserId === targetUserId) {
+  // Ne pas afficher le bouton si c'est le même utilisateur ou si shopId manque
+  if (!currentUserId || !targetUserId || !shopId || currentUserId === targetUserId) {
     return null;
   }
 

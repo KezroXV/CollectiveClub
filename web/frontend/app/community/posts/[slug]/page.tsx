@@ -8,7 +8,7 @@ export { generateMetadata } from "./metadata";
 const prisma = new PrismaClient();
 
 interface PageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 /**
@@ -20,7 +20,18 @@ export default async function PostBySlugPage({ params }: PageProps) {
 
   // Récupération des données côté serveur pour le SEO
   let post = null;
-  let comments = null;
+  let comments: Array<{
+    id: string;
+    content: string;
+    createdAt: Date;
+    updatedAt: Date;
+    author: {
+      id: string;
+      name: string | null;
+    };
+    parentId: string | null;
+    reactions: Array<{ type: string; count: number }>;
+  }> | null = null;
   try {
     post = await prisma.post.findFirst({
       where: {
@@ -63,7 +74,7 @@ export default async function PostBySlugPage({ params }: PageProps) {
 
     // Récupérer les premiers commentaires pour SEO (limités à 5)
     if (post) {
-      comments = await prisma.comment.findMany({
+      const rawComments = await prisma.comment.findMany({
         where: {
           postId: post.id,
           parentId: null, // Seulement les commentaires de premier niveau
@@ -88,8 +99,13 @@ export default async function PostBySlugPage({ params }: PageProps) {
       });
 
       // Transformer les réactions pour correspondre au format attendu
-      comments = comments.map(comment => ({
-        ...comment,
+      comments = rawComments.map(comment => ({
+        id: comment.id,
+        content: comment.content,
+        createdAt: comment.createdAt,
+        updatedAt: comment.updatedAt,
+        author: comment.author,
+        parentId: comment.parentId,
         reactions: comment.reactions.reduce((acc: Array<{ type: string; count: number }>, reaction) => {
           const existing = acc.find(r => r.type === reaction.type);
           if (existing) {

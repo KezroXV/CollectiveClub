@@ -4,9 +4,9 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     userId: string;
-  };
+  }>;
 }
 
 /**
@@ -14,7 +14,8 @@ interface RouteParams {
  */
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const { userId } = params;
+    const resolvedParams = await params;
+    const { userId } = resolvedParams;
     const { searchParams } = new URL(request.url);
     const shopId = searchParams.get('shopId');
     const page = parseInt(searchParams.get('page') || '1');

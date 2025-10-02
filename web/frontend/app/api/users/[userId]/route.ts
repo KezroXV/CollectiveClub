@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 // DELETE /api/users/[userId] - Supprimer un utilisateur définitivement
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
     logger.api('/api/users/[userId]', 'DELETE request');
@@ -100,7 +100,7 @@ export async function DELETE(
 // PUT /api/users/[userId] - Modifier le rôle d'un utilisateur
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
     logger.api('/api/users/[userId]', 'PUT request');

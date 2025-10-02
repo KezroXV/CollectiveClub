@@ -8,6 +8,7 @@ export const POINTS_CONFIG = {
   [PointAction.COMMENT_CREATED]: 5,
   [PointAction.REACTION_RECEIVED]: 2,
   [PointAction.DAILY_LOGIN]: 1,
+  [PointAction.BADGE_UNLOCKED]: 0, // Les points sont déduits, pas ajoutés
 } as const;
 
 /**

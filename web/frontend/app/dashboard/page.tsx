@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import ThemeWrapper from "@/components/ThemeWrapper";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
@@ -13,7 +13,7 @@ import ManagementSection from "./components/ManagementSection";
 import ShopManagementSection from "./components/ShopManagementSection";
 import ModalsManager from "./components/ModalsManager";
 
-export default function DashboardPage() {
+function DashboardPageContent() {
   const { currentUser, loading } = useCurrentUser();
   const { isAdmin, isModerator } = usePermissions();
   const [showCustomization, setShowCustomization] = useState(false);
@@ -185,5 +185,17 @@ export default function DashboardPage() {
         />
       </div>
     </ThemeWrapper>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      </div>
+    }>
+      <DashboardPageContent />
+    </Suspense>
   );
 }

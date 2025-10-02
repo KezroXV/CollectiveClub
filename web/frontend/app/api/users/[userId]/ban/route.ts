@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 // POST /api/users/[userId]/ban - Bannir un utilisateur
 export async function POST(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
     console.log('BAN API POST: Starting request');
@@ -106,7 +106,7 @@ export async function POST(
 // DELETE /api/users/[userId]/ban - Débannir un utilisateur
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
     // 🏪 ISOLATION MULTI-TENANT

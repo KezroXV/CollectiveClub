@@ -135,6 +135,9 @@ export async function DELETE(
   { params }: { params: Promise<{ categoryId: string }> }
 ) {
   try {
+    // Await params (Next.js 15 requirement)
+    const { categoryId } = await params;
+
     // 🏪 ISOLATION MULTI-TENANT
     const shopId = await getShopId(request);
     ensureShopIsolation(shopId);
@@ -265,10 +268,12 @@ export async function GET(
   { params }: { params: Promise<{ categoryId: string }> }
 ) {
   try {
+    // Await params (Next.js 15 requirement)
+    const { categoryId } = await params;
+
     // 🏪 ISOLATION MULTI-TENANT
     const shopId = await getShopId(request);
     ensureShopIsolation(shopId);
-
 
     const category = await prisma.category.findFirst({
       where: {

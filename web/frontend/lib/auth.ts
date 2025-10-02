@@ -123,12 +123,12 @@ export const authOptions: NextAuthOptions = {
 
           // Mettre à jour le token avec les infos de cet utilisateur
           token.sub = shopUser.id;
-          token.role = shopUser.role;
+          token.role = shopUser.role as "ADMIN" | "MODERATOR" | "MEMBER";
           token.isShopOwner = shopUser.isShopOwner;
           token.shopId = shopUser.shopId;
         } catch (error) {
           console.error("🚫 JWT Error:", error);
-          return false; // ❌ BLOQUER l'auth si erreur
+          throw new Error("Authentication failed");
         }
       } else if (token.sub) {
         // Connexions suivantes
@@ -146,14 +146,14 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (dbUser) {
-          token.role = dbUser.role;
+          token.role = dbUser.role as "ADMIN" | "MODERATOR" | "MEMBER";
           token.isShopOwner = dbUser.isShopOwner;
           token.shopId = dbUser.shopId;
           token.name = dbUser.name;
           token.picture = dbUser.image;
           token.roleInfo = dbUser.roleInfo;
         } else {
-          return false; // ❌ BLOQUER si utilisateur n'existe plus
+          throw new Error("User not found"); // ❌ BLOQUER si utilisateur n'existe plus
         }
       }
 

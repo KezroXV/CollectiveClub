@@ -76,10 +76,10 @@ export default function ProfilePage() {
   useEffect(() => {
     const loadProfileData = async () => {
       if (!currentUser) return;
-      
+
       setLoadingProfileData(true);
       try {
-        const response = await fetch('/api/profile/data');
+        const response = await fetch("/api/profile/data");
         if (response.ok) {
           const result = await response.json();
           if (result.success) {
@@ -156,7 +156,6 @@ export default function ProfilePage() {
                 isSaving={isSaving}
                 onEditingToggle={handleEditToggle}
                 onSaveProfile={handleSaveProfile}
-                borderColor={colors.Bordures}
               />
               <ProfileEditForm
                 currentUser={currentUser}
@@ -168,7 +167,9 @@ export default function ProfilePage() {
             {/* Colonne droite - Sidebar avec infos utilisateur */}
             <div className="lg:col-span-1 space-y-6">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Aperçu du profil</h1>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Aperçu du profil
+                </h1>
                 <p className="text-gray-600">
                   Voici comment votre profil est affiché au public.
                 </p>
@@ -179,7 +180,8 @@ export default function ProfilePage() {
                   name: currentUser.name || "",
                   email: currentUser.email || "",
                   image: currentUser.image || undefined,
-                  createdAt: currentUser.createdAt || new Date().toISOString(),
+                  createdAt:
+                    (currentUser as any).createdAt || new Date().toISOString(),
                 }}
                 authorRecentPosts={authorRecentPosts}
                 authorRecentComments={authorRecentComments}

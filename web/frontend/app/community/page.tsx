@@ -1,7 +1,7 @@
- 
+
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
@@ -26,6 +26,7 @@ interface Post {
   id: string;
   title: string;
   content: string;
+  slug?: string;
   imageUrl?: string;
   author: {
     id: string;
@@ -60,7 +61,7 @@ interface Comment {
   createdAt: string;
 }
 
-export default function CommunityPage() {
+function CommunityPageContent() {
   const { currentUser } = useCurrentUser();
   const { colors } = useTheme();
   const [posts, setPosts] = useState<Post[]>([]);
@@ -568,5 +569,17 @@ export default function CommunityPage() {
         </div>
       </div>
     </ThemeWrapper>
+  );
+}
+
+export default function CommunityPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      </div>
+    }>
+      <CommunityPageContent />
+    </Suspense>
   );
 }

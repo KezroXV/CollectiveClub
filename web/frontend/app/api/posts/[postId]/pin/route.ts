@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 // POST /api/posts/[postId]/pin - Épingler un post
 export async function POST(
   request: NextRequest,
-  { params }: { params: { postId: string } }
+  { params }: { params: Promise<{ postId: string }> }
 ) {
   try {
     console.log('PIN API POST: Starting request');
@@ -112,7 +112,7 @@ export async function POST(
 // DELETE /api/posts/[postId]/pin - Désépingler un post
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { postId: string } }
+  { params }: { params: Promise<{ postId: string }> }
 ) {
   try {
     // 🏪 ISOLATION MULTI-TENANT

@@ -20,7 +20,7 @@ interface RoleChangeResponse {
   success: boolean;
   user: {
     id: string;
-    name: string;
+    name: string | null;
     email: string;
     role: UserRole;
   };
@@ -67,12 +67,12 @@ export async function PUT(
       }),
       prisma.user.findFirst({
         where: { id: targetUserId, shopId },
-        select: { 
-          id: true, 
-          role: true, 
-          name: true, 
+        select: {
+          id: true,
+          role: true,
+          name: true,
           email: true,
-          isOwner: true // Vérifier si c'est le propriétaire
+          isShopOwner: true // Vérifier si c'est le propriétaire
         }
       })
     ]);
@@ -98,7 +98,7 @@ export async function PUT(
       targetId: target.id,
       targetRole: target.role as UserRole,
       newRole: body.role,
-      isTargetOwner: target.isOwner || false,
+      isTargetOwner: target.isShopOwner || false,
       shopId,
     };
 
@@ -219,7 +219,7 @@ export async function GET(
         name: true,
         email: true,
         role: true,
-        isOwner: true,
+        isShopOwner: true,
         createdAt: true,
       }
     });
@@ -233,7 +233,7 @@ export async function GET(
 
     return NextResponse.json({
       user,
-      canModify: !user.isOwner && user.id !== actorId,
+      canModify: !user.isShopOwner && user.id !== actorId,
     });
 
   } catch (error) {

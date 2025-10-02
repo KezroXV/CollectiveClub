@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 // GET /api/posts/by-slug/[slug] - Récupérer un post par son slug
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     // 🏪 ISOLATION MULTI-TENANT

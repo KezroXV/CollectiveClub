@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { promises as fs } from 'fs';
+import { promises as fs } from "fs";
 import { performance } from "perf_hooks";
 
 const prisma = new PrismaClient();
@@ -42,7 +42,7 @@ interface BackupData {
 
 /**
  * SYSTÈME DE RÉCUPÉRATION ET SAUVEGARDE DE DONNÉES
- * 
+ *
  * Gère la sauvegarde, restauration et nettoyage des données
  * avec isolation multi-tenant.
  */
@@ -54,94 +54,93 @@ async function backupShop(shopId: string): Promise<RecoveryReport> {
   const start = performance.now();
   const report: RecoveryReport = {
     timestamp: new Date(),
-    operation: 'BACKUP_SHOP',
+    operation: "BACKUP_SHOP",
     shopId,
     success: false,
     itemsProcessed: 0,
     itemsRecovered: 0,
-    errors: []
+    errors: [],
+    duration: 0,
   };
 
   try {
     console.log(`💾 Sauvegarde de la boutique ${shopId}...`);
 
     // Récupérer toutes les données de la boutique
-    const [shop, users, posts, comments, reactions, categories, badges, polls] = await Promise.all([
-      prisma.shop.findUnique({
-        where: { id: shopId }
-      }),
-      prisma.user.findMany({
-        where: { shopId },
-        include: {
-          posts: { select: { id: true } },
-          comments: { select: { id: true } },
-          reactions: { select: { id: true } }
-        }
-      }),
-      prisma.post.findMany({
-        where: { shopId },
-        include: {
-          author: true,
-          comments: {
-            include: { author: true }
+    const [shop, users, posts, comments, reactions, categories, badges, polls] =
+      await Promise.all([
+        prisma.shop.findUnique({
+          where: { id: shopId },
+        }),
+        prisma.user.findMany({
+          where: { shopId },
+          include: {
+            posts: { select: { id: true } },
+            comments: { select: { id: true } },
+            reactions: { select: { id: true } },
           },
-          reactions: {
-            include: { user: true }
+        }),
+        prisma.post.findMany({
+          where: { shopId },
+          include: {
+            author: true,
+            comments: {
+              include: { author: true },
+            },
+            reactions: {
+              include: { user: true },
+            },
+            category: true,
+            poll: {
+              include: {
+                options: {
+                  include: {
+                    votes: { include: { user: true } },
+                  },
+                },
+              },
+            },
           },
-          category: true,
-          poll: {
-            include: {
-              options: {
-                include: {
-                  votes: { include: { user: true } }
-                }
-              }
-            }
-          }
-        }
-      }),
-      prisma.comment.findMany({
-        where: {
-          author: { shopId }
-        },
-        include: {
-          author: true,
-          post: true
-        }
-      }),
-      prisma.reaction.findMany({
-        where: {
-          user: { shopId }
-        },
-        include: {
-          user: true,
-          post: true,
-          comment: true
-        }
-      }),
-      prisma.category.findMany({
-        where: { shopId },
-        include: {
-          posts: { select: { id: true } }
-        }
-      }),
-      prisma.badge.findMany({
-        where: { shopId }
-      }),
-      prisma.poll.findMany({
-        where: { shopId },
-        include: {
-          options: {
-            include: {
-              votes: { include: { user: true } }
-            }
-          }
-        }
-      })
-    ]);
+        }),
+        prisma.comment.findMany({
+          where: { shopId },
+          include: {
+            author: true,
+            post: true,
+          },
+        }),
+        prisma.reaction.findMany({
+          where: { shopId },
+          include: {
+            user: true,
+            post: true,
+            comment: true,
+          },
+        }),
+        prisma.category.findMany({
+          where: { shopId },
+          include: {
+            posts: { select: { id: true } },
+          },
+        }),
+        prisma.badge.findMany({
+          where: { shopId },
+        }),
+        prisma.poll.findMany({
+          where: { shopId },
+          include: {
+            options: {
+              include: {
+                votes: { include: { user: true } },
+              },
+            },
+          },
+        }),
+      ]);
 
     if (!shop) {
       report.errors.push(`Shop not found: ${shopId}`);
+      report.duration = performance.now() - start;
       return report;
     }
 
@@ -155,22 +154,31 @@ async function backupShop(shopId: string): Promise<RecoveryReport> {
       badges,
       polls,
       metadata: {
-        version: '1.0',
+        version: "1.0",
         timestamp: new Date(),
-        totalRecords: users.length + posts.length + comments.length + 
-                     reactions.length + categories.length + badges.length + polls.length
-      }
+        totalRecords:
+          users.length +
+          posts.length +
+          comments.length +
+          reactions.length +
+          categories.length +
+          badges.length +
+          polls.length,
+      },
     };
 
     report.itemsProcessed = backupData.metadata.totalRecords;
 
     // Sauvegarder dans un fichier JSON
-    const filename = `backup_${shop.shopDomain.replace(/[^a-z0-9]/gi, '_')}_${Date.now()}.json`;
+    const filename = `backup_${shop.shopDomain.replace(
+      /[^a-z0-9]/gi,
+      "_"
+    )}_${Date.now()}.json`;
     const backupPath = `./backups/${filename}`;
-    
+
     // Créer le dossier backups s'il n'existe pas
     try {
-      await fs.mkdir('./backups', { recursive: true });
+      await fs.mkdir("./backups", { recursive: true });
     } catch (error) {
       // Ignorer l'erreur si le dossier existe déjà
     }
@@ -182,7 +190,6 @@ async function backupShop(shopId: string): Promise<RecoveryReport> {
 
     console.log(`✅ Sauvegarde terminée: ${filename}`);
     console.log(`   📊 ${report.itemsRecovered} enregistrements sauvegardés`);
-
   } catch (error) {
     report.errors.push(`Backup failed: ${error}`);
     console.error(`❌ Erreur de sauvegarde:`, error);
@@ -195,22 +202,26 @@ async function backupShop(shopId: string): Promise<RecoveryReport> {
 /**
  * Restauration d'une boutique depuis une sauvegarde
  */
-async function restoreShop(backupPath: string, newShopId?: string): Promise<RecoveryReport> {
+async function restoreShop(
+  backupPath: string,
+  newShopId?: string
+): Promise<RecoveryReport> {
   const start = performance.now();
   const report: RecoveryReport = {
     timestamp: new Date(),
-    operation: 'RESTORE_SHOP',
+    operation: "RESTORE_SHOP",
     success: false,
     itemsProcessed: 0,
     itemsRecovered: 0,
-    errors: []
+    errors: [],
+    duration: 0,
   };
 
   try {
     console.log(`🔄 Restauration depuis ${backupPath}...`);
 
     // Lire le fichier de sauvegarde
-    const backupContent = await fs.readFile(backupPath, 'utf-8');
+    const backupContent = await fs.readFile(backupPath, "utf-8");
     const backupData: BackupData = JSON.parse(backupContent);
 
     report.itemsProcessed = backupData.metadata.totalRecords;
@@ -218,11 +229,14 @@ async function restoreShop(backupPath: string, newShopId?: string): Promise<Reco
 
     // Vérifier si la boutique de destination existe
     const existingShop = await prisma.shop.findUnique({
-      where: { id: targetShopId }
+      where: { id: targetShopId },
     });
 
     if (existingShop && !newShopId) {
-      report.errors.push(`Shop ${targetShopId} already exists. Use newShopId parameter to restore to a different shop.`);
+      report.errors.push(
+        `Shop ${targetShopId} already exists. Use newShopId parameter to restore to a different shop.`
+      );
+      report.duration = performance.now() - start;
       return report;
     }
 
@@ -231,14 +245,12 @@ async function restoreShop(backupPath: string, newShopId?: string): Promise<Reco
       // Créer la boutique de destination
       targetShop = await prisma.shop.create({
         data: {
-          ...backupData.shop,
           id: targetShopId,
-          settings: {
-            ...backupData.shop.settings,
-            restoredFrom: backupPath,
-            restoredAt: new Date().toISOString()
-          }
-        }
+          shopDomain: backupData.shop.shopDomain,
+          shopName: backupData.shop.shopName,
+          ownerId: backupData.shop.ownerId,
+          settings: backupData.shop.settings,
+        },
       });
     } else {
       targetShop = existingShop;
@@ -256,19 +268,23 @@ async function restoreShop(backupPath: string, newShopId?: string): Promise<Reco
           where: {
             shopId_email: {
               shopId: targetShop.id,
-              email: user.email
-            }
+              email: user.email,
+            },
           },
           update: {
             name: user.name,
             role: user.role,
-            avatar: user.avatar
+            image: user.image,
           },
           create: {
-            ...user,
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            image: user.image,
+            role: user.role,
             shopId: targetShop.id,
-            shopDomain: targetShop.shopDomain
-          }
+            isShopOwner: user.isShopOwner || false,
+          },
         });
         recovered++;
       } catch (error) {
@@ -283,23 +299,30 @@ async function restoreShop(backupPath: string, newShopId?: string): Promise<Reco
           where: {
             shopId_name: {
               shopId: targetShop.id,
-              name: category.name
-            }
+              name: category.name,
+            },
           },
           update: {
             color: category.color,
             description: category.description,
             order: category.order,
-            isActive: category.isActive
+            isActive: category.isActive,
           },
           create: {
-            ...category,
-            shopId: targetShop.id
-          }
+            id: category.id,
+            name: category.name,
+            color: category.color,
+            description: category.description,
+            order: category.order,
+            isActive: category.isActive,
+            shopId: targetShop.id,
+          },
         });
         recovered++;
       } catch (error) {
-        report.errors.push(`Failed to restore category ${category.name}: ${error}`);
+        report.errors.push(
+          `Failed to restore category ${category.name}: ${error}`
+        );
       }
     }
 
@@ -307,20 +330,22 @@ async function restoreShop(backupPath: string, newShopId?: string): Promise<Reco
     const postIdMapping: Record<string, string> = {};
     for (const post of backupData.posts) {
       try {
-        // Récupérer l'auteur et la catégorie dans la boutique de destination
+        // Récupérer l'auteur dans la boutique de destination
         const author = await prisma.user.findFirst({
           where: {
             shopId: targetShop.id,
-            email: post.author.email
-          }
+            email: post.author.email,
+          },
         });
 
-        const category = await prisma.category.findFirst({
-          where: {
-            shopId: targetShop.id,
-            name: post.category.name
-          }
-        });
+        const category = post.category
+          ? await prisma.category.findFirst({
+              where: {
+                shopId: targetShop.id,
+                name: post.category.name,
+              },
+            })
+          : null;
 
         if (!author) {
           report.errors.push(`Author not found for post ${post.title}`);
@@ -331,14 +356,15 @@ async function restoreShop(backupPath: string, newShopId?: string): Promise<Reco
           data: {
             title: post.title,
             content: post.content,
+            slug: post.slug,
             imageUrl: post.imageUrl,
             status: post.status,
             authorId: author.id,
             categoryId: category?.id,
             shopId: targetShop.id,
             createdAt: post.createdAt,
-            updatedAt: post.updatedAt
-          }
+            updatedAt: post.updatedAt,
+          },
         });
 
         postIdMapping[post.id] = restoredPost.id;
@@ -354,8 +380,8 @@ async function restoreShop(backupPath: string, newShopId?: string): Promise<Reco
         const author = await prisma.user.findFirst({
           where: {
             shopId: targetShop.id,
-            email: comment.author.email
-          }
+            email: comment.author.email,
+          },
         });
 
         const postId = postIdMapping[comment.postId];
@@ -370,9 +396,10 @@ async function restoreShop(backupPath: string, newShopId?: string): Promise<Reco
             content: comment.content,
             authorId: author.id,
             postId: postId,
+            shopId: targetShop.id,
             createdAt: comment.createdAt,
-            updatedAt: comment.updatedAt
-          }
+            updatedAt: comment.updatedAt,
+          },
         });
         recovered++;
       } catch (error) {
@@ -386,13 +413,13 @@ async function restoreShop(backupPath: string, newShopId?: string): Promise<Reco
         const user = await prisma.user.findFirst({
           where: {
             shopId: targetShop.id,
-            email: reaction.user.email
-          }
+            email: reaction.user.email,
+          },
         });
 
-        const postId = postIdMapping[reaction.postId];
+        const postId = reaction.postId ? postIdMapping[reaction.postId] : null;
 
-        if (!user || !postId) {
+        if (!user) {
           continue;
         }
 
@@ -401,8 +428,10 @@ async function restoreShop(backupPath: string, newShopId?: string): Promise<Reco
             type: reaction.type,
             userId: user.id,
             postId: postId,
-            createdAt: reaction.createdAt
-          }
+            commentId: reaction.commentId,
+            shopId: targetShop.id,
+            createdAt: reaction.createdAt,
+          },
         });
         recovered++;
       } catch (error) {
@@ -413,21 +442,27 @@ async function restoreShop(backupPath: string, newShopId?: string): Promise<Reco
     // 6. Badges
     for (const badge of backupData.badges) {
       try {
-        const user = await prisma.user.findFirst({
+        await prisma.badge.upsert({
           where: {
+            shopId_name: {
+              shopId: targetShop.id,
+              name: badge.name,
+            },
+          },
+          update: {
+            imageUrl: badge.imageUrl,
+            requiredPoints: badge.requiredPoints,
+            description: badge.description,
+          },
+          create: {
+            name: badge.name,
+            imageUrl: badge.imageUrl,
+            requiredPoints: badge.requiredPoints,
+            description: badge.description,
+            isDefault: badge.isDefault,
+            order: badge.order,
             shopId: targetShop.id,
-            email: badge.user?.email || `admin@${targetShop.shopDomain}`
-          }
-        });
-
-        if (!user) continue;
-
-        await prisma.badge.create({
-          data: {
-            ...badge,
-            userId: user.id,
-            shopId: targetShop.id
-          }
+          },
         });
         recovered++;
       } catch (error) {
@@ -439,12 +474,15 @@ async function restoreShop(backupPath: string, newShopId?: string): Promise<Reco
     report.itemsRecovered = recovered;
 
     console.log(`✅ Restauration terminée`);
-    console.log(`   📊 ${recovered}/${report.itemsProcessed} enregistrements restaurés`);
-    
-    if (report.errors.length > 0) {
-      console.log(`   ⚠️ ${report.errors.length} erreurs lors de la restauration`);
-    }
+    console.log(
+      `   📊 ${recovered}/${report.itemsProcessed} enregistrements restaurés`
+    );
 
+    if (report.errors.length > 0) {
+      console.log(
+        `   ⚠️ ${report.errors.length} erreurs lors de la restauration`
+      );
+    }
   } catch (error) {
     report.errors.push(`Restore failed: ${error}`);
     console.error(`❌ Erreur de restauration:`, error);
@@ -461,70 +499,51 @@ async function cleanOrphanedData(): Promise<RecoveryReport> {
   const start = performance.now();
   const report: RecoveryReport = {
     timestamp: new Date(),
-    operation: 'CLEAN_ORPHANED_DATA',
+    operation: "CLEAN_ORPHANED_DATA",
     success: false,
     itemsProcessed: 0,
     itemsRecovered: 0,
-    errors: []
+    errors: [],
+    duration: 0,
   };
 
   try {
     console.log(`🧹 Nettoyage des données orphelines...`);
 
-    // 1. Trouver les posts sans boutique valide
-    const orphanedPosts = await prisma.post.findMany({
-      where: {
-        OR: [
-          { shopId: null },
-          {
-            shop: null
-          }
-        ]
-      },
-      include: { author: true }
-    });
+    // 1. Trouver les posts sans shopId ou avec shopId invalide
+    const orphanedPosts = await prisma.$queryRaw<any[]>`
+      SELECT p.* FROM posts p
+      LEFT JOIN shops s ON p."shopId" = s.id
+      WHERE p."shopId" IS NULL OR s.id IS NULL
+    `;
 
-    // 2. Trouver les commentaires d'utilisateurs sans boutique valide
-    const orphanedComments = await prisma.comment.findMany({
-      where: {
-        author: {
-          shopId: null
-        }
-      }
-    });
+    // 2. Trouver les commentaires sans shopId
+    const orphanedComments = await prisma.$queryRaw<any[]>`
+      SELECT c.* FROM comments c
+      LEFT JOIN shops s ON c."shopId" = s.id
+      WHERE c."shopId" IS NULL OR s.id IS NULL
+    `;
 
-    // 3. Trouver les réactions d'utilisateurs sans boutique valide
-    const orphanedReactions = await prisma.reaction.findMany({
-      where: {
-        user: {
-          shopId: null
-        }
-      }
-    });
+    // 3. Trouver les réactions sans shopId
+    const orphanedReactions = await prisma.$queryRaw<any[]>`
+      SELECT r.* FROM reactions r
+      LEFT JOIN shops s ON r."shopId" = s.id
+      WHERE r."shopId" IS NULL OR s.id IS NULL
+    `;
 
-    // 4. Trouver les catégories sans boutique valide
-    const orphanedCategories = await prisma.category.findMany({
-      where: {
-        OR: [
-          { shopId: null },
-          {
-            shop: null
-          }
-        ]
-      }
-    });
+    // 4. Trouver les catégories orphelines
+    const orphanedCategories = await prisma.$queryRaw<any[]>`
+      SELECT c.* FROM categories c
+      LEFT JOIN shops s ON c."shopId" = s.id
+      WHERE c."shopId" IS NULL OR s.id IS NULL
+    `;
 
-    // 5. Trouver les badges sans boutique valide
-    const orphanedBadges = await prisma.badge.findMany({
-      where: {
-        OR: [
-          { shopId: null },
-          {
-            shop: null
-          }
-        ]
-      }
-    });
+    // 5. Trouver les badges orphelins
+    const orphanedBadges = await prisma.$queryRaw<any[]>`
+      SELECT b.* FROM badges b
+      LEFT JOIN shops s ON b."shopId" = s.id
+      WHERE b."shopId" IS NULL OR s.id IS NULL
+    `;
 
     const orphanData: OrphanData = {
       posts: orphanedPosts.length,
@@ -532,10 +551,13 @@ async function cleanOrphanedData(): Promise<RecoveryReport> {
       reactions: orphanedReactions.length,
       categories: orphanedCategories.length,
       badges: orphanedBadges.length,
-      polls: 0
+      polls: 0,
     };
 
-    report.itemsProcessed = Object.values(orphanData).reduce((sum, count) => sum + count, 0);
+    report.itemsProcessed = Object.values(orphanData).reduce(
+      (sum, count) => sum + count,
+      0
+    );
 
     console.log(`📊 Données orphelines détectées:`);
     console.log(`   Posts: ${orphanData.posts}`);
@@ -551,19 +573,33 @@ async function cleanOrphanedData(): Promise<RecoveryReport> {
       return report;
     }
 
+    // Créer le dossier backups s'il n'existe pas
+    try {
+      await fs.mkdir("./backups", { recursive: true });
+    } catch (error) {
+      // Ignorer
+    }
+
     // Sauvegarder les données orphelines avant suppression
     const backupPath = `./backups/orphaned_data_${Date.now()}.json`;
-    await fs.writeFile(backupPath, JSON.stringify({
-      posts: orphanedPosts,
-      comments: orphanedComments,
-      reactions: orphanedReactions,
-      categories: orphanedCategories,
-      badges: orphanedBadges,
-      metadata: {
-        timestamp: new Date(),
-        totalOrphans: report.itemsProcessed
-      }
-    }, null, 2));
+    await fs.writeFile(
+      backupPath,
+      JSON.stringify(
+        {
+          posts: orphanedPosts,
+          comments: orphanedComments,
+          reactions: orphanedReactions,
+          categories: orphanedCategories,
+          badges: orphanedBadges,
+          metadata: {
+            timestamp: new Date(),
+            totalOrphans: report.itemsProcessed,
+          },
+        },
+        null,
+        2
+      )
+    );
 
     console.log(`💾 Sauvegarde des données orphelines: ${backupPath}`);
 
@@ -574,8 +610,8 @@ async function cleanOrphanedData(): Promise<RecoveryReport> {
     if (orphanedReactions.length > 0) {
       const result = await prisma.reaction.deleteMany({
         where: {
-          id: { in: orphanedReactions.map(r => r.id) }
-        }
+          id: { in: orphanedReactions.map((r) => r.id) },
+        },
       });
       cleaned += result.count;
     }
@@ -584,8 +620,8 @@ async function cleanOrphanedData(): Promise<RecoveryReport> {
     if (orphanedComments.length > 0) {
       const result = await prisma.comment.deleteMany({
         where: {
-          id: { in: orphanedComments.map(c => c.id) }
-        }
+          id: { in: orphanedComments.map((c) => c.id) },
+        },
       });
       cleaned += result.count;
     }
@@ -594,8 +630,8 @@ async function cleanOrphanedData(): Promise<RecoveryReport> {
     if (orphanedPosts.length > 0) {
       const result = await prisma.post.deleteMany({
         where: {
-          id: { in: orphanedPosts.map(p => p.id) }
-        }
+          id: { in: orphanedPosts.map((p) => p.id) },
+        },
       });
       cleaned += result.count;
     }
@@ -604,8 +640,8 @@ async function cleanOrphanedData(): Promise<RecoveryReport> {
     if (orphanedCategories.length > 0) {
       const result = await prisma.category.deleteMany({
         where: {
-          id: { in: orphanedCategories.map(c => c.id) }
-        }
+          id: { in: orphanedCategories.map((c) => c.id) },
+        },
       });
       cleaned += result.count;
     }
@@ -614,8 +650,8 @@ async function cleanOrphanedData(): Promise<RecoveryReport> {
     if (orphanedBadges.length > 0) {
       const result = await prisma.badge.deleteMany({
         where: {
-          id: { in: orphanedBadges.map(b => b.id) }
-        }
+          id: { in: orphanedBadges.map((b) => b.id) },
+        },
       });
       cleaned += result.count;
     }
@@ -624,7 +660,6 @@ async function cleanOrphanedData(): Promise<RecoveryReport> {
     report.itemsRecovered = cleaned;
 
     console.log(`✅ Nettoyage terminé: ${cleaned} enregistrements supprimés`);
-
   } catch (error) {
     report.errors.push(`Cleanup failed: ${error}`);
     console.error(`❌ Erreur de nettoyage:`, error);
@@ -640,17 +675,18 @@ async function cleanOrphanedData(): Promise<RecoveryReport> {
 async function migrateBetweenShops(
   sourceShopId: string,
   targetShopId: string,
-  dataTypes: ('posts' | 'users' | 'categories')[] = ['posts', 'categories']
+  dataTypes: ("posts" | "users" | "categories")[] = ["posts", "categories"]
 ): Promise<RecoveryReport> {
   const start = performance.now();
   const report: RecoveryReport = {
     timestamp: new Date(),
-    operation: 'MIGRATE_BETWEEN_SHOPS',
+    operation: "MIGRATE_BETWEEN_SHOPS",
     shopId: sourceShopId,
     success: false,
     itemsProcessed: 0,
     itemsRecovered: 0,
-    errors: []
+    errors: [],
+    duration: 0,
   };
 
   try {
@@ -658,20 +694,21 @@ async function migrateBetweenShops(
 
     const [sourceShop, targetShop] = await Promise.all([
       prisma.shop.findUnique({ where: { id: sourceShopId } }),
-      prisma.shop.findUnique({ where: { id: targetShopId } })
+      prisma.shop.findUnique({ where: { id: targetShopId } }),
     ]);
 
     if (!sourceShop || !targetShop) {
-      report.errors.push('Source or target shop not found');
+      report.errors.push("Source or target shop not found");
+      report.duration = performance.now() - start;
       return report;
     }
 
     let migrated = 0;
 
     // Migration des catégories
-    if (dataTypes.includes('categories')) {
+    if (dataTypes.includes("categories")) {
       const categories = await prisma.category.findMany({
-        where: { shopId: sourceShopId }
+        where: { shopId: sourceShopId },
       });
 
       for (const category of categories) {
@@ -680,30 +717,36 @@ async function migrateBetweenShops(
             where: {
               shopId_name: {
                 shopId: targetShopId,
-                name: category.name
-              }
+                name: category.name,
+              },
             },
             update: {
               color: category.color,
-              description: category.description
+              description: category.description,
             },
             create: {
-              ...category,
-              shopId: targetShopId
-            }
+              name: category.name,
+              color: category.color,
+              description: category.description,
+              order: category.order,
+              isActive: category.isActive,
+              shopId: targetShopId,
+            },
           });
           migrated++;
         } catch (error) {
-          report.errors.push(`Failed to migrate category ${category.name}: ${error}`);
+          report.errors.push(
+            `Failed to migrate category ${category.name}: ${error}`
+          );
         }
       }
     }
 
     // Migration des posts (nécessite des utilisateurs dans la boutique cible)
-    if (dataTypes.includes('posts')) {
+    if (dataTypes.includes("posts")) {
       const posts = await prisma.post.findMany({
         where: { shopId: sourceShopId },
-        include: { author: true, category: true }
+        include: { author: true, category: true },
       });
 
       for (const post of posts) {
@@ -712,8 +755,8 @@ async function migrateBetweenShops(
           let targetAuthor = await prisma.user.findFirst({
             where: {
               shopId: targetShopId,
-              email: post.author.email
-            }
+              email: post.author.email,
+            },
           });
 
           if (!targetAuthor) {
@@ -721,31 +764,34 @@ async function migrateBetweenShops(
               data: {
                 email: post.author.email,
                 name: post.author.name,
-                role: 'MEMBER',
+                role: "MEMBER",
                 shopId: targetShopId,
-                shopDomain: targetShop.shopDomain
-              }
+                isShopOwner: false,
+              },
             });
           }
 
           // Trouver la catégorie dans la boutique cible
-          const targetCategory = await prisma.category.findFirst({
-            where: {
-              shopId: targetShopId,
-              name: post.category?.name
-            }
-          });
+          const targetCategory = post.category
+            ? await prisma.category.findFirst({
+                where: {
+                  shopId: targetShopId,
+                  name: post.category.name,
+                },
+              })
+            : null;
 
           await prisma.post.create({
             data: {
               title: post.title,
               content: post.content,
+              slug: post.slug,
               imageUrl: post.imageUrl,
               status: post.status,
               authorId: targetAuthor.id,
               categoryId: targetCategory?.id,
-              shopId: targetShopId
-            }
+              shopId: targetShopId,
+            },
           });
           migrated++;
         } catch (error) {
@@ -759,7 +805,6 @@ async function migrateBetweenShops(
     report.itemsRecovered = migrated;
 
     console.log(`✅ Migration terminée: ${migrated} éléments migrés`);
-
   } catch (error) {
     report.errors.push(`Migration failed: ${error}`);
     console.error(`❌ Erreur de migration:`, error);
@@ -776,39 +821,47 @@ async function main() {
 
   try {
     switch (command) {
-      case 'backup':
+      case "backup":
         const shopId = args[1];
         if (!shopId) {
-          console.log('Usage: npm run data-recovery backup <shopId>');
+          console.log("Usage: npm run data-recovery backup <shopId>");
           process.exit(1);
         }
         await backupShop(shopId);
         break;
 
-      case 'restore':
+      case "restore":
         const backupPath = args[1];
         const newShopId = args[2];
         if (!backupPath) {
-          console.log('Usage: npm run data-recovery restore <backupPath> [newShopId]');
+          console.log(
+            "Usage: npm run data-recovery restore <backupPath> [newShopId]"
+          );
           process.exit(1);
         }
         await restoreShop(backupPath, newShopId);
         break;
 
-      case 'clean':
+      case "clean":
         await cleanOrphanedData();
         break;
 
-      case 'migrate':
+      case "migrate":
         const sourceShopId = args[1];
         const targetShopId = args[2];
-        const dataTypes = args[3]?.split(',') as any[] || ['posts', 'categories'];
-        
+        const dataTypes = (args[3]?.split(",") as (
+          | "posts"
+          | "users"
+          | "categories"
+        )[]) || ["posts", "categories"];
+
         if (!sourceShopId || !targetShopId) {
-          console.log('Usage: npm run data-recovery migrate <sourceShopId> <targetShopId> [posts,categories,users]');
+          console.log(
+            "Usage: npm run data-recovery migrate <sourceShopId> <targetShopId> [posts,categories,users]"
+          );
           process.exit(1);
         }
-        
+
         await migrateBetweenShops(sourceShopId, targetShopId, dataTypes);
         break;
 
@@ -833,7 +886,7 @@ Exemples:
         break;
     }
   } catch (error) {
-    console.error('❌ Erreur:', error);
+    console.error("❌ Erreur:", error);
     process.exit(1);
   } finally {
     await prisma.$disconnect();
@@ -848,7 +901,7 @@ export {
   migrateBetweenShops,
   type RecoveryReport,
   type OrphanData,
-  type BackupData
+  type BackupData,
 };
 
 // Exécuter si appelé directement

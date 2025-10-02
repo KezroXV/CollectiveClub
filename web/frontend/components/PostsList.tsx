@@ -8,6 +8,7 @@ interface Post {
   id: string;
   title: string;
   content: string;
+  slug?: string;
   imageUrl?: string;
   category?: {
     id: string;
@@ -53,7 +54,7 @@ export default function PostsList({
   searchQuery,
   selectedCategory,
 }: PostsListProps) {
-  const hasFilters = searchQuery || selectedCategory !== "all";
+  const hasFilters = Boolean(searchQuery || selectedCategory !== "all");
 
   if (posts.length === 0) {
     return <EmptyState hasFilters={hasFilters} currentUser={currentUser} />;
@@ -64,7 +65,7 @@ export default function PostsList({
       {posts.map((post, index) => (
         <PostCard
           key={post.id}
-          post={post}
+          post={{ ...post, slug: post.slug ?? "" }}
           currentUser={currentUser}
           onVote={onVote}
           isLast={index === posts.length - 1}

@@ -92,7 +92,7 @@ export function SEOBreadcrumbs({
  */
 export function usePostBreadcrumbs(post?: {
   title: string;
-  slug: string;
+  slug?: string;
   category?: { id: string; name: string };
 }): BreadcrumbItem[] {
   if (!post) return [];
@@ -106,7 +106,7 @@ export function usePostBreadcrumbs(post?: {
   // Ajouter le post actuel
   items.push({
     label: post.title,
-    href: `/community/posts/${post.slug}`,
+    href: post.slug ? `/community/posts/${post.slug}` : '/community',
     isCurrentPage: true
   });
 
@@ -139,7 +139,7 @@ export function useCategoryBreadcrumbs(category?: {
 interface PostBreadcrumbsProps {
   post: {
     title: string;
-    slug: string;
+    slug?: string;
     category?: { id: string; name: string };
   };
   className?: string;
