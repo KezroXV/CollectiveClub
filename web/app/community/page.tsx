@@ -123,31 +123,40 @@ function CommunityPageContent() {
       {/* Header */}
       <Header />
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-6 sm:mb-8">
+          <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
             <Link href="/">
-              <Button variant="outline" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Retour
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 sm:h-9 px-2 sm:px-3"
+              >
+                <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                <span className="text-xs sm:text-sm">Retour</span>
               </Button>
             </Link>
-            <div>
-              <h1 className="text-3xl font-bold">Forum Communautaire</h1>
-              <p className="text-muted-foreground">
-                Partagez vos idées et discutez • {posts.length} posts
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl sm:text-3xl font-bold truncate">
+                Forum Communautaire
+              </h1>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                <span className="hidden sm:inline">
+                  Partagez vos idées et discutez •{" "}
+                </span>
+                {posts.length} posts
               </p>
             </div>
           </div>
 
           <Button
             onClick={() => setShowCreateModal(true)}
-            className="gap-2"
+            className="gap-1.5 sm:gap-2 h-9 sm:h-10 px-3 sm:px-4 w-full sm:w-auto text-sm"
             disabled={!currentUser}
           >
-            <Plus className="h-4 w-4" />
-            Nouveau post
+            <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span>Nouveau post</span>
           </Button>
         </div>
 

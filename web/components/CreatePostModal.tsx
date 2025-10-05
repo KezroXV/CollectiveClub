@@ -311,14 +311,14 @@ export default function CreatePostModal({
   }, [isOpen]);
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="w-full max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto mx-4 sm:mx-auto">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">
+      <DialogContent className="w-full max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-4 p-4 sm:p-6">
+        <DialogHeader className="pb-2">
+          <DialogTitle className="text-lg sm:text-xl font-semibold">
             Créer un post
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6 pt-4">
+        <div className="space-y-4 sm:space-y-6 pt-2">
           {/* Titre */}
           <div className="space-y-2">
             <Label htmlFor="title" className="text-sm font-medium">
@@ -326,7 +326,7 @@ export default function CreatePostModal({
             </Label>
             <Input
               id="title"
-              placeholder="J'ai une idée de boutique mais je ne sais pas comment choisir, comment vous avez eu votre idée vous ?"
+              placeholder="Ex: J'ai une idée de boutique mais..."
               value={title}
               onChange={(e) => {
                 setTitle(e.target.value);
@@ -341,7 +341,7 @@ export default function CreatePostModal({
               }`}
             />
             {showErrors && errors.title && (
-              <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
+              <p className="text-xs sm:text-sm text-red-500 mt-1 flex items-center gap-1">
                 <span>⚠️</span>
                 {errors.title}
               </p>
@@ -363,14 +363,14 @@ export default function CreatePostModal({
                   setErrors((prev) => ({ ...prev, content: "" }));
                 }
               }}
-              className={`min-h-[100px] sm:min-h-[120px] text-sm sm:text-base resize-none ${
+              className={`min-h-[80px] sm:min-h-[120px] text-sm sm:text-base resize-none ${
                 showErrors && errors.content
                   ? "border-red-500 focus-visible:ring-red-500"
                   : ""
               }`}
             />
             {showErrors && errors.content && (
-              <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
+              <p className="text-xs sm:text-sm text-red-500 mt-1 flex items-center gap-1">
                 <span>⚠️</span>
                 {errors.content}
               </p>
@@ -378,28 +378,28 @@ export default function CreatePostModal({
           </div>
 
           {/* Upload d'image */}
-          <div className="space-y-3 mb-0">
+          <div className="space-y-2 sm:space-y-3">
             <Label className="text-sm font-medium">Ajouter une image</Label>
 
             {imageUrl ? (
-              <div className="relative">
+              <div className="relative inline-block">
                 <img
                   src={imageUrl}
                   alt="Uploaded"
-                  className="w-full max-w-[230px] h-auto rounded-lg border"
+                  className="w-full max-w-[200px] sm:max-w-[230px] h-auto rounded-lg border"
                 />
                 <Button
                   variant="destructive"
                   size="sm"
                   onClick={() => setImageUrl("")}
-                  className="absolute top-2 right-2"
+                  className="absolute top-1 right-1 sm:top-2 sm:right-2 h-7 w-7 sm:h-8 sm:w-8 p-0"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
               </div>
             ) : (
               <div
-                className={`w-full max-w-[230px] h-[60px] border-2 border-dashed rounded-lg cursor-pointer transition-all duration-200 flex items-center justify-center ${
+                className={`w-full max-w-[200px] sm:max-w-[230px] h-[50px] sm:h-[60px] border-2 border-dashed rounded-lg cursor-pointer transition-all duration-200 flex items-center justify-center ${
                   isDragOver
                     ? "border-primary bg-primary/10"
                     : "hover:bg-gray-50"
@@ -413,11 +413,9 @@ export default function CreatePostModal({
                 onDragLeave={handleDragLeave}
               >
                 <div className="flex items-center gap-2 text-gray-500">
-                  <ImageIcon className="h-5 w-5" />
-                  <span className="text-sm">
-                    {isDragOver
-                      ? "Déposez votre image ici"
-                      : "Cliquez pour ajouter"}
+                  <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <span className="text-xs sm:text-sm">
+                    {isDragOver ? "Déposez ici" : "Cliquez pour ajouter"}
                   </span>
                 </div>
               </div>
@@ -434,11 +432,11 @@ export default function CreatePostModal({
         </div>
 
         {/* Catégories */}
-        <div className="space-y-3">
+        <div className="space-y-2 sm:space-y-3">
           <Label className="text-sm font-medium">
             Catégorie <span className="text-red-500">*</span>
           </Label>
-          <div className="flex flex-wrap gap-1 sm:gap-2">
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {categories.map((category) => (
               <Button
                 key={category.id}
@@ -454,14 +452,16 @@ export default function CreatePostModal({
                     setErrors((prev) => ({ ...prev, category: "" }));
                   }
                 }}
-                className={`gap-1 sm:gap-2 rounded-full transition-all text-xs sm:text-sm px-2 sm:px-3 ${
+                className={`gap-1.5 rounded-full transition-all text-xs px-2.5 py-1.5 h-auto sm:px-3 ${
                   showErrors && errors.category && !selectedCategory
                     ? "border-red-500"
                     : ""
                 }`}
               >
-                <div className={`w-3 h-3 rounded-full ${category.color}`}></div>
-                {category.name}
+                <div
+                  className={`w-2.5 h-2.5 rounded-full ${category.color}`}
+                ></div>
+                <span className="whitespace-nowrap">{category.name}</span>
               </Button>
             ))}
             {/* Bouton pour créer une catégorie - visible seulement pour ceux qui ont la permission */}
@@ -469,22 +469,22 @@ export default function CreatePostModal({
               <Button
                 variant="ghost"
                 size="icon"
-                className="w-8 h-8 rounded-full border-2 border-dashed"
+                className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-dashed flex-shrink-0"
                 onClick={() => setShowAddCategoryModal(true)}
               >
-                <Plus className="h-4 w-4" />
+                <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
             )}
           </div>
           {showErrors && errors.category && (
-            <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
+            <p className="text-xs sm:text-sm text-red-500 mt-1 flex items-center gap-1">
               <span>⚠️</span>
               {errors.category}
             </p>
           )}
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-2 sm:space-y-3">
           <div className="flex items-center justify-between">
             <Label className="text-sm font-medium">Ajouter un sondage</Label>
             <Button
@@ -492,15 +492,17 @@ export default function CreatePostModal({
               variant={showPoll ? "default" : "outline"}
               size="sm"
               onClick={() => setShowPoll(!showPoll)}
-              className="gap-2"
+              className="gap-1.5 sm:gap-2 h-8 sm:h-9 px-2.5 sm:px-3"
             >
-              <BarChart3 className="h-4 w-4" />
-              {showPoll ? "Retirer" : "Sondage"}
+              <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="text-xs sm:text-sm">
+                {showPoll ? "Retirer" : "Sondage"}
+              </span>
             </Button>
           </div>
 
           {showPoll && (
-            <Card className="p-4 space-y-4">
+            <Card className="p-3 sm:p-4 space-y-3 sm:space-y-4">
               {/* Question du sondage */}
               <div className="space-y-2">
                 <Label htmlFor="poll-question" className="text-sm font-medium">
@@ -511,7 +513,7 @@ export default function CreatePostModal({
                   placeholder="Quelle est votre couleur préférée ?"
                   value={pollQuestion}
                   onChange={(e) => setPollQuestion(e.target.value)}
-                  className="h-10"
+                  className="h-9 sm:h-10 text-sm"
                 />
               </div>
 
@@ -522,7 +524,7 @@ export default function CreatePostModal({
                 </Label>
                 {pollOptions.map((option, index) => (
                   <div key={index} className="flex items-center gap-2">
-                    <span className="text-sm text-gray-500 w-6">
+                    <span className="text-xs sm:text-sm text-gray-500 w-5 flex-shrink-0">
                       {index + 1}.
                     </span>
                     <Input
@@ -533,7 +535,7 @@ export default function CreatePostModal({
                         newOptions[index] = e.target.value;
                         setPollOptions(newOptions);
                       }}
-                      className="h-9"
+                      className="h-8 sm:h-9 text-sm"
                     />
                   </div>
                 ))}
@@ -542,23 +544,25 @@ export default function CreatePostModal({
           )}
         </div>
         {/* Actions */}
-        <div className="flex justify-end gap-3 pt-4 border-t">
+        <div className="flex justify-end gap-2 sm:gap-3 pt-3 sm:pt-4 border-t mt-2">
           <Button
             variant="outline"
             onClick={handleClose}
             disabled={isSubmitting}
+            className="h-9 sm:h-10 px-3 sm:px-4 text-sm"
           >
             Annuler
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground h-9 sm:h-10 px-4 sm:px-6 text-sm"
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Publication...
+                <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-2 animate-spin" />
+                <span className="hidden sm:inline">Publication...</span>
+                <span className="sm:hidden">...</span>
               </>
             ) : (
               "Publier"

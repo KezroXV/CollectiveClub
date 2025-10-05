@@ -127,11 +127,6 @@ export default function PostCard({
     ? getCategoryColorValue(post.category.color)
     : null;
 
-  // Debug: afficher la couleur récupérée
-  if (post.category) {
-    console.log("Category color:", post.category.color, "->", categoryColor);
-  }
-
   // Helper pour obtenir les initiales
   const getInitials = (name: string) => {
     return (
@@ -320,20 +315,20 @@ export default function PostCard({
         className="block cursor-pointer"
       >
         {/* Author info and badge */}
-        <div className="flex items-center justify-between pt-4 sm:pt-6 mb-3">
-          <div className="flex items-center gap-2.5">
-            <Avatar className="h-8 w-8 sm:h-9 sm:w-9">
+        <div className="flex items-start justify-between pt-3 sm:pt-6 mb-3 gap-2">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <Avatar className="h-7 w-7 sm:h-9 sm:w-9 flex-shrink-0">
               <AvatarImage src={post.author.image || undefined} />
               <AvatarFallback
-                className="text-xs font-semibold text-white"
+                className="text-[10px] sm:text-xs font-semibold text-white"
                 style={{ backgroundColor: colors.Posts }}
               >
                 {getInitials(post.author.name)}
               </AvatarFallback>
             </Avatar>
-            <div className="flex flex-col">
+            <div className="flex flex-col min-w-0">
               <span
-                className="text-xs sm:text-sm font-semibold"
+                className="text-xs sm:text-sm font-semibold truncate"
                 style={{ color: colors.Police }}
               >
                 {post.author.name}
@@ -345,22 +340,22 @@ export default function PostCard({
           </div>
 
           {/* Badges à droite (Catégorie et Épinglé) */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             {/* Badge de catégorie */}
             {post.category && categoryColor && (
               <Badge
                 variant="outline"
-                className="flex items-center gap-1.5 px-2.5 py-1 border-0"
+                className="flex items-center gap-1 px-1.5 py-0.5 sm:px-2.5 sm:py-1 border-0"
                 style={{
                   backgroundColor: hexToRgba(categoryColor, 0.1),
                   color: categoryColor,
                 }}
               >
                 <div
-                  className="w-2 h-2 rounded-full"
+                  className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full flex-shrink-0"
                   style={{ backgroundColor: categoryColor }}
                 />
-                <span className="text-[10px] font-semibold">
+                <span className="text-[9px] sm:text-[10px] font-semibold whitespace-nowrap">
                   {post.category.name.toUpperCase()}
                 </span>
               </Badge>
@@ -370,10 +365,12 @@ export default function PostCard({
             {post.isPinned && (
               <Badge
                 variant="secondary"
-                className="flex items-center gap-1.5 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors px-2.5 py-1"
+                className="flex items-center gap-1 sm:gap-1.5 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors px-1.5 py-0.5 sm:px-2.5 sm:py-1"
               >
-                <Pin className="h-3 w-3" />
-                <span className="text-[10px] font-semibold">ÉPINGLÉ</span>
+                <Pin className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                <span className="text-[9px] sm:text-[10px] font-semibold whitespace-nowrap">
+                  ÉPINGLÉ
+                </span>
               </Badge>
             )}
           </div>
@@ -433,7 +430,7 @@ export default function PostCard({
         <div className="relative">
           <Button
             variant="outline"
-            className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-6 py-2 sm:py-3 rounded-full border-2 transition-colors ${
+            className={`flex items-center gap-1.5 sm:gap-3 px-2.5 sm:px-6 py-1.5 sm:py-3 h-8 sm:h-auto rounded-full border-2 transition-colors ${
               localUserReaction
                 ? "text-red-600 bg-red-50"
                 : "text-gray-700 bg-gray-50 hover:bg-gray-100"
@@ -449,11 +446,11 @@ export default function PostCard({
             disabled={!currentUser}
           >
             <Heart
-              className={`h-4 sm:h-5 w-4 sm:w-5 stroke-2 ${
+              className={`h-3.5 w-3.5 sm:h-5 sm:w-5 stroke-2 ${
                 localUserReaction ? "fill-current" : ""
               }`}
             />
-            <span className="text-sm sm:text-base font-medium">
+            <span className="text-xs sm:text-base font-medium">
               {localReactionsCount}
             </span>
           </Button>
@@ -502,7 +499,7 @@ export default function PostCard({
 
         <Button
           variant="outline"
-          className="flex items-center gap-2 sm:gap-3 bg-gray-50 px-3 sm:px-6 py-2 sm:py-3 rounded-full border-2 hover:bg-gray-100 text-gray-700"
+          className="flex items-center gap-1.5 sm:gap-3 bg-gray-50 px-2.5 sm:px-6 py-1.5 sm:py-3 h-8 sm:h-auto rounded-full border-2 hover:bg-gray-100 text-gray-700"
           style={{ borderColor: colors.Bordures }}
           onClick={(e) => {
             e.preventDefault();
@@ -510,15 +507,15 @@ export default function PostCard({
             window.location.href = `/community/posts/${post.slug || post.id}`;
           }}
         >
-          <MessageSquare className="h-4 sm:h-5 w-4 sm:w-5 stroke-2" />
-          <span className="text-sm sm:text-base font-medium">
+          <MessageSquare className="h-3.5 w-3.5 sm:h-5 sm:w-5 stroke-2" />
+          <span className="text-xs sm:text-base font-medium">
             {post._count.comments}
           </span>
         </Button>
 
         <Button
           variant="outline"
-          className="ml-auto flex items-center gap-1 sm:gap-2 bg-white px-2 sm:px-4 py-2 rounded-full hover:bg-gray-100 text-gray-600"
+          className="ml-auto flex items-center gap-1 sm:gap-2 bg-white px-2 sm:px-4 py-1.5 sm:py-2 h-8 sm:h-auto rounded-full hover:bg-gray-100 text-gray-600"
           style={{ borderColor: colors.Bordures }}
           onClick={(e) => {
             e.preventDefault();
@@ -526,7 +523,7 @@ export default function PostCard({
             handleShare();
           }}
         >
-          <Share2 className="h-3 sm:h-4 w-3 sm:w-4" />
+          <Share2 className="h-3 w-3 sm:h-4 sm:w-4" />
           <span className="text-xs sm:text-sm">Partager</span>
         </Button>
       </div>
