@@ -80,6 +80,9 @@ export default function PostCard({
 }: PostCardProps) {
   const { colors } = useTheme();
   const [showReactionDropdown, setShowReactionDropdown] = useState(false);
+  const [localReactions, setLocalReactions] = useState(post.reactions || []);
+  const [localUserReaction, setLocalUserReaction] = useState(post.userReaction || null);
+  const [localReactionsCount, setLocalReactionsCount] = useState(post._count.reactions);
 
   // Helper pour obtenir les initiales
   const getInitials = (name: string) => {
@@ -148,6 +151,65 @@ export default function PostCard({
 
     setShowReactionDropdown(false);
 
+    // Mise à jour optimiste : mettre à jour l'UI immédiatement
+    const previousReaction = localUserReaction;
+    const previousReactions = [...localReactions];
+    const previousCount = localReactionsCount;
+
+    // Si l'utilisateur avait déjà réagi
+    if (localUserReaction === type) {
+      // Retirer la réaction
+      setLocalUserReaction(null);
+      setLocalReactionsCount(prev => prev - 1);
+      setLocalReactions(prev => {
+        return prev.map(r =>
+          r.type === type
+            ? { ...r, count: Math.max(0, r.count - 1) }
+            : r
+        ).filter(r => r.count > 0);
+      });
+    } else {
+      // Ajouter ou changer la réaction
+      setLocalUserReaction(type);
+
+      if (localUserReaction) {
+        // Changer de réaction (enlever l'ancienne, ajouter la nouvelle)
+        setLocalReactions(prev => {
+          const updated = prev.map(r => {
+            if (r.type === localUserReaction) {
+              return { ...r, count: Math.max(0, r.count - 1) };
+            }
+            if (r.type === type) {
+              return { ...r, count: r.count + 1 };
+            }
+            return r;
+          });
+
+          // Ajouter la nouvelle réaction si elle n'existe pas
+          if (!updated.find(r => r.type === type)) {
+            updated.push({ type, count: 1 });
+          }
+
+          return updated.filter(r => r.count > 0);
+        });
+      } else {
+        // Nouvelle réaction
+        setLocalReactionsCount(prev => prev + 1);
+        setLocalReactions(prev => {
+          const existing = prev.find(r => r.type === type);
+          if (existing) {
+            return prev.map(r =>
+              r.type === type
+                ? { ...r, count: r.count + 1 }
+                : r
+            );
+          } else {
+            return [...prev, { type, count: 1 }];
+          }
+        });
+      }
+    }
+
     try {
       const response = await fetch(`/api/posts/${post.id}/reactions`, {
         method: "POST",
@@ -161,14 +223,28 @@ export default function PostCard({
 
       if (response.ok) {
         const data = await response.json();
+        // Mettre à jour avec les vraies données du serveur
+        setLocalReactions(data.reactions || []);
+        setLocalUserReaction(data.userReaction || null);
+        setLocalReactionsCount(data.reactions?.reduce((sum: number, r: ReactionData) => sum + r.count, 0) || 0);
         toast.success("Réaction ajoutée !");
+
+        // Rafraîchir en arrière-plan (optionnel, pour sync avec d'autres users)
         if (onVote) {
-          onVote(); // Rafraîchir immédiatement la liste des posts
+          setTimeout(() => onVote(), 1000);
         }
       } else {
+        // Rollback en cas d'erreur
+        setLocalUserReaction(previousReaction);
+        setLocalReactions(previousReactions);
+        setLocalReactionsCount(previousCount);
         toast.error("Erreur lors de l'ajout de la réaction");
       }
     } catch (error) {
+      // Rollback en cas d'erreur
+      setLocalUserReaction(previousReaction);
+      setLocalReactions(previousReactions);
+      setLocalReactionsCount(previousCount);
       console.error("Error adding reaction:", error);
       toast.error("Erreur lors de l'ajout de la réaction");
     }
@@ -276,7 +352,7 @@ export default function PostCard({
           <Button
             variant="outline"
             className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-6 py-2 sm:py-3 rounded-full border-2 transition-colors ${
-              post.userReaction
+              localUserReaction
                 ? "text-red-600 bg-red-50"
                 : "text-gray-700 bg-gray-50 hover:bg-gray-100"
             }`}
@@ -290,9 +366,9 @@ export default function PostCard({
             }}
             disabled={!currentUser}
           >
-            <Heart className={`h-4 sm:h-5 w-4 sm:w-5 stroke-2 ${post.userReaction ? "fill-current" : ""}`} />
+            <Heart className={`h-4 sm:h-5 w-4 sm:w-5 stroke-2 ${localUserReaction ? "fill-current" : ""}`} />
             <span className="text-sm sm:text-base font-medium">
-              {post._count.reactions}
+              {localReactionsCount}
             </span>
           </Button>
 
@@ -301,8 +377,8 @@ export default function PostCard({
             <div className="reaction-dropdown absolute bottom-full left-0 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-10">
               <div className="flex gap-1 mb-2">
                 {Object.entries(REACTION_EMOJIS).map(([type, emoji]) => {
-                  const isSelected = post.userReaction === type;
-                  const reactionCount = post.reactions?.find((r) => r.type === type)?.count || 0;
+                  const isSelected = localUserReaction === type;
+                  const reactionCount = localReactions?.find((r) => r.type === type)?.count || 0;
                   return (
                     <div key={type} className="flex flex-col items-center">
                       <button
