@@ -49,15 +49,7 @@ export default function ManagementSection({
             >
               Posts
             </Button>
-            <Button
-              variant="ghost"
-              onClick={onCategoriesClick}
-              className="w-full text-sm sm:text-md justify-start h-12 sm:h-16 py-3 sm:py-5 text-gray-600 bg-chart-6 mb-2 sm:mb-4 border"
-              style={{ borderColor }}
-              icon={<FolderOpen className="h-4 w-4" />}
-            >
-              Catégories
-            </Button>
+
             <Button
               variant="ghost"
               onClick={onThemeClick}

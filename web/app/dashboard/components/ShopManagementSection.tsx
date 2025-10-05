@@ -596,29 +596,6 @@ export default function ShopManagementSection({
           </div>
           <hr className="border-[1px] mb-4 sm:mb-6" style={{ borderColor }} />
 
-          {/* Section Rôles Personnalisés */}
-          <div className="mb-4 sm:mb-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 mb-3 sm:mb-4">
-              <h3 className="text-base sm:text-lg font-semibold text-gray-900">
-                Rôles Personnalisés
-              </h3>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowCustomRolesModal(true)}
-                className="text-gray-600 hover:text-gray-700 h-8 text-xs sm:text-sm"
-              >
-                <Users className="w-3 w-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                Gérer les rôles
-              </Button>
-            </div>
-            <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
-              Créez des rôles personnalisés avec des permissions spécifiques
-              comme Discord
-            </p>
-          </div>
-          <hr className="border-[1px] mb-4 sm:mb-6" style={{ borderColor }} />
-
           {/* Section Catégories */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 mb-3 sm:mb-4">
             <h3 className="text-base sm:text-lg font-semibold text-gray-900">
