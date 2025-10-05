@@ -2,6 +2,7 @@
 "use client";
 
 import PostCard from "@/components/PostCard";
+import PostCardSkeleton from "@/components/PostCardSkeleton";
 import EmptyState from "@/components/EmptyState";
 
 interface Post {
@@ -19,7 +20,7 @@ interface Post {
     id: string;
     name: string;
     email: string;
-    avatar?: string;
+    image?: string;
   };
   poll?: {
     id: string;
@@ -45,6 +46,7 @@ interface PostsListProps {
   onVote?: () => void;
   searchQuery: string;
   selectedCategory: string;
+  isLoading?: boolean;
 }
 
 export default function PostsList({
@@ -53,8 +55,20 @@ export default function PostsList({
   onVote,
   searchQuery,
   selectedCategory,
+  isLoading = false,
 }: PostsListProps) {
   const hasFilters = Boolean(searchQuery || selectedCategory !== "all");
+
+  // Show skeletons while loading
+  if (isLoading) {
+    return (
+      <div className="space-y-0 bg-transparent">
+        {[...Array(3)].map((_, index) => (
+          <PostCardSkeleton key={index} isLast={index === 2} />
+        ))}
+      </div>
+    );
+  }
 
   if (posts.length === 0) {
     return <EmptyState hasFilters={hasFilters} currentUser={currentUser} />;

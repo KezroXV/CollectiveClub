@@ -4,6 +4,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MessageSquare, Share2, Heart, Pin } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -42,7 +43,7 @@ interface Post {
     id: string;
     name: string;
     email: string;
-    avatar?: string;
+    image?: string;
   };
   poll?: {
     id: string;
@@ -79,6 +80,44 @@ export default function PostCard({
 }: PostCardProps) {
   const { colors } = useTheme();
   const [showReactionDropdown, setShowReactionDropdown] = useState(false);
+
+  // Helper pour obtenir les initiales
+  const getInitials = (name: string) => {
+    return name
+      ?.split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase() || "?";
+  };
+
+  // Helper pour formater la date avec heure
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMs = now.getTime() - date.getTime();
+    const diffInHours = diffInMs / (1000 * 60 * 60);
+    const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+
+    const timeStr = date.toLocaleTimeString("fr-FR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    if (diffInHours < 1) {
+      const minutes = Math.floor(diffInMs / (1000 * 60));
+      return `Il y a ${minutes} min`;
+    } else if (diffInHours < 24) {
+      return `Il y a ${Math.floor(diffInHours)}h • ${timeStr}`;
+    } else if (diffInDays < 7) {
+      return `Il y a ${Math.floor(diffInDays)}j • ${timeStr}`;
+    } else {
+      const dateStr = date.toLocaleDateString("fr-FR", {
+        day: "numeric",
+        month: "short",
+      });
+      return `${dateStr} • ${timeStr}`;
+    }
+  };
 
   // Gérer le clic à l'extérieur pour fermer le dropdown
   const handleClickOutside = useCallback((event: MouseEvent) => {
@@ -137,7 +176,7 @@ export default function PostCard({
 
   return (
     <div
-      className="pb-4 sm:pb-8"
+      className={`pb-4 sm:pb-8 ${post.isPinned ? 'relative' : ''}`}
       style={{
         ...((!isLast) && {
           borderBottom: `1px solid ${colors.Bordures}`
@@ -145,10 +184,49 @@ export default function PostCard({
       }}
     >
       <Link href={`/community/posts/${post.slug || post.id}`} className="block cursor-pointer">
+        {/* Author info and badge */}
+        <div className="flex items-center justify-between pt-4 sm:pt-6 mb-3">
+          <div className="flex items-center gap-2.5">
+            <Avatar className="h-8 w-8 sm:h-9 sm:w-9">
+              <AvatarImage src={post.author.image || undefined} />
+              <AvatarFallback
+                className="text-xs font-semibold text-white"
+                style={{ backgroundColor: colors.Posts }}
+              >
+                {getInitials(post.author.name)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col">
+              <span
+                className="text-xs sm:text-sm font-semibold"
+                style={{ color: colors.Police }}
+              >
+                {post.author.name}
+              </span>
+              <span className="text-[10px] sm:text-xs text-gray-500">
+                {formatDate(post.createdAt)}
+              </span>
+            </div>
+          </div>
+
+          {/* Badge épinglé à droite */}
+          {post.isPinned && (
+            <Badge
+              variant="secondary"
+              className="flex items-center gap-1.5 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors px-2.5 py-1"
+            >
+              <Pin className="h-3 w-3" />
+              <span className="text-[10px] font-semibold">ÉPINGLÉ</span>
+            </Badge>
+          )}
+        </div>
+
         {/* Post Title and Content */}
-        <div className="mb-4 sm:mb-6 pt-4 sm:pt-7 relative">
+        <div className="mb-4 sm:mb-6">
           <h2
-            className="text-sm sm:text-[13px] md:text-[15px] font-semibold mb-2 leading-tight line-clamp-2 sm:line-clamp-1 transition-colors duration-200"
+            className={`text-sm sm:text-[13px] md:text-[15px] mb-2 leading-tight line-clamp-2 sm:line-clamp-1 transition-colors duration-200 ${
+              post.isPinned ? 'font-bold' : 'font-semibold'
+            }`}
             style={{ color: colors.Police }}
           >
             {post.title}

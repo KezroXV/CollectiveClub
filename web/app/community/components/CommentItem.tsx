@@ -33,7 +33,7 @@ interface Comment {
     id: string;
     name: string;
     email: string;
-    avatar?: string;
+    image?: string;
   };
   createdAt: string;
   reactions?: ReactionData[];
@@ -223,7 +223,7 @@ const CommentItem = ({
     >
       <div className="flex gap-4">
         <Avatar className="h-10 w-10 flex-shrink-0">
-          <AvatarImage src={comment.author.avatar} />
+          <AvatarImage src={comment.author.image || undefined} />
           <AvatarFallback
             className="text-sm text-white"
             style={{ backgroundColor: colors.Posts }}

@@ -30,7 +30,7 @@ interface Post {
     id: string;
     name: string;
     email: string;
-    avatar?: string;
+    image?: string;
   };
   poll?: {
     id: string;
@@ -62,6 +62,7 @@ function HomePageContent() {
   const [showPinnedOnly, setShowPinnedOnly] = useState(false);
   const [pinnedCount, setPinnedCount] = useState(0);
   const [sortBy, setSortBy] = useState("newest");
+  const [isLoadingPosts, setIsLoadingPosts] = useState(true);
 
   // 🏪 Initialiser la persistance du shop
   const { currentShop } = useShopPersistence();
@@ -69,6 +70,7 @@ function HomePageContent() {
   // Fetch posts
   const fetchPosts = async () => {
     try {
+      setIsLoadingPosts(true);
       const params = new URLSearchParams();
       if (showPinnedOnly) {
         params.append("pinnedOnly", "true");
@@ -86,6 +88,8 @@ function HomePageContent() {
       setPinnedCount(pinnedPostsCount);
     } catch (error) {
       console.error("Error fetching posts:", error);
+    } finally {
+      setIsLoadingPosts(false);
     }
   };
 
@@ -95,6 +99,16 @@ function HomePageContent() {
 
   // Auto-refresh toutes les 10 secondes
   useAutoRefresh(fetchPosts, { enabled: true, interval: 10000 });
+
+  // Écouter l'événement de pin/unpin pour rafraîchir immédiatement
+  useEffect(() => {
+    const handlePostPinToggled = () => {
+      fetchPosts();
+    };
+
+    window.addEventListener('postPinToggled', handlePostPinToggled);
+    return () => window.removeEventListener('postPinToggled', handlePostPinToggled);
+  }, [showPinnedOnly, currentUser?.id]);
 
   // Filter posts
   // Modifier le filtering par catégorie :
@@ -187,6 +201,7 @@ function HomePageContent() {
                 onVote={fetchPosts}
                 searchQuery={searchQuery}
                 selectedCategory={selectedCategory}
+                isLoading={isLoadingPosts}
               />
             </div>
           </div>

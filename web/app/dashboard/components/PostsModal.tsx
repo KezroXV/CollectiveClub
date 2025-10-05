@@ -184,6 +184,9 @@ export default function PostsModal({
 
       setPosts((prev) => prev.map(updatePost));
       setFilteredPosts((prev) => prev.map(updatePost));
+
+      // Déclencher un événement pour rafraîchir les posts partout
+      window.dispatchEvent(new CustomEvent('postPinToggled'));
     } catch (error) {
       console.error("Error toggling pin:", error);
     } finally {
