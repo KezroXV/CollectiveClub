@@ -25,6 +25,40 @@ import { toast } from "sonner";
 import { useTheme } from "@/contexts/ThemeContext";
 import { usePermissions } from "@/lib/hooks/usePermissions";
 
+// Fonction helper pour convertir les classes Tailwind en valeurs CSS
+const getCategoryColorValue = (colorClass: string): string => {
+  // Si c'est déjà une couleur hexadécimale, la retourner directement
+  if (colorClass.startsWith("#")) {
+    return colorClass;
+  }
+
+  const colorMap: Record<string, string> = {
+    "bg-blue-500": "#3b82f6",
+    "bg-orange-500": "#f97316",
+    "bg-emerald-500": "#10b981",
+    "bg-green-500": "#22c55e",
+    "bg-red-500": "#ef4444",
+    "bg-violet-500": "#8b5cf6",
+    "bg-purple-500": "#a855f7",
+    "bg-amber-500": "#f59e0b",
+    "bg-yellow-500": "#eab308",
+    "bg-pink-500": "#ec4899",
+    "bg-cyan-500": "#06b6d4",
+    "bg-indigo-500": "#6366f1",
+    "bg-teal-500": "#14b8a6",
+  };
+
+  return colorMap[colorClass] || "#3b82f6"; // Bleu par défaut
+};
+
+// Fonction pour convertir hex en rgba avec opacité
+const hexToRgba = (hex: string, opacity: number): string => {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+};
+
 interface PostHeaderProps {
   author: {
     id: string;
@@ -81,10 +115,8 @@ const PostHeader = ({
 
   // Permissions basées sur le nouveau système
   const canPin = currentUser && canManagePosts();
-  const canDelete = currentUser && (
-    canDeletePosts() ||
-    post.authorId === currentUser.id
-  );
+  const canDelete =
+    currentUser && (canDeletePosts() || post.authorId === currentUser.id);
 
   // Charger le badge le plus élevé de l'auteur
   useEffect(() => {
@@ -132,46 +164,54 @@ const PostHeader = ({
 
   const handleTogglePin = async () => {
     if (!currentUser || !canPin || !post?.id) {
-      console.log('handleTogglePin: Missing requirements', { currentUser: !!currentUser, canPin, postId: post?.id });
+      console.log("handleTogglePin: Missing requirements", {
+        currentUser: !!currentUser,
+        canPin,
+        postId: post?.id,
+      });
       return;
     }
 
-    console.log('handleTogglePin: Starting', { postId: post.id, isPinned: post.isPinned, userRole: currentUser.role });
+    console.log("handleTogglePin: Starting", {
+      postId: post.id,
+      isPinned: post.isPinned,
+      userRole: currentUser.role,
+    });
 
     setIsPinning(true);
     try {
       const endpoint = `/api/posts/${post.id}/pin`;
-      const method = post.isPinned ? 'DELETE' : 'POST';
-      
+      const method = post.isPinned ? "DELETE" : "POST";
+
       const response = await fetch(endpoint, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: currentUser.id,
           userRole: currentUser.role,
         }),
       });
 
-      console.log('handleTogglePin: Response received', { 
-        ok: response.ok, 
-        status: response.status, 
-        statusText: response.statusText 
+      console.log("handleTogglePin: Response received", {
+        ok: response.ok,
+        status: response.status,
+        statusText: response.statusText,
       });
 
       if (response.ok) {
         const responseData = await response.json();
-        console.log('handleTogglePin: Success response', responseData);
-        const action = post.isPinned ? 'désépinglé' : 'épinglé';
+        console.log("handleTogglePin: Success response", responseData);
+        const action = post.isPinned ? "désépinglé" : "épinglé";
         toast.success(`Post ${action} avec succès !`);
         onPin?.(); // Callback pour rafraîchir la liste
       } else {
         const errorData = await response.json();
-        console.log('handleTogglePin: Error response', errorData);
-        toast.error(errorData.error || 'Erreur lors de l\'épinglage');
+        console.log("handleTogglePin: Error response", errorData);
+        toast.error(errorData.error || "Erreur lors de l'épinglage");
       }
     } catch (error) {
-      console.error('Error toggling pin:', error);
-      toast.error('Erreur lors de l\'épinglage');
+      console.error("Error toggling pin:", error);
+      toast.error("Erreur lors de l'épinglage");
     } finally {
       setIsPinning(false);
     }
@@ -183,8 +223,8 @@ const PostHeader = ({
     setIsDeleting(true);
     try {
       const response = await fetch(`/api/posts/${post.id}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: currentUser.id,
           userRole: currentUser.role,
@@ -193,15 +233,15 @@ const PostHeader = ({
 
       if (response.ok) {
         setShowDeleteDialog(false);
-        toast.success('Post supprimé avec succès !');
+        toast.success("Post supprimé avec succès !");
         onDelete?.(); // Callback pour rafraîchir la liste
       } else {
         const errorData = await response.json();
-        toast.error(errorData.error || 'Erreur lors de la suppression');
+        toast.error(errorData.error || "Erreur lors de la suppression");
       }
     } catch (error) {
-      console.error('Error deleting post:', error);
-      toast.error('Erreur lors de la suppression');
+      console.error("Error deleting post:", error);
+      toast.error("Erreur lors de la suppression");
     } finally {
       setIsDeleting(false);
     }
@@ -253,7 +293,7 @@ const PostHeader = ({
             </div>
           </div>
         </div>
-        
+
         {/* Menu dropdown pour les actions modération */}
         {(canPin || canDelete) && (
           <DropdownMenu>
@@ -264,26 +304,26 @@ const PostHeader = ({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               {canPin && (
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={handleTogglePin}
                   disabled={isPinning}
                 >
                   {post?.isPinned ? (
                     <>
                       <PinOff className="mr-2 h-4 w-4" />
-                      {isPinning ? 'Désépinglage...' : 'Désépingler'}
+                      {isPinning ? "Désépinglage..." : "Désépingler"}
                     </>
                   ) : (
                     <>
                       <Pin className="mr-2 h-4 w-4" />
-                      {isPinning ? 'Épinglage...' : 'Épingler'}
+                      {isPinning ? "Épinglage..." : "Épingler"}
                     </>
                   )}
                 </DropdownMenuItem>
               )}
-              
+
               {canDelete && (
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => setShowDeleteDialog(true)}
                   className="text-red-600 focus:text-red-600"
                 >
@@ -296,30 +336,52 @@ const PostHeader = ({
         )}
       </div>
 
-      {/* Post Title */}
-      <h1
-        className="text-[13px] font-semibold mb-4"
-        style={{ color: colors.Police }}
-      >
-        {title}
-      </h1>
+      {/* Post Title et Badges */}
+      <div className="flex items-center justify-between mb-4">
+        <h1
+          className="text-[13px] font-semibold"
+          style={{ color: colors.Police }}
+        >
+          {title}
+        </h1>
 
-      {/* Categories badges - Style CategoriesSection */}
-      <div className="flex gap-2">
-        {category && (
-          <div
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white"
-            style={{ border: `1px solid ${colors.Bordures}` }}
-          >
-            <span className={`w-2.5 h-2.5 rounded-full ${category.color}`} />
-            <span
-              className="text-[12px] font-medium"
-              style={{ color: colors.Police }}
+        {/* Badges (Catégorie et Épinglé) */}
+        <div className="flex items-center gap-2">
+          {/* Badge de catégorie */}
+          {category &&
+            (() => {
+              const categoryColor = getCategoryColorValue(category.color);
+              return (
+                <Badge
+                  variant="outline"
+                  className="flex items-center gap-1.5 px-2.5 py-1 border-0"
+                  style={{
+                    backgroundColor: hexToRgba(categoryColor, 0.1),
+                    color: categoryColor,
+                  }}
+                >
+                  <div
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: categoryColor }}
+                  />
+                  <span className="text-[10px] font-semibold">
+                    {category.name.toUpperCase()}
+                  </span>
+                </Badge>
+              );
+            })()}
+
+          {/* Badge épinglé */}
+          {post?.isPinned && (
+            <Badge
+              variant="secondary"
+              className="flex items-center gap-1.5 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors px-2.5 py-1"
             >
-              {category.name}
-            </span>
-          </div>
-        )}
+              <Pin className="h-3 w-3" />
+              <span className="text-[10px] font-semibold">ÉPINGLÉ</span>
+            </Badge>
+          )}
+        </div>
       </div>
 
       {/* Dialog de confirmation de suppression */}
@@ -328,7 +390,9 @@ const PostHeader = ({
           <DialogHeader>
             <DialogTitle>Supprimer le post</DialogTitle>
             <DialogDescription>
-              Êtes-vous sûr de vouloir supprimer ce post ? Cette action est irréversible et supprimera également tous les commentaires et réactions associés.
+              Êtes-vous sûr de vouloir supprimer ce post ? Cette action est
+              irréversible et supprimera également tous les commentaires et
+              réactions associés.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -345,7 +409,7 @@ const PostHeader = ({
               disabled={isDeleting}
               className="bg-red-600 hover:bg-red-700"
             >
-              {isDeleting ? 'Suppression...' : 'Supprimer'}
+              {isDeleting ? "Suppression..." : "Supprimer"}
             </Button>
           </DialogFooter>
         </DialogContent>

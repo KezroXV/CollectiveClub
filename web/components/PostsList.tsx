@@ -5,12 +5,15 @@ import PostCard from "@/components/PostCard";
 import PostCardSkeleton from "@/components/PostCardSkeleton";
 import EmptyState from "@/components/EmptyState";
 
+type ReactionType = "LIKE" | "LOVE" | "LAUGH" | "WOW" | "APPLAUSE";
+
 interface Post {
   id: string;
   title: string;
   content: string;
   slug?: string;
   imageUrl?: string;
+  isPinned?: boolean;
   category?: {
     id: string;
     name: string;
@@ -37,6 +40,11 @@ interface Post {
     comments: number;
     reactions: number;
   };
+  reactions?: Array<{
+    type: ReactionType;
+    count: number;
+  }>;
+  userReaction?: ReactionType | null;
   createdAt: string;
 }
 

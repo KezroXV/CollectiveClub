@@ -18,6 +18,7 @@ import { X, Loader2, Image as ImageIcon, BarChart3, Plus } from "lucide-react";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import { usePermissions } from "@/lib/hooks/usePermissions";
 import { useTheme } from "@/contexts/ThemeContext";
+import { toast } from "sonner";
 
 interface CreatePostModalProps {
   isOpen: boolean;
@@ -50,14 +51,25 @@ export default function CreatePostModal({
   const [newCategoryName, setNewCategoryName] = useState("");
   const [selectedColor, setSelectedColor] = useState("bg-blue-500");
   const [loadingAddCategory, setLoadingAddCategory] = useState(false);
+
+  // États pour les erreurs de validation
+  const [errors, setErrors] = useState({
+    title: "",
+    content: "",
+    category: "",
+  });
+  const [showErrors, setShowErrors] = useState(false);
+
   const resetForm = () => {
     setTitle("");
     setContent("");
     setSelectedCategory("");
     setImageUrl("");
-    setShowPoll(false); // ✅ AJOUTER
-    setPollQuestion(""); // ✅ AJOUTER
-    setPollOptions(["", "", "", ""]); // ✅ AJOUTER
+    setShowPoll(false);
+    setPollQuestion("");
+    setPollOptions(["", "", "", ""]);
+    setErrors({ title: "", content: "", category: "" });
+    setShowErrors(false);
   };
 
   // Fonction pour ajouter une catégorie (copiée de ShopManagementSection)
@@ -100,16 +112,17 @@ export default function CreatePostModal({
         setShowAddCategoryModal(false);
 
         // Déclencher un événement personnalisé pour rafraîchir les catégories partout
-        window.dispatchEvent(new CustomEvent('categoryCreated'));
+        window.dispatchEvent(new CustomEvent("categoryCreated"));
 
+        toast.success("Catégorie créée avec succès");
         console.log("Catégorie créée avec succès:", newCategory);
       } else {
         const error = await response.json();
-        alert(error.error || "Erreur lors de la création");
+        toast.error(error.error || "Erreur lors de la création");
       }
     } catch (error) {
       console.error("Error creating category:", error);
-      alert("Erreur lors de la création");
+      toast.error("Erreur lors de la création");
     } finally {
       setLoadingAddCategory(false);
     }
@@ -127,13 +140,45 @@ export default function CreatePostModal({
     { name: "Cyan", value: "bg-cyan-500" },
   ];
 
+  // Fonction de validation
+  const validateForm = () => {
+    const newErrors = {
+      title: "",
+      content: "",
+      category: "",
+    };
+
+    if (!title.trim()) {
+      newErrors.title = "Le titre est obligatoire";
+    }
+
+    if (!content.trim()) {
+      newErrors.content = "La description est obligatoire";
+    }
+
+    if (!selectedCategory) {
+      newErrors.category = "Veuillez sélectionner une catégorie";
+    }
+
+    setErrors(newErrors);
+    setShowErrors(true);
+
+    // Retourne true si pas d'erreurs
+    return !newErrors.title && !newErrors.content && !newErrors.category;
+  };
+
   const handleClose = () => {
     resetForm();
     onClose();
   };
 
   const handleSubmit = async () => {
-    if (!title.trim() || !content.trim() || !currentUser) return;
+    if (!currentUser) return;
+
+    // ✅ VALIDATION DES CHAMPS OBLIGATOIRES
+    if (!validateForm()) {
+      return;
+    }
 
     // ✅ VALIDATION SONDAGE
     if (
@@ -141,7 +186,7 @@ export default function CreatePostModal({
       (!pollQuestion.trim() ||
         pollOptions.filter((opt) => opt.trim()).length < 2)
     ) {
-      alert("Un sondage doit avoir une question et au moins 2 options");
+      toast.error("Un sondage doit avoir une question et au moins 2 options");
       return;
     }
 
@@ -178,14 +223,32 @@ export default function CreatePostModal({
       });
 
       if (response.ok) {
+        toast.success("Post publié avec succès !");
         handleClose();
         onPostCreated(); // Rafraîchissement immédiat de la liste des posts
       } else {
-        console.error("Error creating post");
-        alert("Erreur lors de la création du post");
+        const errorData = await response.json();
+        console.error("Error creating post:", errorData);
+
+        // Afficher un message d'erreur approprié
+        if (errorData.error === "Category is required") {
+          setErrors((prev) => ({
+            ...prev,
+            category: "La catégorie est obligatoire",
+          }));
+          setShowErrors(true);
+          toast.error("Veuillez sélectionner une catégorie");
+        } else if (errorData.error === "Category not found") {
+          setErrors((prev) => ({ ...prev, category: "Catégorie introuvable" }));
+          setShowErrors(true);
+          toast.error("Catégorie introuvable");
+        } else {
+          toast.error("Erreur lors de la création du post");
+        }
       }
     } catch (error) {
       console.error("Error creating post:", error);
+      toast.error("Erreur lors de la création du post");
     } finally {
       setIsSubmitting(false);
     }
@@ -259,29 +322,59 @@ export default function CreatePostModal({
           {/* Titre */}
           <div className="space-y-2">
             <Label htmlFor="title" className="text-sm font-medium">
-              Titre
+              Titre <span className="text-red-500">*</span>
             </Label>
             <Input
               id="title"
               placeholder="J'ai une idée de boutique mais je ne sais pas comment choisir, comment vous avez eu votre idée vous ?"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="h-10 sm:h-12 text-sm sm:text-base"
+              onChange={(e) => {
+                setTitle(e.target.value);
+                if (showErrors && e.target.value.trim()) {
+                  setErrors((prev) => ({ ...prev, title: "" }));
+                }
+              }}
+              className={`h-10 sm:h-12 text-sm sm:text-base ${
+                showErrors && errors.title
+                  ? "border-red-500 focus-visible:ring-red-500"
+                  : ""
+              }`}
             />
+            {showErrors && errors.title && (
+              <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
+                <span>⚠️</span>
+                {errors.title}
+              </p>
+            )}
           </div>
 
           {/* Description */}
           <div className="space-y-2">
             <Label htmlFor="content" className="text-sm font-medium">
-              Description
+              Description <span className="text-red-500">*</span>
             </Label>
             <Textarea
               id="content"
               placeholder="Salut, je ne sais pas comment choisir entre quelques idées de..."
               value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="min-h-[100px] sm:min-h-[120px] text-sm sm:text-base resize-none"
+              onChange={(e) => {
+                setContent(e.target.value);
+                if (showErrors && e.target.value.trim()) {
+                  setErrors((prev) => ({ ...prev, content: "" }));
+                }
+              }}
+              className={`min-h-[100px] sm:min-h-[120px] text-sm sm:text-base resize-none ${
+                showErrors && errors.content
+                  ? "border-red-500 focus-visible:ring-red-500"
+                  : ""
+              }`}
             />
+            {showErrors && errors.content && (
+              <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
+                <span>⚠️</span>
+                {errors.content}
+              </p>
+            )}
           </div>
 
           {/* Upload d'image */}
@@ -342,6 +435,9 @@ export default function CreatePostModal({
 
         {/* Catégories */}
         <div className="space-y-3">
+          <Label className="text-sm font-medium">
+            Catégorie <span className="text-red-500">*</span>
+          </Label>
           <div className="flex flex-wrap gap-1 sm:gap-2">
             {categories.map((category) => (
               <Button
@@ -350,12 +446,19 @@ export default function CreatePostModal({
                   selectedCategory === category.name ? "default" : "outline"
                 }
                 size="sm"
-                onClick={() =>
+                onClick={() => {
                   setSelectedCategory(
                     selectedCategory === category.name ? "" : category.name
-                  )
-                }
-                className="gap-1 sm:gap-2 rounded-full transition-all text-xs sm:text-sm px-2 sm:px-3"
+                  );
+                  if (showErrors && category.name) {
+                    setErrors((prev) => ({ ...prev, category: "" }));
+                  }
+                }}
+                className={`gap-1 sm:gap-2 rounded-full transition-all text-xs sm:text-sm px-2 sm:px-3 ${
+                  showErrors && errors.category && !selectedCategory
+                    ? "border-red-500"
+                    : ""
+                }`}
               >
                 <div className={`w-3 h-3 rounded-full ${category.color}`}></div>
                 {category.name}
@@ -373,6 +476,12 @@ export default function CreatePostModal({
               </Button>
             )}
           </div>
+          {showErrors && errors.category && (
+            <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
+              <span>⚠️</span>
+              {errors.category}
+            </p>
+          )}
         </div>
 
         <div className="space-y-3">
@@ -443,7 +552,7 @@ export default function CreatePostModal({
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={!title.trim() || !content.trim() || isSubmitting}
+            disabled={isSubmitting}
             className="bg-primary hover:bg-primary/90 text-primary-foreground"
           >
             {isSubmitting ? (
