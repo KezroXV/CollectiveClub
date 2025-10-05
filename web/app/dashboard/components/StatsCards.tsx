@@ -171,8 +171,8 @@ export default function StatsCards({
   useEffect(() => {
     fetchStats();
 
-    // Rafraîchir les stats toutes les 5 minutes
-    const interval = setInterval(fetchStats, 5 * 60 * 1000);
+    // Rafraîchir les stats toutes les 30 secondes pour une meilleure réactivité
+    const interval = setInterval(fetchStats, 30 * 1000);
 
     return () => clearInterval(interval);
   }, [shopId]);

@@ -5,6 +5,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
+import { useAutoRefresh } from "@/lib/hooks/useAutoRefresh";
 import {
   Card,
   CardContent,
@@ -81,6 +82,9 @@ function CommunityPageContent() {
   useEffect(() => {
     fetchPosts();
   }, []);
+
+  // Auto-refresh toutes les 10 secondes
+  useAutoRefresh(fetchPosts, { enabled: true, interval: 10000 });
 
   const fetchPosts = async () => {
     try {

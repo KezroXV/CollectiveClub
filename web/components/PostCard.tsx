@@ -121,9 +121,10 @@ export default function PostCard({
       });
 
       if (response.ok) {
+        const data = await response.json();
         toast.success("Réaction ajoutée !");
         if (onVote) {
-          onVote(); // Rafraîchir la liste des posts
+          onVote(); // Rafraîchir immédiatement la liste des posts
         }
       } else {
         toast.error("Erreur lors de l'ajout de la réaction");

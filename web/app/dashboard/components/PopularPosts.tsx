@@ -58,6 +58,11 @@ export default function PopularPosts({ shopId, refreshTrigger, borderColor = "#E
 
   useEffect(() => {
     fetchPopularPosts();
+
+    // Auto-refresh toutes les 30 secondes
+    const interval = setInterval(fetchPopularPosts, 30 * 1000);
+
+    return () => clearInterval(interval);
   }, [shopId, refreshTrigger]);
 
   if (isLoading) {

@@ -99,6 +99,9 @@ export default function CreatePostModal({
         setSelectedColor("bg-blue-500");
         setShowAddCategoryModal(false);
 
+        // Déclencher un événement personnalisé pour rafraîchir les catégories partout
+        window.dispatchEvent(new CustomEvent('categoryCreated'));
+
         console.log("Catégorie créée avec succès:", newCategory);
       } else {
         const error = await response.json();
@@ -176,9 +179,10 @@ export default function CreatePostModal({
 
       if (response.ok) {
         handleClose();
-        onPostCreated();
+        onPostCreated(); // Rafraîchissement immédiat de la liste des posts
       } else {
         console.error("Error creating post");
+        alert("Erreur lors de la création du post");
       }
     } catch (error) {
       console.error("Error creating post:", error);

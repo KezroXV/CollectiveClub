@@ -12,6 +12,7 @@ import PostsList from "@/components/PostsList";
 import ThemeWrapper from "@/components/ThemeWrapper";
 import { useShopPersistence } from "@/lib/useShopPersistence";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useAutoRefresh } from "@/lib/hooks/useAutoRefresh";
 // ReactionPicker retiré pour n'afficher que coeur + commentaires
 
 interface Post {
@@ -91,6 +92,9 @@ function HomePageContent() {
   useEffect(() => {
     fetchPosts();
   }, [showPinnedOnly, currentUser?.id]);
+
+  // Auto-refresh toutes les 10 secondes
+  useAutoRefresh(fetchPosts, { enabled: true, interval: 10000 });
 
   // Filter posts
   // Modifier le filtering par catégorie :
