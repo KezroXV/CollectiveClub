@@ -1,7 +1,7 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
 import ThemeWrapper from "@/components/ThemeWrapper";
@@ -10,12 +10,60 @@ import { useState, useEffect, Suspense } from "react";
 
 function SignInContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const shop = searchParams.get("shop");
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
+  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
   const { colors, bannerImageUrl } = useTheme();
   const [isLoading, setIsLoading] = useState(false);
   const [hasAdmin, setHasAdmin] = useState<boolean | null>(null);
   const [loadingAdminCheck, setLoadingAdminCheck] = useState(true);
+  const [isInIframe, setIsInIframe] = useState(false);
+  const [authAttempted, setAuthAttempted] = useState(false);
+
+  // Authentification automatique Shopify (pour iframe)
+  const handleShopifyAuth = async () => {
+    if (!shop || authAttempted) return;
+
+    setAuthAttempted(true);
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/auth/shopify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shop }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Rediriger vers le dashboard avec le shop param
+        const url = new URL(callbackUrl, window.location.origin);
+        url.searchParams.set("shop", shop);
+        router.push(url.pathname + url.search);
+      } else {
+        console.error("Shopify auth failed:", data.error);
+        setIsLoading(false);
+        setAuthAttempted(false); // Permettre un nouvel essai
+      }
+    } catch (error) {
+      console.error("Shopify auth error:", error);
+      setIsLoading(false);
+      setAuthAttempted(false); // Permettre un nouvel essai
+    }
+  };
+
+  // Détecter si on est dans un iframe Shopify et auto-authentifier
+  useEffect(() => {
+    const inIframe = window !== window.parent;
+    setIsInIframe(inIframe);
+
+    // Si on est dans un iframe Shopify avec un shop param, auto-auth
+    // MAIS uniquement si pas déjà en cours de chargement
+    if (inIframe && shop && !isLoading) {
+      handleShopifyAuth();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shop]);
 
   // Vérifier s'il existe déjà un admin
   useEffect(() => {
@@ -44,68 +92,28 @@ function SignInContent() {
   const handleSignIn = async () => {
     setIsLoading(true);
     try {
-      // Détecter le contexte (Shopify embedded ou front public)
-      const isInIframe = window !== window.parent;
-      const isShopifyEmbedded = !!(isInIframe && shop);
-
-      // Créer le state parameter avec le contexte
-      let state = "";
-      if (isShopifyEmbedded) {
-        // Encoder le contexte Shopify dans le state
-        state = JSON.stringify({
-          context: "shopify",
-          shop: shop,
-        });
-      } else {
-        state = JSON.stringify({
-          context: "public",
-        });
+      // Si on est dans un iframe Shopify, utiliser l'auth Shopify
+      if (isInIframe && shop) {
+        await handleShopifyAuth();
+        return;
       }
 
-      // Définir un cookie pour le contexte (backup au state)
-      document.cookie = `auth_context=${isShopifyEmbedded ? 'shopify' : 'public'}; path=/; SameSite=${isShopifyEmbedded ? 'None' : 'Lax'}; Secure`;
-
-      // Construire l'URL Google OAuth
-      const googleAuthUrl = buildGoogleAuthUrl(state, isShopifyEmbedded);
-
-      // ✅ SOLUTION: Si dans iframe Shopify, SORTIR de l'iframe avant OAuth
-      if (isShopifyEmbedded) {
-        // Google bloque OAuth dans les iframes, donc on redirige le PARENT
-        console.log("🔓 Sortie de l'iframe Shopify pour OAuth Google");
-
-        // Option 1: Utiliser window.top (marche dans la plupart des cas)
-        if (window.top) {
-          window.top.location.href = googleAuthUrl;
-        } else {
-          // Fallback: forcer la navigation du parent
-          window.parent.location.href = googleAuthUrl;
-        }
-      } else {
-        // Contexte normal: redirection classique
-        window.location.href = googleAuthUrl;
+      // Sinon, utiliser Google OAuth (accès direct)
+      let finalCallbackUrl = callbackUrl;
+      if (shop) {
+        const url = new URL(callbackUrl, window.location.origin);
+        url.searchParams.set("shop", shop);
+        finalCallbackUrl = url.toString();
       }
 
+      await signIn("google", {
+        callbackUrl: finalCallbackUrl,
+        redirect: true,
+      });
     } catch (error) {
       console.error("Erreur de connexion:", error);
       setIsLoading(false);
     }
-  };
-
-  const buildGoogleAuthUrl = (state: string, isShopifyEmbedded: boolean) => {
-    const redirectUri = `${window.location.origin}/api/auth/callback/google`;
-    const scope = "openid email profile";
-
-    const params = new URLSearchParams({
-      client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
-      redirect_uri: redirectUri,
-      response_type: "code",
-      scope: scope,
-      state: encodeURIComponent(state),
-      access_type: "offline",
-      prompt: "select_account",
-    });
-
-    return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
   };
 
   return (
